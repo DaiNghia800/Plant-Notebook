@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:plant_notebook/view/home/widget/watering_section/home_watering_section.dart';
-import 'package:plant_notebook/view/home/widget/garden_health/home_garden_health.dart';
-import 'package:plant_notebook/view/home/widget/hero_banner/home_hero_banner.dart';
-import 'package:plant_notebook/view/home/widget/quick_actions/home_quick_actions.dart';
-import 'package:plant_notebook/view/home/widget/discover_plant/home_discover_plant.dart';
+import 'package:plant_notebook/features/home/views/widget/watering_section/home_watering_section.dart';
+import 'package:plant_notebook/features/home/views/widget/garden_health/home_garden_health.dart';
+import 'package:plant_notebook/features/home/views/widget/hero_banner/home_hero_banner.dart';
+import 'package:plant_notebook/features/home/views/widget/quick_actions/home_quick_actions.dart';
+import 'package:plant_notebook/features/home/views/widget/discover_plant/home_discover_plant.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});

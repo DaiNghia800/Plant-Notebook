@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:plant_notebook/features/home/views/widget/garden_health/environment_toggle_tab.dart';
 import 'package:plant_notebook/features/home/views/widget/garden_health/health_card.dart';
+import 'package:plant_notebook/features/home/views/widget/garden_health/environment_toggle_tab.dart';
 
 class HomeGardenHealth extends StatefulWidget {
   const HomeGardenHealth({super.key});
@@ -24,7 +24,7 @@ class _HomeGardenHealthState extends State<HomeGardenHealth> {
               child: const Text(
                 'Sức khỏe khu vườn',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1B1B1B),
                 ),

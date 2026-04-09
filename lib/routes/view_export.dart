@@ -1,5 +1,5 @@
-export '/view/home/home_view.dart';
-export '/view/my_garden/my_garden_view.dart';
-export '/view/Plant_Scanner/plant_scanner_view.dart';
-export '/view/library/library_view.dart';
-export '/view/profile/profile_view.dart';
+export '/features/home/views/home_view.dart';
+export '/features/my_garden/views/my_garden_view.dart';
+export '/features/plant_scanner/views/plant_scanner_view.dart';
+export '/features/library/views/library_view.dart';
+export '/features/profile/views/profile_view.dart';

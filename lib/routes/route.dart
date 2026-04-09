@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plant_notebook/app.dart';
+import 'package:plant_notebook/app/app.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/routes/view_export.dart';
 

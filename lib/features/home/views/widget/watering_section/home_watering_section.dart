@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plant_notebook/view/home/widget/watering_section/watering_plant_card.dart';
+import 'package:plant_notebook/features/home/views/widget/watering_section/watering_plant_card.dart';
 
 class HomeWateringSection extends StatelessWidget {
   const HomeWateringSection({super.key});

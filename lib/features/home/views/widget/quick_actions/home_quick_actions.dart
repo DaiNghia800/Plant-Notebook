@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:plant_notebook/view/home/widget/quick_actions/quick_action_card.dart';
+import 'package:plant_notebook/features/home/views/widget/quick_actions/quick_action_card.dart';
+import 'package:plant_notebook/features/plant_scanner/views/plant_scanner_view.dart';
 
 class HomeQuickActions extends StatelessWidget {
   const HomeQuickActions({super.key});
@@ -26,8 +27,12 @@ class HomeQuickActions extends StatelessWidget {
                 iconColor: const Color(0xFF2E7D32),
                 iconBgColor: const Color(0xFFE8F5E9),
                 title: 'Scan AI',
-                subtitle: 'Chẩn đoán sâu bệnh',
-                onTap: () {},
+                subtitle: 'Thông tin cây trồng/ Chẩn đoán sâu bệnh',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const PlantScannerView()),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),
