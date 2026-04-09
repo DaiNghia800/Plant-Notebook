@@ -1,3 +1,5 @@
+const String splashViewRoute = "splash";
+const String onboardingViewRoute = "onboarding";
 const String appViewRoute = "app";
 const String homeViewRoute = "home";
 const String myGardenViewRoute = "garden";
