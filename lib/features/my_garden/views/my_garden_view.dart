@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plant_notebook/features/library-plant/views/library_plant_detail_view.dart';
+import 'package:plant_notebook/features/plant-detail/views/plant_detail_view.dart';
 import 'package:plant_notebook/features/my_garden/controllers/my_garden_controller.dart';
 import 'package:plant_notebook/utils/constant.dart';
 import 'package:provider/provider.dart';
@@ -71,7 +71,7 @@ class MyGardenView extends StatelessWidget {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => LibraryPlantDetailView(plant: plant),
+                        builder: (_) => PlantDetailView(plant: plant),
                       ),
                     );
                   },

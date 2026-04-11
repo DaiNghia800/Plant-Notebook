@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/features/library-plant/data/library_plant_seed.dart';
 import 'package:plant_notebook/features/library-plant/models/library_plant_item.dart';
-import 'package:plant_notebook/features/library-plant/views/library_plant_detail_view.dart';
+import 'package:plant_notebook/features/plant-detail/views/plant_detail_view.dart';
 import 'package:plant_notebook/utils/constant.dart';
 
 class LibraryPlantView extends StatefulWidget {
@@ -89,6 +89,8 @@ class _LibraryPlantViewState extends State<LibraryPlantView> {
         _buildCategoryRow(),
         const SizedBox(height: 14),
         _buildFilterRow(),
+        const SizedBox(height: 16),
+        _buildDidYouKnowSection(),
         const SizedBox(height: 16),
         if (featured != null) _buildFeaturedCard(featured),
         if (featured != null) const SizedBox(height: 16),
@@ -310,11 +312,47 @@ class _LibraryPlantViewState extends State<LibraryPlantView> {
     );
   }
 
+  Widget _buildDidYouKnowSection() {
+    final List<LibraryPlantItem> knowledgePlants = libraryPlantSeed
+        .where((plant) => plant.funFacts.isNotEmpty)
+        .take(3)
+        .toList(growable: false);
+
+    if (knowledgePlants.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Bạn có biết?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF102A17),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 150,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: knowledgePlants.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final LibraryPlantItem plant = knowledgePlants[index];
+              return _DidYouKnowCard(plant: plant, fact: plant.funFacts.first);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   void _openDetail(LibraryPlantItem plant) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => LibraryPlantDetailView(plant: plant),
-      ),
+      MaterialPageRoute(builder: (context) => PlantDetailView(plant: plant)),
     );
   }
 }
@@ -450,6 +488,86 @@ class _MetaText extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DidYouKnowCard extends StatelessWidget {
+  const _DidYouKnowCard({required this.plant, required this.fact});
+
+  final LibraryPlantItem plant;
+  final String fact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 260,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F8F4),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE1EAE2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F1E4),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      plant.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF102A17),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Mẹo chăm cây nhanh',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF688071),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            fact,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: Color(0xFF3E4E43),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
