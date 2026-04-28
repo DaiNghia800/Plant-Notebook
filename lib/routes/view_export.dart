@@ -1,5 +1,5 @@
-export '/features/home/views/home_view.dart';
-export '/features/my_garden/views/my_garden_view.dart';
-export '/features/plant_scanner/views/plant_scanner_view.dart';
-export '/features/library/views/library_view.dart';
-export '/features/profile/views/profile_view.dart';
+export 'package:plant_notebook/screens/home/home_screen.dart';
+export 'package:plant_notebook/screens/my_garden/my_garden_screen.dart';
+export 'package:plant_notebook/screens/plant_scanner/plant_scanner_screen.dart';
+export 'package:plant_notebook/screens/library/library_screen.dart';
+export 'package:plant_notebook/screens/profile/profile_screen.dart';

@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/routes/view_export.dart';
-import 'package:plant_notebook/utils/constant.dart';
+import 'package:plant_notebook/common/styles/app_colors.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -12,11 +12,11 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   final List _pages = const [
-    HomeView(),
-    MyGardenView(),
-    PlantScannerView(),
-    LibraryView(),
-    ProfileView(),
+    HomeScreen(),
+    MyGardenScreen(),
+    PlantScannerScreen(),
+    LibraryScreen(),
+    ProfileScreen(),
   ];
 
   int _currentIndex = 0;
@@ -140,7 +140,7 @@ class _AppState extends State<App> {
                       BoxShadow(
                         color: Colors.black12,
                         blurRadius: 10,
-                        offset: Offset(0, 3), // shadow rơi xuống dưới
+                        offset: Offset(0, 3), // shadow rÆ¡i xuá»‘ng dÆ°á»›i
                       ),
                     ],
                   ),
@@ -171,3 +171,4 @@ class _AppState extends State<App> {
     );
   }
 }
+
