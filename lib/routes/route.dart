@@ -18,7 +18,7 @@ Route<dynamic> generateRoute(RouteSettings settings) {
     case libraryViewRoute:
       return MaterialPageRoute(builder: (context) => const LibraryScreen());
     case profileViewRoute:
-      return MaterialPageRoute(builder: (context) => const ProfileScreen());
+      return MaterialPageRoute(builder: (context) => ProfileScreen());
     default:
       return MaterialPageRoute(builder: (context) => const HomeScreen());
   }
