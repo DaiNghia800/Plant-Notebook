@@ -1,6 +1,8 @@
+const String loginViewRoute = "login";
 const String appViewRoute = "app";
 const String homeViewRoute = "home";
 const String myGardenViewRoute = "garden";
+const String plantDetailViewRoute = "plant_detail";
 const String scannerViewRoute = "scanner";
 const String libraryViewRoute = "library";
 const String profileViewRoute = "profile";

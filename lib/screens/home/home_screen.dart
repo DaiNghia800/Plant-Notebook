@@ -18,10 +18,7 @@ class _HomeViewState extends State<HomeScreen> {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(), // Hiệu ứng cuộn mượt
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24.0,
-          vertical: 20.0,
-        ), // Căn lề tổng thể (nếu trước đó chưa có)
+        padding: EdgeInsets.only(top: 100, left: 20, right: 20, bottom: 60),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
@@ -41,4 +38,3 @@ class _HomeViewState extends State<HomeScreen> {
     );
   }
 }
-
