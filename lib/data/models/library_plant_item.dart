@@ -13,8 +13,13 @@ class LibraryPlantItem {
     required this.imageUrl,
     this.isTrending = false,
     this.isRare = false,
-    this.temperature,
+    this.temperatureRange,
     this.badge,
+    this.scientificName,
+    this.humidityLevel,
+    this.toxicity,
+    this.wateringIntervalDays,
+    this.wateringFrequencyLabel,
   });
 
   final String id;
@@ -30,6 +35,11 @@ class LibraryPlantItem {
   final String imageUrl;
   final bool isTrending;
   final bool isRare;
-  final String? temperature;
+  final String? temperatureRange;
   final String? badge;
+  final String? scientificName;
+  final String? humidityLevel;
+  final String? toxicity;
+  final int? wateringIntervalDays;
+  final String? wateringFrequencyLabel;
 }
