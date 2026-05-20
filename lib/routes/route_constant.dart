@@ -4,3 +4,7 @@ const String myGardenViewRoute = "garden";
 const String scannerViewRoute = "scanner";
 const String libraryViewRoute = "library";
 const String profileViewRoute = "profile";
+const String splashViewRoute = "splash";
+const String onboardingViewRoute = "onboarding";
+const String loginViewRoute = "login";
+const String registerViewRoute = "register";

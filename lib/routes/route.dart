@@ -1,10 +1,18 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/app/app.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/routes/view_export.dart';
 
 Route<dynamic> generateRoute(RouteSettings settings) {
   switch (settings.name) {
+    case splashViewRoute:
+      return MaterialPageRoute(builder: (context) => const SplashScreen());
+    case onboardingViewRoute:
+      return MaterialPageRoute(builder: (context) => const OnboardingScreen());
+    case loginViewRoute:
+      return MaterialPageRoute(builder: (context) => const LoginScreen());
+    case registerViewRoute:
+      return MaterialPageRoute(builder: (context) => const RegisterScreen());
     case appViewRoute:
       return MaterialPageRoute(builder: (context) => const App());
     case homeViewRoute:

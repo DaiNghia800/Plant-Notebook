@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/routes/route.dart' as router;
 
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.light,
       onGenerateRoute: router.generateRoute,
-      initialRoute: appViewRoute,
+      initialRoute: splashViewRoute,
     );
   }
 }

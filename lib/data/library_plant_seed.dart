@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
+import 'package:plant_notebook/data/models/my_garden_item.dart';
 
 const List<PlantCareLogEntry> _defaultCareLogs = [
   PlantCareLogEntry(
@@ -52,6 +53,18 @@ const List<String> _defaultFunFacts = [
   'Ánh sáng gián tiếp mạnh là lựa chọn an toàn cho đa số cây trồng trong nhà.',
 ];
 
+MyGardenItem createDefaultGardenItem(String libraryPlantId) {
+  return MyGardenItem(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    libraryPlantId: libraryPlantId,
+    healthStatus: 'Khỏe mạnh',
+    wateringFrequencyLabel: '2 lần/tuần',
+    lastWateredLabel: '2 ngày trước',
+    careLogs: List.from(_defaultCareLogs),
+    growthTimeline: List.from(_defaultGrowthTimeline),
+  );
+}
+
 const List<LibraryPlantItem> libraryPlantSeed = [
   LibraryPlantItem(
     id: 'pothos',
@@ -68,8 +81,6 @@ const List<LibraryPlantItem> libraryPlantSeed = [
       'Tưới khi lớp đất mặt se khô, giữ ẩm vừa phải để rễ phát triển khỏe.',
       'Cắt tỉa lá vàng và xoay chậu định kỳ để tán lá cân đối hơn.',
     ],
-    careLogs: _defaultCareLogs,
-    growthTimeline: _defaultGrowthTimeline,
     funFacts: [
       'Trầu Bà có thể leo hoặc rủ tự nhiên, rất hợp làm điểm nhấn gần cửa sổ.',
       'Nếu lá nhạt màu, cây thường đang cần thêm ánh sáng gián tiếp.',
@@ -78,9 +89,6 @@ const List<LibraryPlantItem> libraryPlantSeed = [
     imageUrl:
         'https://images.unsplash.com/photo-1604762524887-5a1a5f2c4f43?auto=format&fit=crop&w=1200&q=80',
     isTrending: true,
-    healthStatus: 'Khỏe mạnh',
-    wateringFrequencyLabel: '2 lần/tuần',
-    lastWateredLabel: '2 ngày trước',
   ),
   LibraryPlantItem(
     id: 'fiddle-leaf-fig',
@@ -97,8 +105,6 @@ const List<LibraryPlantItem> libraryPlantSeed = [
       'Tưới khi bề mặt đất khô 2-3 cm, không để úng rễ.',
       'Lau bụi mặt lá 1 lần/tuần để cây quang hợp tốt hơn.',
     ],
-    careLogs: _defaultCareLogs,
-    growthTimeline: _defaultGrowthTimeline,
     funFacts: _defaultFunFacts,
     imageUrl:
         'https://images.unsplash.com/photo-1593691512422-28cb17fb9b83?auto=format&fit=crop&w=1200&q=80',
@@ -119,8 +125,6 @@ const List<LibraryPlantItem> libraryPlantSeed = [
       'Dùng chậu thoát nước tốt để tránh thối gốc.',
       'Có thể đặt ở góc phòng vẫn phát triển ổn định.',
     ],
-    careLogs: _defaultCareLogs,
-    growthTimeline: _defaultGrowthTimeline,
     funFacts: _defaultFunFacts,
     imageUrl:
         'https://images.unsplash.com/photo-1598880940080-ff9a29891b85?auto=format&fit=crop&w=1200&q=80',
@@ -140,8 +144,6 @@ const List<LibraryPlantItem> libraryPlantSeed = [
       'Ưa môi trường thoáng khí, độ ẩm trung bình đến cao.',
       'Xoay chậu định kỳ để tán lá phát triển cân đối.',
     ],
-    careLogs: _defaultCareLogs,
-    growthTimeline: _defaultGrowthTimeline,
     funFacts: _defaultFunFacts,
     imageUrl:
         'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?auto=format&fit=crop&w=1200&q=80',
@@ -161,8 +163,6 @@ const List<LibraryPlantItem> libraryPlantSeed = [
       'Chỉ tưới khi đất khô hoàn toàn để tránh úng.',
       'Ưu tiên đất thoát nước nhanh chuyên cho sen đá.',
     ],
-    careLogs: _defaultCareLogs,
-    growthTimeline: _defaultGrowthTimeline,
     funFacts: _defaultFunFacts,
     imageUrl:
         'https://images.unsplash.com/photo-1526397751294-331021109fbd?auto=format&fit=crop&w=1200&q=80',
@@ -183,8 +183,6 @@ const List<LibraryPlantItem> libraryPlantSeed = [
       'Tưới ít, đảm bảo đất khô trước lần tưới tiếp theo.',
       'Không để nước đọng ở bẹ lá để tránh nấm bệnh.',
     ],
-    careLogs: _defaultCareLogs,
-    growthTimeline: _defaultGrowthTimeline,
     funFacts: _defaultFunFacts,
     imageUrl:
         'https://images.unsplash.com/photo-1509423350716-97f2360af9f4?auto=format&fit=crop&w=1200&q=80',
@@ -204,8 +202,6 @@ const List<LibraryPlantItem> libraryPlantSeed = [
       'Tưới đều khi đất vừa se khô, không tưới quá tay.',
       'Cắt tỉa lá vàng định kỳ để cây luôn xanh khỏe.',
     ],
-    careLogs: _defaultCareLogs,
-    growthTimeline: _defaultGrowthTimeline,
     funFacts: _defaultFunFacts,
     imageUrl:
         'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=1200&q=80',

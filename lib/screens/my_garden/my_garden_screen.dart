@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/screens/plant_detail/plant_detail_screen.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
@@ -16,9 +16,9 @@ class MyGardenScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final plants = controller.savedPlants;
+        final gardenPlants = controller.savedPlants;
 
-        if (plants.isEmpty) {
+        if (gardenPlants.isEmpty) {
           // Trạng thái rỗng khi chưa có cây nào được lưu.
           return Container(
             width: double.infinity,
@@ -56,7 +56,7 @@ class MyGardenScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Cây của tôi (${plants.length})',
+              'Cây của tôi (${gardenPlants.length})',
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -64,100 +64,107 @@ class MyGardenScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            ...plants.map(
-              (plant) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => PlantDetailScreen(plant: plant),
+            ...gardenPlants.map(
+              (gardenPlant) {
+                final libraryPlant = controller.getLibraryPlant(gardenPlant.libraryPlantId);
+                
+                // Bỏ qua nếu cây gốc không còn tồn tại trong thư viện (phòng hờ)
+                if (libraryPlant == null) return const SizedBox.shrink();
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => PlantDetailScreen(plant: libraryPlant),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.black12),
                       ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: SizedBox(
-                            width: 72,
-                            height: 72,
-                            child: Image.network(
-                              plant.imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: const Color(0xFFE3EEE6),
-                                  child: const Icon(
-                                    Icons.local_florist,
-                                    color: primaryColor,
-                                  ),
-                                );
-                              },
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: SizedBox(
+                              width: 72,
+                              height: 72,
+                              child: Image.network(
+                                libraryPlant.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: const Color(0xFFE3EEE6),
+                                    child: const Icon(
+                                      Icons.local_florist,
+                                      color: primaryColor,
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                plant.name,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF183224),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  libraryPlant.name,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF183224),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                plant.shortDescription,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Color(0xFF4B6255),
-                                  height: 1.35,
+                                const SizedBox(height: 4),
+                                Text(
+                                  libraryPlant.shortDescription,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF4B6255),
+                                    height: 1.35,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          tooltip: 'Xóa khỏi vườn',
-                          onPressed: () async {
-                            // Xóa cây khỏi vườn và hiển thị thông báo.
-                            await controller.removePlant(plant.id);
-                            if (!context.mounted) {
-                              return;
-                            }
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Đã xóa ${plant.name} khỏi vườn của tôi',
+                          IconButton(
+                            tooltip: 'Xóa khỏi vườn',
+                            onPressed: () async {
+                              // Xóa cây khỏi vườn và hiển thị thông báo.
+                              await controller.removePlant(gardenPlant.id);
+                              if (!context.mounted) {
+                                return;
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Đã xóa ${libraryPlant.name} khỏi vườn của tôi',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
                                 ),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Color(0xFF9B3A3A),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Color(0xFF9B3A3A),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         );
@@ -165,4 +172,3 @@ class MyGardenScreen extends StatelessWidget {
     );
   }
 }
-

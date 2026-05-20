@@ -1,0 +1,389 @@
+import 'package:flutter/material.dart';
+import 'package:plant_notebook/common/styles/app_colors.dart';
+import 'package:plant_notebook/routes/route_constant.dart';
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
+  
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  void _onRegisterPressed() {
+    // Tạm thời bỏ qua validate, điều hướng thẳng vào app
+    Navigator.of(context).pushNamedAndRemoveUntil(appViewRoute, (route) => false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6FBF7),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF135022)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Sổ tay cây trồng',
+          style: TextStyle(
+            color: Color(0xFF135022),
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+          ),
+        ),
+        centerTitle: false,
+      ),
+      body: Stack(
+        children: [
+          // Background leaf watermark placeholder at bottom
+          Positioned(
+            bottom: -50,
+            left: 0,
+            right: 0,
+            child: Icon(
+              Icons.energy_savings_leaf_rounded,
+              size: 240,
+              color: Colors.black.withOpacity(0.03),
+            ),
+          ),
+          
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    // Logo
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE8F5E9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.yard_rounded,
+                          size: 36,
+                          color: Color(0xFF135022),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Titles
+                    const Text(
+                      'Bắt đầu hành trình',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF111C14),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Tạo tài khoản để quản lý khu vườn của bạn',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF4B6255),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    
+                    // Form Card
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x08000000),
+                            blurRadius: 20,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Name Field
+                          _buildLabel('HỌ VÀ TÊN'),
+                          _buildTextField(
+                            controller: _nameController,
+                            hintText: 'Nguyễn Văn A',
+                            prefixIcon: Icons.person_rounded,
+                          ),
+                          const SizedBox(height: 18),
+                          
+                          // Email Field
+                          _buildLabel('EMAIL'),
+                          _buildTextField(
+                            controller: _emailController,
+                            hintText: 'example@gmail.com',
+                            prefixIcon: Icons.email_rounded,
+                            keyboardType: TextInputType.emailAddress,
+                          ),
+                          const SizedBox(height: 18),
+                          
+                          // Password Field
+                          _buildLabel('MẬT KHẨU'),
+                          _buildTextField(
+                            controller: _passwordController,
+                            hintText: '••••••••',
+                            prefixIcon: Icons.lock_rounded,
+                            obscureText: _obscurePassword,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                color: const Color(0xFF90A496),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          
+                          // Confirm Password Field
+                          _buildLabel('XÁC NHẬN MẬT KHẨU'),
+                          _buildTextField(
+                            controller: _confirmController,
+                            hintText: '••••••••',
+                            prefixIcon: Icons.history_rounded,
+                            obscureText: _obscurePassword,
+                          ),
+                          const SizedBox(height: 28),
+                          
+                          // Register Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: FilledButton(
+                              onPressed: _onRegisterPressed,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF2E7B36),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Text(
+                                    'Đăng ký',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward_rounded, size: 20),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          
+                          // Already have account
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'Đã có tài khoản? ',
+                                style: TextStyle(
+                                  color: Color(0xFF4B6255),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text(
+                                  'Đăng nhập ngay',
+                                  style: TextStyle(
+                                    color: Color(0xFF186F2F),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    // Social Divider
+                    Row(
+                      children: const [
+                        Expanded(child: Divider(color: Color(0xFFE5ECE7))),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'HOẶC ĐĂNG KÝ BẰNG',
+                            style: TextStyle(
+                              color: Color(0xFF6B8071),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: Color(0xFFE5ECE7))),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Social Buttons Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _SocialButton(
+                            label: 'Google',
+                            iconData: Icons.g_mobiledata,
+                            iconColor: Colors.red,
+                            onTap: () {},
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _SocialButton(
+                            label: 'Facebook',
+                            iconData: Icons.facebook,
+                            iconColor: const Color(0xFF1877F2),
+                            onTap: () {},
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          color: Color(0xFF334B3B),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData prefixIcon,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+    Widget? suffixIcon,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: const TextStyle(color: Color(0xFFB0C2B6)),
+        filled: true,
+        fillColor: const Color(0xFFF1F6F3),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
+        prefixIcon: Icon(
+          prefixIcon,
+          color: const Color(0xFF7A8D81),
+          size: 22,
+        ),
+        suffixIcon: suffixIcon,
+      ),
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({
+    required this.label,
+    required this.iconData,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData iconData;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF2F6F3),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(iconData, color: iconColor),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF111C14),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
