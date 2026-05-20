@@ -13,6 +13,8 @@ class LibraryPlantItem {
     required this.imageUrl,
     this.isTrending = false,
     this.isRare = false,
+    this.temperature,
+    this.badge,
   });
 
   final String id;
@@ -28,4 +30,6 @@ class LibraryPlantItem {
   final String imageUrl;
   final bool isTrending;
   final bool isRare;
+  final String? temperature;
+  final String? badge;
 }

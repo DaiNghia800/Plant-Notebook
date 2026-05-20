@@ -9,6 +9,7 @@ class MyGardenItem {
     required this.lastWateredLabel,
     required this.careLogs,
     required this.growthTimeline,
+    this.nickname,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class MyGardenItem {
   final String lastWateredLabel;
   final List<PlantCareLogEntry> careLogs;
   final List<PlantGrowthSnapshot> growthTimeline;
+  final String? nickname;
 
   MyGardenItem copyWith({
     String? healthStatus,
@@ -25,6 +27,7 @@ class MyGardenItem {
     String? lastWateredLabel,
     List<PlantCareLogEntry>? careLogs,
     List<PlantGrowthSnapshot>? growthTimeline,
+    String? nickname,
   }) {
     return MyGardenItem(
       id: id,
@@ -34,6 +37,7 @@ class MyGardenItem {
       lastWateredLabel: lastWateredLabel ?? this.lastWateredLabel,
       careLogs: careLogs ?? this.careLogs,
       growthTimeline: growthTimeline ?? this.growthTimeline,
+      nickname: nickname ?? this.nickname,
     );
   }
 
@@ -46,6 +50,7 @@ class MyGardenItem {
       'lastWateredLabel': lastWateredLabel,
       'careLogs': careLogs.map((e) => e.toMap()).toList(),
       'growthTimeline': growthTimeline.map((e) => e.toMap()).toList(),
+      'nickname': nickname,
     };
   }
 
@@ -66,6 +71,7 @@ class MyGardenItem {
           (e) => PlantGrowthSnapshot.fromMap(e as Map<String, dynamic>),
         ),
       ),
+      nickname: map['nickname'] as String?,
     );
   }
 }
