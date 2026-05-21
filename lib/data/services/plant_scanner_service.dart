@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:plant_notebook/data/models/plant_analysis_result.dart';
 
 // Top-level helper để chạy trong isolate riêng, tránh block UI thread
 String _encodeToBase64(Uint8List bytes) => base64Encode(bytes);
@@ -18,9 +19,10 @@ class PlantScannerService {
 
   // ── Gemini state ────────────────────────────────────────────────────────
   static final Map<String, DateTime> _geminiCooldownUntil = {};
+  static final Set<String> _permanentlyBannedKeys = {};
   static int _nextGeminiStartIndex = 0;
 
-  // ── Keys (lazy-loaded once) ──────────────────────────────────────────────
+  // ── Keys & Model (lazy-loaded once) ─────────────────────────────────────
   final List<String> _geminiApiKeys;
   final String _geminiModel;
 
@@ -88,21 +90,23 @@ class PlantScannerService {
     var available = _availableKeys(
       keys: _geminiApiKeys,
       cooldownMap: _geminiCooldownUntil,
+      bannedKeys: _permanentlyBannedKeys,
       startIndex: _nextGeminiStartIndex,
     );
 
-    // Safety valve: nếu tất cả đang cooldown thì xóa và thử lại
+    // Safety valve: nếu tất cả đang cooldown thì xóa temp cooldown và thử lại
     if (available.isEmpty) {
       _geminiCooldownUntil.clear();
       available = _availableKeys(
         keys: _geminiApiKeys,
         cooldownMap: _geminiCooldownUntil,
+        bannedKeys: _permanentlyBannedKeys,
         startIndex: _nextGeminiStartIndex,
       );
     }
 
     if (available.isEmpty) {
-      _devLog('[Gemini] ❌ Tất cả Gemini keys bị rate limit');
+      _devLog('[Gemini] ❌ Tất cả Gemini keys bị rate limit hoặc bị banned');
       throw const PlantScannerException('all_ai_keys_rate_limited');
     }
 
@@ -129,13 +133,24 @@ class PlantScannerService {
       } catch (e) {
         final msg = e.toString().toLowerCase();
 
+        // 403: key bị banned vĩnh viễn, không thử lại
+        if (_isPermanentlyBanned(msg)) {
+          _devLog(
+            '[Gemini] 🚫 Key #${_geminiApiKeys.indexOf(apiKey) + 1} bị banned vĩnh viễn (403) → bỏ qua',
+          );
+          _permanentlyBannedKeys.add(apiKey);
+          lastError = e;
+          continue;
+        }
+
+        // 429: rate limit tạm thời, cooldown rồi thử key tiếp theo
         if (_isPerKeyRateLimitError(msg)) {
           _devLog(
             '[Gemini] ⚠️  Rate limit (429) key #${_geminiApiKeys.indexOf(apiKey) + 1}: $e',
           );
           _geminiCooldownUntil[apiKey] = DateTime.now().add(_rateLimitCooldown);
           lastError = e;
-          continue; // chuyển sang key tiếp theo
+          continue;
         }
 
         _devLog(
@@ -149,11 +164,12 @@ class PlantScannerService {
     final allCooled = _availableKeys(
       keys: _geminiApiKeys,
       cooldownMap: _geminiCooldownUntil,
+      bannedKeys: _permanentlyBannedKeys,
       startIndex: 0,
     ).isEmpty;
 
     if (allCooled) {
-      _devLog('[Gemini] ❌ Tất cả Gemini keys bị rate limit');
+      _devLog('[Gemini] ❌ Tất cả Gemini keys không khả dụng');
       throw const PlantScannerException('all_ai_keys_rate_limited');
     }
 
@@ -169,7 +185,7 @@ class PlantScannerService {
     // Encode base64 trong isolate riêng để không block UI thread
     final base64Image = await compute(_encodeToBase64, bytes);
     final client = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 15);
+      ..connectionTimeout = const Duration(seconds: 30);
 
     try {
       final uri = Uri.https(
@@ -272,6 +288,7 @@ class PlantScannerService {
   static List<String> _availableKeys({
     required List<String> keys,
     required Map<String, DateTime> cooldownMap,
+    required Set<String> bannedKeys,
     required int startIndex,
   }) {
     if (keys.isEmpty) return const [];
@@ -282,6 +299,7 @@ class PlantScannerService {
       ordered.add(keys[(start + i) % keys.length]);
     }
     return ordered.where((k) {
+      if (bannedKeys.contains(k)) return false;
       final t = cooldownMap[k];
       return t == null || now.isAfter(t);
     }).toList();
@@ -291,6 +309,11 @@ class PlantScannerService {
     final now = DateTime.now();
     _geminiCooldownUntil.removeWhere((_, t) => now.isAfter(t));
   }
+
+  bool _isPermanentlyBanned(String msg) =>
+      msg.contains('403') ||
+      msg.contains('permission_denied') ||
+      msg.contains('project has been denied');
 
   bool _isPerKeyRateLimitError(String msg) =>
       msg.contains('429') ||

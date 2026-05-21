@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:plant_notebook/controller/plant_scanner_controller.dart';
-import 'package:plant_notebook/data/services/gemini_scanner_service.dart';
+import 'package:plant_notebook/data/services/plant_scanner_service.dart';
 import 'package:plant_notebook/screens/plant_scanner/widget/result_area/result_sliver_app_bar.dart';
 import 'package:plant_notebook/screens/plant_scanner/widget/result_area/result_info_card.dart';
 import 'package:plant_notebook/screens/plant_scanner/widget/result_area/result_states.dart';
@@ -54,7 +54,7 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
         errorMessage: controller.analysisErrorMessage!,
         onRetry: () {
           // Xóa cooldown để retry bắt đầu lại
-          GeminiScannerService.clearCooldowns();
+          PlantScannerService.clearCooldowns();
           controller.analyzeImage(widget.imagePath);
         },
       );

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:plant_notebook/data/models/plant_analysis_result.dart';
-import 'package:plant_notebook/data/services/gemini_scanner_service.dart';
+import 'package:plant_notebook/data/services/plant_scanner_service.dart';
 
 class PlantScannerController extends ChangeNotifier {
   // ── Camera State ─────────────────────────────────────────
@@ -16,7 +16,7 @@ class PlantScannerController extends ChangeNotifier {
   bool isFlashOn = false;
 
   // ── Analysis State ───────────────────────────────────────
-  final GeminiScannerService _scannerService = GeminiScannerService();
+  final PlantScannerService _scannerService = PlantScannerService();
   bool isAnalyzing = true;
   PlantAnalysisResult? analysisResult;
   String? analysisErrorMessage;
