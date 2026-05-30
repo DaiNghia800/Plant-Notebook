@@ -4,6 +4,7 @@ import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/data/services/google_auth_service.dart';
 import 'package:plant_notebook/common/widgets/widget.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:plant_notebook/data/services/email_auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -18,9 +19,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
   final GoogleAuthService _googleAuthService = GoogleAuthService();
+  final EmailAuthService _emailAuthService = EmailAuthService();
   
   bool _obscurePassword = true;
   bool _isGoogleRegistering = false;
+  bool _isEmailRegistering = false;
 
   @override
   void initState() {
@@ -61,9 +64,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _onRegisterPressed() {
-    // Tạm thời bỏ qua validate, điều hướng thẳng vào app
-    Navigator.of(context).pushNamedAndRemoveUntil(appViewRoute, (route) => false);
+  Future<void> _onRegisterPressed() async {
+    if (_isEmailRegistering) return;
+
+    final name = _nameController.text.trim();
+    final identifier = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirm = _confirmController.text.trim();
+
+    if (name.isEmpty || identifier.isEmpty || password.isEmpty || confirm.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
+      );
+      return;
+    }
+
+    if (password != confirm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mật khẩu xác nhận không khớp')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isEmailRegistering = true;
+    });
+
+    try {
+      await _emailAuthService.register(identifier: identifier, password: password, name: name);
+      if (!mounted) return;
+      
+      // Sau khi đăng ký thành công, tự động đăng nhập
+      await _emailAuthService.login(identifier: identifier, password: password);
+      if (!mounted) return;
+      
+      Navigator.of(context).pushNamedAndRemoveUntil(appViewRoute, (route) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isEmailRegistering = false;
+        });
+      }
+    }
   }
 
   Future<void> _onGoogleRegisterPressed() async {
@@ -215,11 +262,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 18),
                           
                           // Email Field
-                          _buildLabel('EMAIL'),
+                          _buildLabel('EMAIL HOẶC SỐ ĐIỆN THOẠI'),
                           _buildTextField(
                             controller: _emailController,
-                            hintText: 'example@gmail.com',
-                            prefixIcon: Icons.email_rounded,
+                            hintText: 'example@gmail.com hoặc 09...',
+                            prefixIcon: Icons.person_outline_rounded,
                             keyboardType: TextInputType.emailAddress,
                           ),
                           const SizedBox(height: 18),
@@ -260,27 +307,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             width: double.infinity,
                             height: 56,
                             child: FilledButton(
-                              onPressed: _onRegisterPressed,
+                              onPressed: _isEmailRegistering ? () {} : _onRegisterPressed,
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFF2E7B36),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(28),
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Text(
-                                    'Đăng ký',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
+                              child: _isEmailRegistering
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: const [
+                                        Text(
+                                          'Đăng ký',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Icon(Icons.arrow_forward_rounded, size: 20),
+                                      ],
                                     ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(Icons.arrow_forward_rounded, size: 20),
-                                ],
-                              ),
                             ),
                           ),
                           const SizedBox(height: 24),

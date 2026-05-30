@@ -4,6 +4,7 @@ import 'package:plant_notebook/data/services/google_auth_service.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/common/widgets/widget.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:plant_notebook/data/services/email_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,8 +17,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GoogleAuthService _googleAuthService = GoogleAuthService();
+  final EmailAuthService _emailAuthService = EmailAuthService();
   bool _obscurePassword = true;
   bool _isGoogleSigningIn = false;
+  bool _isEmailSigningIn = false;
 
   @override
   void initState() {
@@ -56,9 +59,39 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _onLoginPressed() {
-    // Tạm thời bỏ qua validate, điều hướng thẳng vào app
-    Navigator.of(context).pushReplacementNamed(appViewRoute);
+  Future<void> _onLoginPressed() async {
+    if (_isEmailSigningIn) return;
+
+    final identifier = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (identifier.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập email/sđt và mật khẩu')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isEmailSigningIn = true;
+    });
+
+    try {
+      await _emailAuthService.login(identifier: identifier, password: password);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(appViewRoute);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isEmailSigningIn = false;
+        });
+      }
+    }
   }
 
   Future<void> _onGoogleLoginPressed() async {
@@ -171,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       // Email Field
                       const Text(
-                        'EMAIL',
+                        'EMAIL HOẶC SỐ ĐIỆN THOẠI',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -184,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          hintText: 'example@gmail.com',
+                          hintText: 'example@gmail.com hoặc 09...',
                           hintStyle: const TextStyle(color: Color(0xFF90A496)),
                           filled: true,
                           fillColor: const Color(0xFFEFF4F0),
@@ -197,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             vertical: 18,
                           ),
                           suffixIcon: const Icon(
-                            Icons.email_outlined,
+                            Icons.person_outline_rounded,
                             color: Color(0xFF90A496),
                           ),
                         ),
@@ -269,20 +302,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         height: 56,
                         child: FilledButton(
-                          onPressed: _onLoginPressed,
+                          onPressed: _isEmailSigningIn ? () {} : _onLoginPressed,
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFF267A32),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28),
                             ),
                           ),
-                          child: const Text(
-                            'Đăng nhập',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          child: _isEmailSigningIn
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Đăng nhập',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(height: 24),
