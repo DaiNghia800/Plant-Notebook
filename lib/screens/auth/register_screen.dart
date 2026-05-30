@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
+import 'package:plant_notebook/data/services/google_auth_service.dart';
+import 'package:plant_notebook/common/widgets/widget.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,8 +17,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
   
   bool _obscurePassword = true;
+  bool _isGoogleRegistering = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _googleAuthService.onCurrentUserChanged.listen((GoogleSignInAccount? googleUser) async {
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+      if (googleUser != null) {
+        if (_isGoogleRegistering) return;
+        setState(() {
+          _isGoogleRegistering = true;
+        });
+        try {
+          await _googleAuthService.handleGoogleAuthResult(googleUser);
+          if (!mounted) return;
+          Navigator.of(context).pushNamedAndRemoveUntil(appViewRoute, (route) => false);
+        } catch (error) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi đăng ký Google: $error')),
+          );
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isGoogleRegistering = false;
+            });
+          }
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -29,6 +64,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _onRegisterPressed() {
     // Tạm thời bỏ qua validate, điều hướng thẳng vào app
     Navigator.of(context).pushNamedAndRemoveUntil(appViewRoute, (route) => false);
+  }
+
+  Future<void> _onGoogleRegisterPressed() async {
+    if (_isGoogleRegistering) {
+      return;
+    }
+
+    setState(() {
+      _isGoogleRegistering = true;
+    });
+
+    try {
+      final GoogleAuthResult? result =
+          await _googleAuthService.signInWithGoogle();
+
+      if (!mounted) {
+        return;
+      }
+
+      if (result == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Người dùng đã hủy đăng ký Google')),
+        );
+        return;
+      }
+
+      Navigator.of(context).pushNamedAndRemoveUntil(appViewRoute, (route) => false);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi đăng ký Google: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleRegistering = false;
+        });
+      }
+    }
   }
 
   @override
@@ -264,11 +341,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: _SocialButton(
-                            label: 'Google',
-                            iconData: Icons.g_mobiledata,
-                            iconColor: Colors.red,
-                            onTap: () {},
+                          child: GoogleSignInButton(
+                            onPressed: _onGoogleRegisterPressed,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                GoogleLogoWidget(size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Google',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF111C14),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -347,14 +436,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 class _SocialButton extends StatelessWidget {
   const _SocialButton({
     required this.label,
-    required this.iconData,
-    required this.iconColor,
     required this.onTap,
+    this.iconData,
+    this.iconColor,
+    this.iconWidget,
   });
 
   final String label;
-  final IconData iconData;
-  final Color iconColor;
+  final IconData? iconData;
+  final Color? iconColor;
+  final Widget? iconWidget;
   final VoidCallback onTap;
 
   @override
@@ -371,7 +462,10 @@ class _SocialButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(iconData, color: iconColor),
+            if (iconWidget != null)
+              iconWidget!
+            else if (iconData != null)
+              Icon(iconData, color: iconColor),
             const SizedBox(width: 8),
             Text(
               label,

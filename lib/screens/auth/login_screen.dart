@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:plant_notebook/data/services/google_auth_service.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
+import 'package:plant_notebook/common/widgets/widget.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +18,36 @@ class _LoginScreenState extends State<LoginScreen> {
   final GoogleAuthService _googleAuthService = GoogleAuthService();
   bool _obscurePassword = true;
   bool _isGoogleSigningIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _googleAuthService.onCurrentUserChanged.listen((GoogleSignInAccount? googleUser) async {
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+      if (googleUser != null) {
+        if (_isGoogleSigningIn) return;
+        setState(() {
+          _isGoogleSigningIn = true;
+        });
+        try {
+          await _googleAuthService.handleGoogleAuthResult(googleUser);
+          if (!mounted) return;
+          Navigator.of(context).pushReplacementNamed(appViewRoute);
+        } catch (error) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi đăng nhập Google: $error')),
+          );
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isGoogleSigningIn = false;
+            });
+          }
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -278,16 +310,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(
                         width: double.infinity,
                         height: 56,
-                        child: OutlinedButton(
+                        child: GoogleSignInButton(
                           onPressed:
-                              _isGoogleSigningIn ? null : _onGoogleLoginPressed,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF111C14),
-                            side: const BorderSide(color: Color(0xFFE5ECE7)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                          ),
+                              _isGoogleSigningIn ? () {} : _onGoogleLoginPressed,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -300,19 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 )
                               else
-                                Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.black,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.g_mobiledata,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                ),
+                                const GoogleLogoWidget(size: 20),
                               const SizedBox(width: 12),
                               Text(
                                 _isGoogleSigningIn

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,7 +23,8 @@ class GoogleAuthService {
       : _googleSignIn =
             googleSignIn ??
             GoogleSignIn(
-              scopes: const ['email'],
+              clientId: '511657699751-53gb2g7jui4htd28k2l7befoe2b59omf.apps.googleusercontent.com',
+              scopes: const ['email', 'openid', 'profile'],
             );
 
   static const String _defaultBackendUrl = 'http://10.0.2.2:5000';
@@ -31,6 +33,8 @@ class GoogleAuthService {
 
   final GoogleSignIn _googleSignIn;
 
+  Stream<GoogleSignInAccount?> get onCurrentUserChanged => _googleSignIn.onCurrentUserChanged;
+
   Future<GoogleAuthResult?> signInWithGoogle() async {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
@@ -38,6 +42,10 @@ class GoogleAuthService {
       return null;
     }
 
+    return handleGoogleAuthResult(googleUser);
+  }
+
+  Future<GoogleAuthResult> handleGoogleAuthResult(GoogleSignInAccount googleUser) async {
     final GoogleSignInAuthentication googleAuth =
         await googleUser.authentication;
     final String? idToken = googleAuth.idToken;
@@ -46,10 +54,11 @@ class GoogleAuthService {
       throw Exception('missing_google_id_token');
     }
 
+    final String defaultUrl = kIsWeb ? 'http://localhost:5000' : _defaultBackendUrl;
     final String backendBaseUrl =
         dotenv.env['GOOGLE_AUTH_BACKEND_URL']?.trim().isNotEmpty == true
             ? dotenv.env['GOOGLE_AUTH_BACKEND_URL']!.trim()
-            : _defaultBackendUrl;
+            : defaultUrl;
 
     final Uri endpoint = Uri.parse('$backendBaseUrl/auth/google');
     final http.Response response = await http.post(
