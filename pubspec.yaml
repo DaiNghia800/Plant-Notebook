@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  google_sign_in: ^6.2.1
+  http: ^1.2.1 
   camera: ^0.11.0
   image_picker: ^1.1.0
   shared_preferences: ^2.3.2

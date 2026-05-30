@@ -47,3 +47,7 @@ app.*.map.json
 analyze.txt
 # Secrets
 .env
+
+# Seed files
+lib/data/my_garden_seed.dart
+lib/data/library_plant_seed.dart

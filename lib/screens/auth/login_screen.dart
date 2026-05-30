@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
+import 'package:plant_notebook/data/services/google_auth_service.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,7 +13,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
   bool _obscurePassword = true;
+  bool _isGoogleSigningIn = false;
 
   @override
   void dispose() {
@@ -24,6 +27,48 @@ class _LoginScreenState extends State<LoginScreen> {
   void _onLoginPressed() {
     // Tạm thời bỏ qua validate, điều hướng thẳng vào app
     Navigator.of(context).pushReplacementNamed(appViewRoute);
+  }
+
+  Future<void> _onGoogleLoginPressed() async {
+    if (_isGoogleSigningIn) {
+      return;
+    }
+
+    setState(() {
+      _isGoogleSigningIn = true;
+    });
+
+    try {
+      final GoogleAuthResult? result =
+          await _googleAuthService.signInWithGoogle();
+
+      if (!mounted) {
+        return;
+      }
+
+      if (result == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Người dùng đã hủy đăng nhập Google')),
+        );
+        return;
+      }
+
+      Navigator.of(context).pushReplacementNamed(appViewRoute);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi đăng nhập Google: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleSigningIn = false;
+        });
+      }
+    }
   }
 
   @override
@@ -234,9 +279,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         height: 56,
                         child: OutlinedButton(
-                          onPressed: () {
-                            // Google Login Action
-                          },
+                          onPressed:
+                              _isGoogleSigningIn ? null : _onGoogleLoginPressed,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF111C14),
                             side: const BorderSide(color: Color(0xFFE5ECE7)),
@@ -247,24 +291,34 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // Placeholder for Google Icon
-                              Container(
-                                width: 20,
-                                height: 20,
-                                decoration: const BoxDecoration(
-                                  color: Colors.black,
-                                  shape: BoxShape.circle,
+                              if (_isGoogleSigningIn)
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              else
+                                Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.g_mobiledata,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
                                 ),
-                                child: const Icon(
-                                  Icons.g_mobiledata,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
                               const SizedBox(width: 12),
-                              const Text(
-                                'Đăng nhập với Google',
-                                style: TextStyle(
+                              Text(
+                                _isGoogleSigningIn
+                                    ? 'Đang đăng nhập...'
+                                    : 'Đăng nhập với Google',
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                 ),
