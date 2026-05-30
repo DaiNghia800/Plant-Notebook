@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/screens/home/widget/watering_section/watering_plant_card.dart';
 
 class HomeWateringSection extends StatelessWidget {

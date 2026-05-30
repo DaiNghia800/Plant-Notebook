@@ -1,8 +1,11 @@
-﻿import 'package:flutter/material.dart';
-import 'package:plant_notebook/data/library_plant_seed.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
 import 'package:plant_notebook/data/services/my_garden_storage.dart';
 
+/// Controller quản lý danh sách cây trong vườn của người dùng.
+///
+/// Thay vì dùng seed tĩnh, [savedPlants] nhận vào danh sách cây từ
+/// [LibraryPlantController] thông qua phương thức [resolveFrom].
 class MyGardenController extends ChangeNotifier {
   MyGardenController({MyGardenStorage? storage})
     : _storage = storage ?? MyGardenStorage();
@@ -15,9 +18,13 @@ class MyGardenController extends ChangeNotifier {
   /// Trạng thái tải dữ liệu ban đầu từ local storage.
   bool get isLoading => _isLoading;
 
-  /// Danh sách cây đã lưu, ánh xạ từ id sang dữ liệu seed hiện có.
-  List<LibraryPlantItem> get savedPlants {
-    return libraryPlantSeed
+  /// ID các cây đã lưu.
+  Set<String> get savedPlantIds => Set.unmodifiable(_savedPlantIds);
+
+  /// Resolve danh sách cây đã lưu từ danh sách đầy đủ truyền vào.
+  /// Gọi trong UI: `controller.resolveFrom(libraryController.plants)`.
+  List<LibraryPlantItem> resolveFrom(List<LibraryPlantItem> allPlants) {
+    return allPlants
         .where((plant) => _savedPlantIds.contains(plant.id))
         .toList(growable: false);
   }

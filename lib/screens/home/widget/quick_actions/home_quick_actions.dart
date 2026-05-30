@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/screens/home/widget/quick_actions/quick_action_card.dart';
 import 'package:plant_notebook/screens/plant_scanner/plant_scanner_screen.dart';
 import 'package:plant_notebook/routes/route_constant.dart';

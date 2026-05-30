@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/routes/view_export.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';

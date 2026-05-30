@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
@@ -49,180 +49,191 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: neutral,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 320,
-            pinned: true,
-            backgroundColor: neutral,
-            elevation: 0,
-            title: Text(
-              widget.plant.name,
-              style: const TextStyle(
-                color: Color(0xFF11331A),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            iconTheme: const IconThemeData(color: Color(0xFF11331A)),
-            actions: [
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.more_vert_rounded),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    widget.plant.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: const Color(0xFFE6EFE8),
-                        child: const Icon(
-                          Icons.local_florist,
-                          size: 80,
-                          color: primaryColor,
-                        ),
-                      );
-                    },
+    return Consumer<MyGardenController>(
+      builder: (context, gardenController, _) {
+        final bool isAdded = gardenController.containsPlant(widget.plant.id);
+
+        return Scaffold(
+          backgroundColor: neutral,
+          body: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 320,
+                pinned: true,
+                backgroundColor: neutral,
+                elevation: 0,
+                title: Text(
+                  widget.plant.name,
+                  style: const TextStyle(
+                    color: Color(0xFF11331A),
+                    fontWeight: FontWeight.w700,
                   ),
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0xA6000000)],
-                      ),
-                    ),
+                ),
+                iconTheme: const IconThemeData(color: Color(0xFF11331A)),
+                actions: [
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.more_vert_rounded),
                   ),
                 ],
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Transform.translate(
-                    offset: const Offset(0, -36),
-                    child: _OverviewCard(
-                      plant: widget.plant,
-                      healthStatus: _healthStatus,
-                      wateringFrequencyLabel: _wateringFrequencyLabel,
-                      lastWateredLabel: _lastWateredLabel,
-                      onWateringConfirmed: _confirmWatering,
-                      onEditInfo: _showEditInfoMessage,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  _SectionHeader(
-                    title: 'Thống kê & Nhật ký',
-                    subtitle:
-                        'Theo dõi các lần chăm sóc và ảnh cập nhật của cây theo từng tháng.',
-                  ),
-                  const SizedBox(height: 12),
-                  _PanelCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Nhật ký chăm sóc',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF14311F),
-                                ),
-                              ),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        widget.plant.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: const Color(0xFFE6EFE8),
+                            child: const Icon(
+                              Icons.local_florist,
+                              size: 80,
+                              color: primaryColor,
                             ),
-                            TextButton(
-                              onPressed: _showQuickActionsHint,
-                              child: const Text('Xác nhận nhanh'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _ActionButton(
-                                label: 'Đã tưới',
-                                icon: Icons.water_drop_rounded,
-                                onTap: _confirmWatering,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _ActionButton(
-                                label: 'Đã bón phân',
-                                icon: Icons.eco_rounded,
-                                secondary: true,
-                                onTap: _confirmFertilizer,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        ..._careLogs.map(
-                          (entry) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _CareLogTile(entry: entry),
+                          );
+                        },
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.35),
+                              Colors.black.withValues(alpha: 0.1),
+                              primaryColor.withValues(alpha: 0.3),
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  _PanelCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Dòng thời gian sinh trưởng',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF14311F),
-                                ),
-                              ),
-                            ),
-                            TextButton.icon(
-                              onPressed: _openAddSnapshotDialog,
-                              icon: const Icon(Icons.add_a_photo_outlined),
-                              label: const Text('Thêm ảnh tháng'),
-                            ),
-                          ],
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      _OverviewCard(
+                        plant: widget.plant,
+                        healthStatus: _healthStatus,
+                        wateringFrequencyLabel: _wateringFrequencyLabel,
+                        lastWateredLabel: _lastWateredLabel,
+                        onWateringConfirmed: _confirmWatering,
+                        onEditInfo: _showEditInfoMessage,
+                        showActions: isAdded,
+                      ),
+                      if (isAdded) ...[
+                        const SizedBox(height: 24),
+                        _SectionHeader(
+                          title: 'Thống kê & Nhật ký',
+                          subtitle:
+                              'Theo dõi các lần chăm sóc và ảnh cập nhật của cây theo từng tháng.',
                         ),
                         const SizedBox(height: 12),
-                        SizedBox(
-                          height: 220,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _growthTimeline.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 12),
-                            itemBuilder: (context, index) {
-                              final PlantGrowthSnapshot snapshot =
-                                  _growthTimeline[index];
-                              return _GrowthSnapshotCard(snapshot: snapshot);
-                            },
+                        _PanelCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Nhật ký chăm sóc',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF14311F),
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: _showQuickActionsHint,
+                                    child: const Text('Xác nhận nhanh'),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _ActionButton(
+                                      label: 'Đã tưới',
+                                      icon: Icons.water_drop_rounded,
+                                      onTap: _confirmWatering,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _ActionButton(
+                                      label: 'Đã bón phân',
+                                      icon: Icons.eco_rounded,
+                                      secondary: true,
+                                      onTap: _confirmFertilizer,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              ..._careLogs.map(
+                                (entry) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _CareLogTile(entry: entry),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                      _PanelCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    'Dòng thời gian sinh trưởng',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF14311F),
+                                    ),
+                                  ),
+                                ),
+                                if (isAdded)
+                                  TextButton.icon(
+                                    onPressed: _openAddSnapshotDialog,
+                                    icon: const Icon(Icons.add_a_photo_outlined),
+                                    label: const Text('Thêm ảnh tháng'),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 255,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _growthTimeline.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final PlantGrowthSnapshot snapshot =
+                                      _growthTimeline[index];
+                                  return _GrowthSnapshotCard(snapshot: snapshot);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                   _SectionHeader(
                     title: 'Hướng dẫn chăm sóc',
                     subtitle:
@@ -289,66 +300,60 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Consumer<MyGardenController>(
-                    builder: (context, gardenController, _) {
-                      final bool alreadyAdded = gardenController.containsPlant(
-                        widget.plant.id,
-                      );
-
-                      return SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: alreadyAdded
-                              ? null
-                              : () async {
-                                  final bool added = await gardenController
-                                      .addPlant(widget.plant.id);
-                                  if (!context.mounted) {
-                                    return;
-                                  }
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        added
-                                            ? 'Đã thêm ${widget.plant.name} vào vườn của tôi'
-                                            : '${widget.plant.name} đã có trong vườn',
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                },
-                          icon: Icon(
-                            alreadyAdded
-                                ? Icons.check_circle_rounded
-                                : Icons.add_circle_outline,
-                          ),
-                          label: Text(
-                            alreadyAdded
-                                ? 'Đã có trong vườn của tôi'
-                                : 'Thêm vào vườn của tôi',
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            textStyle: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: isAdded
+                          ? null
+                          : () async {
+                              final bool added = await gardenController
+                                  .addPlant(widget.plant.id);
+                              if (!context.mounted) {
+                                return;
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    added
+                                        ? 'Đã thêm ${widget.plant.name} vào vườn của tôi'
+                                        : '${widget.plant.name} đã có trong vườn',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                      icon: Icon(
+                        isAdded
+                            ? Icons.check_circle_rounded
+                            : Icons.add_circle_outline,
+                      ),
+                      label: Text(
+                        isAdded
+                            ? 'Đã có trong vườn của tôi'
+                            : 'Thêm vào vườn của tôi',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        textStyle: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
                         ),
-                      );
-                    },
-                  ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
           ),
         ],
       ),
+    );
+      },
     );
   }
 
@@ -490,6 +495,7 @@ class _OverviewCard extends StatelessWidget {
     required this.lastWateredLabel,
     required this.onWateringConfirmed,
     required this.onEditInfo,
+    required this.showActions,
   });
 
   final LibraryPlantItem plant;
@@ -498,6 +504,7 @@ class _OverviewCard extends StatelessWidget {
   final String lastWateredLabel;
   final VoidCallback onWateringConfirmed;
   final VoidCallback onEditInfo;
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -602,56 +609,60 @@ class _OverviewCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _StatTile(
-                  label: 'LAST WATER',
-                  value: lastWateredLabel,
-                  icon: Icons.calendar_month_rounded,
+                  label: showActions ? 'LAST WATER' : 'DIFFICULTY',
+                  value: showActions ? lastWateredLabel : plant.difficulty,
+                  icon: showActions
+                      ? Icons.calendar_month_rounded
+                      : Icons.star_rounded,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onWateringConfirmed,
-              icon: const Icon(Icons.water_drop_outlined),
-              label: const Text('Đã tưới'),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF126D25),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onEditInfo,
-              icon: const Icon(Icons.edit_rounded),
-              label: const Text('Chỉnh sửa thông tin'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primaryColor,
-                side: const BorderSide(color: Color(0xFFDBE7DC)),
-                backgroundColor: const Color(0xFFF1F6F2),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
+          if (showActions) ...[
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: onWateringConfirmed,
+                icon: const Icon(Icons.water_drop_outlined),
+                label: const Text('Đã tưới'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF126D25),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onEditInfo,
+                icon: const Icon(Icons.edit_rounded),
+                label: const Text('Chỉnh sửa thông tin'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryColor,
+                  side: const BorderSide(color: Color(0xFFDBE7DC)),
+                  backgroundColor: const Color(0xFFF1F6F2),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -831,7 +842,7 @@ class _CareLogTile extends StatelessWidget {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: entry.accentColor.withOpacity(0.12),
+            color: entry.accentColor.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(entry.icon, color: entry.accentColor, size: 20),

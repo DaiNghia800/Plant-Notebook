@@ -1,8 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/screens/plant_detail/plant_detail_screen.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:provider/provider.dart';
+
+import 'package:plant_notebook/controller/library_plant_controller.dart';
 
 class MyGardenScreen extends StatelessWidget {
   const MyGardenScreen({super.key});
@@ -10,13 +12,13 @@ class MyGardenScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Lắng nghe thay đổi để danh sách cây cập nhật ngay sau khi thêm/xóa.
-    return Consumer<MyGardenController>(
-      builder: (context, controller, _) {
-        if (controller.isLoading) {
+    return Consumer2<MyGardenController, LibraryPlantController>(
+      builder: (context, controller, libraryController, _) {
+        if (controller.isLoading || libraryController.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final plants = controller.savedPlants;
+        final plants = controller.resolveFrom(libraryController.plants);
 
         if (plants.isEmpty) {
           // Trạng thái rỗng khi chưa có cây nào được lưu.
@@ -165,4 +167,3 @@ class MyGardenScreen extends StatelessWidget {
     );
   }
 }
-

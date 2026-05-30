@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:plant_notebook/data/models/plant_analysis_result.dart';
 import 'package:plant_notebook/data/services/plant_scanner_service.dart';
+import 'package:plant_notebook/data/services/library_plant_api_service.dart';
 
 class PlantScannerController extends ChangeNotifier {
   // ── Camera State ─────────────────────────────────────────
@@ -17,9 +18,13 @@ class PlantScannerController extends ChangeNotifier {
 
   // ── Analysis State ───────────────────────────────────────
   final PlantScannerService _scannerService = PlantScannerService();
+  final LibraryPlantApiService _libraryApiService = LibraryPlantApiService();
   bool isAnalyzing = true;
   PlantAnalysisResult? analysisResult;
   String? analysisErrorMessage;
+  bool existsInLibrary = true;
+  bool isSubmittingProposal = false;
+  bool proposalSubmitted = false;
 
   // ── Lifecycle Mgt ────────────────────────────────────────
   Future<void> initCamera({Function(String)? onError}) async {
@@ -160,6 +165,9 @@ class PlantScannerController extends ChangeNotifier {
     isAnalyzing = true;
     analysisErrorMessage = null;
     analysisResult = null;
+    existsInLibrary = true;
+    proposalSubmitted = false;
+    isSubmittingProposal = false;
     notifyListeners();
 
     try {
@@ -174,6 +182,21 @@ class PlantScannerController extends ChangeNotifier {
           );
 
       analysisResult = result;
+
+      // Kiểm tra xem cây đã tồn tại trong thư viện chưa
+      try {
+        final checkResult = await _libraryApiService.checkPlantExistence(
+          name: result.tenPhoThong,
+          scientificName: result.tenKhoaHoc,
+        );
+        existsInLibrary = checkResult['exists'] == true;
+      } catch (e) {
+        // ignore: avoid_print
+        print('[PlantScannerController] checkPlantExistence error: $e');
+        // Fallback: Nếu lỗi kết nối, xem như đã có để tránh gây phiền
+        existsInLibrary = true;
+      }
+
       isAnalyzing = false;
       notifyListeners();
     } catch (e) {
@@ -183,6 +206,50 @@ class PlantScannerController extends ChangeNotifier {
       analysisErrorMessage = _mapAnalysisErrorMessage(e);
       isAnalyzing = false;
       notifyListeners();
+    }
+  }
+
+  /// Gửi đề xuất đóng góp cây mới lên Admin
+  Future<void> submitProposal(String imagePath) async {
+    final result = analysisResult;
+    if (result == null || isSubmittingProposal || proposalSubmitted) return;
+
+    isSubmittingProposal = true;
+    notifyListeners();
+
+    try {
+      await _libraryApiService.contributePlant(
+        name: result.tenPhoThong,
+        scientificName: result.tenKhoaHoc,
+        category: 'Trong nhà', // Mặc định xếp vào Trong nhà
+        shortDescription: result.benhDangGap,
+        description: result.loiKhuyenChamSoc,
+        lightLevel: 'Sáng gián tiếp',
+        waterNeed: 'Trung bình',
+        difficulty: 'Dễ',
+        temperature: '20-30°C',
+        humidity: 'Trung bình',
+        toxicity: 'Chưa xác định',
+        funFacts: [result.banCoBiet],
+        careGuide: [
+          {
+            'step': 1,
+            'title': 'Tổng quan lời khuyên chăm sóc',
+            'content': result.loiKhuyenChamSoc,
+          }
+        ],
+        imagePath: imagePath,
+      );
+
+      proposalSubmitted = true;
+      isSubmittingProposal = false;
+      notifyListeners();
+    } catch (e) {
+      // ignore: avoid_print
+      print('[PlantScannerController] submitProposal error: $e');
+      isSubmittingProposal = false;
+      notifyListeners();
+      rethrow;
     }
   }
 
