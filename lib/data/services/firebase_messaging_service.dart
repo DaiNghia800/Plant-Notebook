@@ -115,8 +115,12 @@ class FirebaseMessagingService {
       print('User declined or has not accepted permission');
     }
 
-    _currentToken = await _firebaseMessaging.getToken();
-    print('FCM Token: $_currentToken');
+    try {
+      _currentToken = await _firebaseMessaging.getToken();
+      print('FCM Token: $_currentToken');
+    } catch (e) {
+      print('Failed to get FCM token: $e');
+    }
 
     final prefs = await SharedPreferences.getInstance();
     final String? userId = prefs.getString('userId');
@@ -158,13 +162,21 @@ class FirebaseMessagingService {
   }
 
   static Future<void> registerToken(String userId) async {
-    _currentToken ??= await _firebaseMessaging.getToken();
-    if (_currentToken == null) return;
-    await _sendTokenToServer(userId, _currentToken!);
+    try {
+      _currentToken ??= await _firebaseMessaging.getToken();
+      if (_currentToken == null) return;
+      await _sendTokenToServer(userId, _currentToken!);
+    } catch (e) {
+      print('Failed to register FCM token: $e');
+    }
   }
 
   static Future<String?> getToken() async {
-    _currentToken ??= await _firebaseMessaging.getToken();
+    try {
+      _currentToken ??= await _firebaseMessaging.getToken();
+    } catch (e) {
+      print('Failed to get FCM token: $e');
+    }
     return _currentToken;
   }
 

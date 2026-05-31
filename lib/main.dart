@@ -39,9 +39,7 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => MyGardenController()..initialize(),
         ),
-        ChangeNotifierProvider(
-          create: (_) => StoreController()..fetchStores(),
-        ),
+        ChangeNotifierProvider(create: (_) => StoreController()..fetchStores()),
         ChangeNotifierProvider(create: (_) => ProfileController()),
       ],
       child: MyApp(initialRoute: initialRoute),
@@ -60,7 +58,9 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      themeMode: profileController.isDarkModeOn ? ThemeMode.dark : ThemeMode.light,
+      themeMode: profileController.isDarkModeOn
+          ? ThemeMode.dark
+          : ThemeMode.light,
       theme: ThemeData.light().copyWith(
         primaryColor: AppColors.primary,
         scaffoldBackgroundColor: AppColors.background,
@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       onGenerateRoute: router.generateRoute,
-      initialRoute: initialRoute,
+      initialRoute: splashViewRoute,
     );
   }
 }
