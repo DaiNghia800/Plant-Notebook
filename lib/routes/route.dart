@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/app/app.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/routes/view_export.dart';
@@ -19,6 +19,8 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       return MaterialPageRoute(builder: (context) => const LibraryScreen());
     case profileViewRoute:
       return MaterialPageRoute(builder: (context) => ProfileScreen());
+    case communityPostDetailRoute:
+      return MaterialPageRoute(builder: (context) => PostDetailScreen());
     default:
       return MaterialPageRoute(builder: (context) => const HomeScreen());
   }

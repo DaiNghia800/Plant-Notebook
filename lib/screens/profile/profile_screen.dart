@@ -8,11 +8,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Bọc Provider ngay tại màn hình này để không phải cấu hình lại main.dart
-    return ChangeNotifierProvider(
-      create: (_) => ProfileController(),
-      child: const ProfileView(),
-    );
+    return const ProfileView();
   }
 }
 
@@ -20,47 +16,152 @@ class ProfileScreen extends StatelessWidget {
 class ProfileView extends StatelessWidget {
   const ProfileView({Key? key}) : super(key: key);
 
+  void _showEditProfileBottomSheet(BuildContext context, ProfileController controller) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.image, color: Theme.of(context).primaryColor),
+                title: Text('Đổi ảnh đại diện', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                onTap: () {
+                  Navigator.pop(context);
+                  controller.pickAvatar();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit, color: Theme.of(context).primaryColor),
+                title: Text('Đổi tên hiển thị', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showEditNameDialog(context, controller);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditNameDialog(BuildContext context, ProfileController controller) {
+    final TextEditingController nameController = TextEditingController(text: controller.userName);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Đổi tên hiển thị', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: nameController,
+            decoration: InputDecoration(
+              hintText: 'Nhập tên mới',
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor)),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('Hủy', style: TextStyle(color: Theme.of(context).hintColor))),
+            ElevatedButton(
+              onPressed: () {
+                controller.updateUserName(nameController.text);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+              child: Text('Lưu', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context, ProfileController controller) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Chọn ngôn ngữ', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text('Tiếng Việt', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                onTap: () {
+                  controller.changeLanguage('Tiếng Việt');
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text('English', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                onTap: () {
+                  controller.changeLanguage('English');
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFeedbackDialog(BuildContext context, ProfileController controller) {
+    final TextEditingController feedbackController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Phản hồi / Báo lỗi', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: feedbackController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Nhập nội dung...',
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor)),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('Hủy', style: TextStyle(color: Theme.of(context).hintColor))),
+            ElevatedButton(
+              onPressed: () {
+                controller.submitFeedback(context, feedbackController.text);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+              child: Text('Gửi', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Gọi controller từ Provider
     final controller = context.watch<ProfileController>();
 
     return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
+      physics: BouncingScrollPhysics(),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+        padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Header (Tự custom, thay thế cho AppBar)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const SizedBox(width: 24), // Tàng hình để cân bằng chữ ra giữa
-                const Text(
-                  'Sổ tay cây trồng',
-                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 20),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert, color: AppColors.textMain),
-                  onPressed: () {},
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                )
-              ],
-            ),
-            const SizedBox(height: 20),
-            
             // 2. Nội dung Profile
-            _buildProfileCard(),
-            const SizedBox(height: 30),
-            const Text('CÀI ĐẶT ỨNG DỤNG',
-                style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-            const SizedBox(height: 15),
+            _buildProfileCard(context, controller),
+            SizedBox(height: 30),
+            Text(controller.textSettings,
+                style: TextStyle(color: Theme.of(context).hintColor, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+            SizedBox(height: 15),
             _buildSettingsCard(context, controller),
-            const SizedBox(height: 30),
-            _buildLogoutButton(),
-            const SizedBox(height: 50), // Khoảng trống dưới cùng
+            SizedBox(height: 30),
+            _buildLogoutButton(context, controller),
+            SizedBox(height: 50), // Khoảng trống dưới cùng
           ],
         ),
       ),
@@ -68,50 +169,54 @@ class ProfileView extends StatelessWidget {
   }
 
   // 1. Thẻ Thông tin cá nhân
-  Widget _buildProfileCard() {
+  Widget _buildProfileCard(BuildContext context, ProfileController controller) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5))
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: Offset(0, 5))
         ],
       ),
       child: Column(
         children: [
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: AppColors.secondary.withOpacity(0.2),
-                child: const Icon(Icons.person, size: 50, color: AppColors.primary),
-              ),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.white, width: 2),
+          GestureDetector(
+            onTap: () => _showEditProfileBottomSheet(context, controller),
+            child: Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                  backgroundImage: controller.avatarBytes != null ? MemoryImage(controller.avatarBytes!) : null,
+                  child: controller.avatarBytes == null ? Icon(Icons.person, size: 50, color: Theme.of(context).primaryColor) : null,
                 ),
-                child: const Icon(Icons.edit, color: AppColors.white, size: 16),
-              )
-            ],
+                Container(
+                  padding: EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
+                  ),
+                  child: Icon(Icons.edit, color: Theme.of(context).colorScheme.surface, size: 16),
+                )
+              ],
+            ),
           ),
-          const SizedBox(height: 15),
-          const Text('Nguyễn Văn An',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textMain)),
-          const SizedBox(height: 5),
-          const Text('THÀNH VIÊN TỪ 2024',
-              style: TextStyle(fontSize: 12, color: AppColors.secondary, fontWeight: FontWeight.w600, letterSpacing: 1.0)),
-          const SizedBox(height: 20),
+          SizedBox(height: 15),
+          Text(controller.userName,
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          SizedBox(height: 5),
+          Text(controller.textMemberSince,
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w600, letterSpacing: 1.0)),
+          SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildStatChip(Icons.eco, '12 Cây trồng'),
-              const SizedBox(width: 15),
-              _buildStatChip(Icons.military_tech, 'Cấp 5'),
+              _buildStatChip(context, Icons.eco, controller.textPlants),
+              SizedBox(width: 15),
+              _buildStatChip(context, Icons.military_tech, controller.textLevel),
             ],
           )
         ],
@@ -119,18 +224,18 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatChip(IconData icon, String label) {
+  Widget _buildStatChip(BuildContext context, IconData icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 18),
-          const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMain)),
+          Icon(icon, color: Theme.of(context).primaryColor, size: 18),
+          SizedBox(width: 8),
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         ],
       ),
     );
@@ -140,86 +245,98 @@ class ProfileView extends StatelessWidget {
   Widget _buildSettingsCard(BuildContext context, ProfileController controller) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5))
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: Offset(0, 5))
         ],
       ),
       child: Column(
         children: [
           _buildSettingTile(
+            context,
             icon: Icons.notifications,
-            title: 'Thông báo',
+            title: controller.textNotification,
             trailing: Switch(
               value: controller.isNotificationOn,
               onChanged: controller.toggleNotification,
-              activeColor: AppColors.primary,
+              activeColor: Theme.of(context).primaryColor,
             ),
           ),
-          _buildDivider(),
+          _buildDivider(context),
           _buildSettingTile(
+            context,
             icon: Icons.dark_mode,
-            title: 'Chế độ tối',
+            title: controller.textDarkMode,
             trailing: Switch(
               value: controller.isDarkModeOn,
               onChanged: controller.toggleDarkMode,
-              activeColor: AppColors.primary,
+              activeColor: Theme.of(context).primaryColor,
             ),
           ),
-          _buildDivider(),
+          _buildDivider(context),
           _buildSettingTile(
+            context,
             icon: Icons.translate,
-            title: 'Ngôn ngữ',
-            trailing: const Row(
+            title: controller.textLanguage,
+            trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Tiếng Việt', style: TextStyle(color: AppColors.textLight, fontSize: 14)),
+                Text(controller.currentLanguage, style: TextStyle(color: Theme.of(context).hintColor, fontSize: 14)),
                 SizedBox(width: 5),
-                Icon(Icons.chevron_right, color: AppColors.textLight)
+                Icon(Icons.chevron_right, color: Theme.of(context).hintColor)
               ],
             ),
-            onTap: () {},
+            onTap: () => _showLanguageDialog(context, controller),
           ),
-          _buildDivider(),
+          _buildDivider(context),
           _buildSettingTile(
+            context,
             icon: Icons.person_add_alt_1,
-            title: 'Giới thiệu bạn bè',
-            trailing: const Icon(Icons.chevron_right, color: AppColors.textLight),
+            title: controller.textInviteFriends,
+            trailing: Icon(Icons.chevron_right, color: Theme.of(context).hintColor),
             onTap: () => controller.reportIssue(context),
+          ),
+          _buildDivider(context),
+          _buildSettingTile(
+            context,
+            icon: Icons.feedback_outlined,
+            title: controller.textFeedback,
+            trailing: Icon(Icons.chevron_right, color: Theme.of(context).hintColor),
+            onTap: () => _showFeedbackDialog(context, controller),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSettingTile({required IconData icon, required String title, required Widget trailing, VoidCallback? onTap}) {
+  Widget _buildSettingTile(BuildContext context, {required IconData icon, required String title, required Widget trailing, VoidCallback? onTap}) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-        child: Icon(icon, color: AppColors.primary),
+        padding: EdgeInsets.all(10),
+        decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(12)),
+        child: Icon(icon, color: Theme.of(context).primaryColor),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textMain)),
+      title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
       trailing: trailing,
       onTap: onTap,
     );
   }
 
-  Widget _buildDivider() => const Divider(height: 1, indent: 70, endIndent: 20, color: AppColors.background);
+  Widget _buildDivider(BuildContext context) => Divider(height: 1, indent: 70, endIndent: 20, color: Theme.of(context).scaffoldBackgroundColor);
 
   // 3. Nút Đăng xuất
-  Widget _buildLogoutButton() {
+  Widget _buildLogoutButton(BuildContext context, ProfileController controller) {
     return SizedBox(
       width: double.infinity,
       height: 55,
       child: OutlinedButton.icon(
         onPressed: () {},
-        icon: const Icon(Icons.logout, color: AppColors.danger),
-        label: const Text('Đăng xuất', style: TextStyle(color: AppColors.danger, fontSize: 16, fontWeight: FontWeight.bold)),
+        icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+        label: Text(controller.textLogout, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 16, fontWeight: FontWeight.bold)),
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.danger, width: 1.5),
+          side: BorderSide(color: Theme.of(context).colorScheme.error, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
