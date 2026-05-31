@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       onGenerateRoute: router.generateRoute,
-      initialRoute: initialRoute,
+      initialRoute: splashViewRoute,
     );
   }
 }

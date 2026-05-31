@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:plant_notebook/data/services/firebase_messaging_service.dart';
+import 'package:plant_notebook/routes/route_constant.dart';
 import '../../controller/profile_controller.dart';
 import '../../utils/app_colors.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -89,13 +94,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const ProfileView();
+    return ProfileView(onLogout: _logout);
   }
 }
 
 // Màn hình chính đã loại bỏ Scaffold, y hệt như HomeScreen
 class ProfileView extends StatelessWidget {
-  const ProfileView({Key? key}) : super(key: key);
+  const ProfileView({super.key, this.onLogout});
+
+  final VoidCallback? onLogout;
 
   void _showEditProfileBottomSheet(BuildContext context, ProfileController controller) {
     showModalBottomSheet(
@@ -413,7 +420,7 @@ class ProfileView extends StatelessWidget {
       width: double.infinity,
       height: 55,
       child: OutlinedButton.icon(
-        onPressed: () {},
+        onPressed: onLogout,
         icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
         label: Text(controller.textLogout, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 16, fontWeight: FontWeight.bold)),
         style: OutlinedButton.styleFrom(

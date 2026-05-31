@@ -2,6 +2,16 @@
 
 A new Flutter project.
 
+## Google Sign-In Setup
+
+Create a local `.env` file in the project root based on `.env.example` and set:
+
+```env
+GOOGLE_AUTH_BACKEND_URL=http://10.0.2.2:5000
+```
+
+On Android emulator, `10.0.2.2` points to your machine. On a real device, replace it with your backend IP or host name.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
