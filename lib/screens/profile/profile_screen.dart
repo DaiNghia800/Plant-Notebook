@@ -7,6 +7,87 @@ class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String? _fcmToken;
+  String? _userId;
+  String? _userEmail;
+  bool _isLoadingToken = true;
+  bool _isSendingTest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    final userEmail = prefs.getString('userEmail');
+    final token = await FirebaseMessagingService.getToken();
+    if (userId != null && token != null) {
+      await FirebaseMessagingService.registerToken(userId);
+    }
+
+    setState(() {
+      _userId = userId;
+      _userEmail = userEmail;
+      _fcmToken = token;
+      _isLoadingToken = false;
+    });
+  }
+
+  Future<void> _sendTestNotification() async {
+    if (_userId == null) return;
+
+    setState(() => _isSendingTest = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/user/send-test-notification'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'userId': _userId}),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Thông báo thử nghiệm đã gửi!')),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('❌ Gửi thất bại')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ Lỗi: $e')));
+    } finally {
+      setState(() => _isSendingTest = false);
+    }
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    // Remove FCM token from server
+    if (userId != null) {
+      await FirebaseMessagingService.removeFcmTokenFromServer(userId);
+    }
+
+    // Clear local data
+    await prefs.remove('userId');
+    await prefs.remove('userEmail');
+
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, loginViewRoute);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return const ProfileView();
   }
