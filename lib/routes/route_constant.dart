@@ -6,3 +6,4 @@ const String plantDetailViewRoute = "plant_detail";
 const String scannerViewRoute = "scanner";
 const String libraryViewRoute = "library";
 const String profileViewRoute = "profile";
+const String communityPostDetailRoute = "community_post_detail";

@@ -11,13 +11,13 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  final List _pages = const [
-    HomeScreen(),
-    MyGardenScreen(),
-    PlantScannerScreen(),
-    LibraryScreen(),
-    ProfileScreen(),
-  ];
+  final List _pages = [
+  const HomeScreen(),
+  const MyGardenScreen(),
+  const PlantScannerScreen(),
+  const LibraryScreen(),
+  ProfileScreen(), 
+];
 
   int _currentIndex = 0;
 
