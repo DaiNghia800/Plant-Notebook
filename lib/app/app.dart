@@ -11,13 +11,13 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  final List _pages = const [
-    HomeScreen(),
-    MyGardenScreen(),
-    PlantScannerScreen(),
-    LibraryScreen(),
-    ProfileScreen(),
-  ];
+  final List _pages = [
+  const HomeScreen(),
+  const MyGardenScreen(),
+  const PlantScannerScreen(),
+  const LibraryScreen(),
+  ProfileScreen(), 
+];
 
   int _currentIndex = 0;
 
@@ -28,6 +28,7 @@ class _AppState extends State<App> {
       extendBody: true,
       backgroundColor: neutral,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: neutral.withOpacity(0.9),
         title: Text(
           "Sổ tay cây trồng",
@@ -71,15 +72,7 @@ class _AppState extends State<App> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          top: kToolbarHeight + 30,
-          left: 20,
-          right: 20,
-          bottom: kBottomNavigationBarHeight + 60,
-        ),
-        child: _pages[_currentIndex],
-      ),
+      body: _pages[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: neutral,
@@ -171,4 +164,3 @@ class _AppState extends State<App> {
     );
   }
 }
-

@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:plant_notebook/data/library_plant_seed.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
-import 'package:plant_notebook/screens/plant_detail/plant_detail_screen.dart';
+import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 
 class LibraryPlantScreen extends StatefulWidget {
@@ -351,9 +351,10 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   }
 
   void _openDetail(LibraryPlantItem plant) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => PlantDetailScreen(plant: plant)),
-    );
+    // TODO: Navigate to library plant detail screen
+    // Navigator.of(context).push(
+    //   MaterialPageRoute(builder: (context) => PlantDetailScreen(plant: plant)),
+    // );
   }
 }
 
@@ -626,4 +627,3 @@ class _FilterMenuChip extends StatelessWidget {
     );
   }
 }
-

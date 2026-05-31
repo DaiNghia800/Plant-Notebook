@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "511657699751",
+    "project_id": "plant-notebook",
+    "storage_bucket": "plant-notebook.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:511657699751:android:4df644f3b2448b91cfee82",
+        "android_client_info": {
+          "package_name": "com.example.plant_notebook"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPDGGPENh6Koey0Mutubl0yQhcNILFiN8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
