@@ -3,3 +3,5 @@ export 'package:plant_notebook/screens/my_garden/my_garden_screen.dart';
 export 'package:plant_notebook/screens/plant_scanner/plant_scanner_screen.dart';
 export 'package:plant_notebook/screens/library/library_screen.dart';
 export 'package:plant_notebook/screens/profile/profile_screen.dart';
+export 'package:plant_notebook/screens/store/store_map_screen.dart';
+export 'package:plant_notebook/screens/store/store_detail_screen.dart';

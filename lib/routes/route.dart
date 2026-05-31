@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/app/app.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/routes/view_export.dart';
@@ -19,6 +19,13 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       return MaterialPageRoute(builder: (context) => const LibraryScreen());
     case profileViewRoute:
       return MaterialPageRoute(builder: (context) => const ProfileScreen());
+    case storeMapRoute:
+      return MaterialPageRoute(builder: (context) => const StoreMapScreen());
+    case storeDetailRoute:
+      final String storeId = settings.arguments as String;
+      return MaterialPageRoute(
+        builder: (context) => StoreDetailScreen(storeId: storeId),
+      );
     default:
       return MaterialPageRoute(builder: (context) => const HomeScreen());
   }

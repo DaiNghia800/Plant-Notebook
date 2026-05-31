@@ -1,6 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/screens/home/widget/quick_actions/quick_action_card.dart';
-import 'package:plant_notebook/screens/plant_scanner/plant_scanner_screen.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 
 class HomeQuickActions extends StatelessWidget {
@@ -43,6 +42,23 @@ class HomeQuickActions extends StatelessWidget {
                 title: 'Thêm cây',
                 subtitle: 'Vào vườn của bạn',
                 onTap: () {},
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: QuickActionCard(
+                icon: Icons.map_outlined,
+                iconColor: const Color(0xFF1976D2),
+                iconBgColor: const Color(0xFFE3F2FD),
+                title: 'Cửa hàng & Vườn ươm',
+                subtitle: 'Tìm tiệm cây, thuốc BVTV gần bạn',
+                onTap: () {
+                  Navigator.of(context).pushNamed(storeMapRoute);
+                },
               ),
             ),
           ],
