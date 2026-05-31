@@ -29,6 +29,14 @@ Route<dynamic> generateRoute(RouteSettings settings) {
     case libraryViewRoute:
       return MaterialPageRoute(builder: (context) => const LibraryScreen());
     case profileViewRoute:
+      return MaterialPageRoute(builder: (context) => const ProfileScreen());
+    case storeMapRoute:
+      return MaterialPageRoute(builder: (context) => const StoreMapScreen());
+    case storeDetailRoute:
+      final String storeId = settings.arguments as String;
+      return MaterialPageRoute(
+        builder: (context) => StoreDetailScreen(storeId: storeId),
+      );
       return MaterialPageRoute(builder: (context) => ProfileScreen());
     case communityPostDetailRoute:
       return MaterialPageRoute(builder: (context) => PostDetailScreen());

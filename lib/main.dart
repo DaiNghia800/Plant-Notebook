@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/controller/plant_scanner_controller.dart';
+import 'package:plant_notebook/controller/store_controller.dart';
 import 'package:plant_notebook/controller/profile_controller.dart';
 import 'package:plant_notebook/utils/app_colors.dart';
 
@@ -37,6 +38,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => PlantScannerController()),
         ChangeNotifierProvider(
           create: (_) => MyGardenController()..initialize(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => StoreController()..fetchStores(),
         ),
         ChangeNotifierProvider(create: (_) => ProfileController()),
       ],
