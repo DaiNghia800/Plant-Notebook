@@ -73,5 +73,6 @@ class EmailAuthService {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.setString(_tokenStorageKey, backendToken);
     await preferences.setString(_userStorageKey, jsonEncode(user));
+    await preferences.setString('userId', user['id'].toString());
   }
 }

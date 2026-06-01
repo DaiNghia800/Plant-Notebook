@@ -14,6 +14,7 @@ import 'package:plant_notebook/utils/app_colors.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:plant_notebook/data/services/firebase_messaging_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'firebase_options.dart';
 
 // Global navigation key for notification handling
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -23,7 +24,9 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
   // Initialize Firebase
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Initialize Firebase Messaging
   await FirebaseMessagingService.initialize();
