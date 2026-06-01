@@ -1,6 +1,15 @@
+const String loginViewRoute = "login";
 const String appViewRoute = "app";
 const String homeViewRoute = "home";
 const String myGardenViewRoute = "garden";
+const String plantDetailViewRoute = "plant_detail";
 const String scannerViewRoute = "scanner";
 const String libraryViewRoute = "library";
 const String profileViewRoute = "profile";
+const String storeMapRoute = "store_map";
+const String storeDetailRoute = "store_detail";
+const String communityPostDetailRoute = "community_post_detail";
+const String splashViewRoute = "splash";
+const String onboardingViewRoute = "onboarding";
+const String registerViewRoute = "register";
+const String forgotPasswordViewRoute = "forgot_password";

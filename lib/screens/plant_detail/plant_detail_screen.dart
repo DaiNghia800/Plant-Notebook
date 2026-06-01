@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
+import 'package:plant_notebook/data/models/my_garden_item.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:provider/provider.dart';
@@ -14,30 +15,9 @@ class PlantDetailScreen extends StatefulWidget {
 }
 
 class _PlantDetailScreenState extends State<PlantDetailScreen> {
-  late final List<PlantCareLogEntry> _careLogs;
-  late final List<PlantGrowthSnapshot> _growthTimeline;
-  late final List<String> _funFacts;
-
-  late String _healthStatus;
-  late String _wateringFrequencyLabel;
-  late String _lastWateredLabel;
-
   final TextEditingController _monthController = TextEditingController();
   final TextEditingController _imageController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _careLogs = List<PlantCareLogEntry>.from(widget.plant.careLogs);
-    _growthTimeline = List<PlantGrowthSnapshot>.from(
-      widget.plant.growthTimeline,
-    );
-    _funFacts = List<String>.from(widget.plant.funFacts);
-    _healthStatus = widget.plant.healthStatus;
-    _wateringFrequencyLabel = widget.plant.wateringFrequencyLabel;
-    _lastWateredLabel = widget.plant.lastWateredLabel;
-  }
 
   @override
   void dispose() {
@@ -52,6 +32,12 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     return Consumer<MyGardenController>(
       builder: (context, gardenController, _) {
         final bool isAdded = gardenController.containsPlant(widget.plant.id);
+        final gardenPlantList = gardenController.savedPlants
+            .where((p) => p.libraryPlantId == widget.plant.id)
+            .toList();
+        final MyGardenItem? gardenPlant = gardenPlantList.isNotEmpty
+            ? gardenPlantList.first
+            : null;
 
         return Scaffold(
           backgroundColor: neutral,
@@ -249,29 +235,88 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 34,
-                                    height: 34,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE8F4EA),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Icon(
-                                      Icons.lightbulb_outline_rounded,
-                                      size: 18,
-                                      color: primaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
+                                  const Expanded(
                                     child: Text(
-                                      tip,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        height: 1.55,
-                                        color: Color(0xFF3E4E43),
+                                      'Nhật ký chăm sóc',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF14311F),
                                       ),
                                     ),
+                                  ),
+                                  TextButton(
+                                    onPressed: _showQuickActionsHint,
+                                    child: const Text('Xác nhận nhanh'),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _ActionButton(
+                                      label: 'Đã tưới',
+                                      icon: Icons.water_drop_rounded,
+                                      onTap: () => _confirmWatering(
+                                        context,
+                                        gardenController,
+                                        gardenPlant,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _ActionButton(
+                                      label: 'Đã bón phân',
+                                      icon: Icons.eco_rounded,
+                                      secondary: true,
+                                      onTap: () => _confirmFertilizer(
+                                        context,
+                                        gardenController,
+                                        gardenPlant,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              ...gardenPlant.careLogs.map(
+                                (entry) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _CareLogTile(entry: entry),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _PanelCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Dòng thời gian sinh trưởng',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF14311F),
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton.icon(
+                                    onPressed: () => _openAddSnapshotDialog(
+                                      context,
+                                      gardenController,
+                                      gardenPlant,
+                                    ),
+                                    icon: const Icon(
+                                      Icons.add_a_photo_outlined,
+                                    ),
+                                    label: const Text('Thêm ảnh tháng'),
                                   ),
                                 ],
                               ),
@@ -348,51 +393,64 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                   )
                 ],
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
       },
     );
   }
 
-  void _confirmWatering() {
-    setState(() {
-      _lastWateredLabel = 'Vừa xong';
-      _careLogs.insert(
-        0,
-        const PlantCareLogEntry(
-          title: 'Đã tưới nước',
-          timeLabel: 'Vừa xong',
-          note: 'Người dùng vừa xác nhận tưới nước cho cây.',
-          icon: Icons.water_drop_rounded,
-          accentColor: Color(0xFF1B7A3D),
-        ),
-      );
-    });
+  void _confirmWatering(
+    BuildContext context,
+    MyGardenController controller,
+    MyGardenItem? gardenPlant,
+  ) {
+    if (gardenPlant == null) {
+      _showSnackBar('Vui lòng thêm cây vào vườn trước khi ghi nhật ký.');
+      return;
+    }
 
+    final log = PlantCareLogEntry(
+      title: 'Đã tưới nước',
+      timeLabel: 'Vừa xong',
+      note: 'Người dùng vừa xác nhận tưới nước cho cây.',
+      icon: Icons.water_drop_rounded,
+      accentColor: const Color(0xFF1B7A3D),
+    );
+
+    controller.addCareLog(gardenPlant.id, log);
     _showSnackBar('Đã lưu nhật ký tưới nước cho ${widget.plant.name}.');
   }
 
-  void _confirmFertilizer() {
-    setState(() {
-      _careLogs.insert(
-        0,
-        const PlantCareLogEntry(
-          title: 'Bón phân hữu cơ',
-          timeLabel: 'Vừa xong',
-          note: 'Người dùng vừa xác nhận bón phân cho cây.',
-          icon: Icons.eco_rounded,
-          accentColor: Color(0xFF6C8F49),
-        ),
-      );
-    });
+  void _confirmFertilizer(
+    BuildContext context,
+    MyGardenController controller,
+    MyGardenItem? gardenPlant,
+  ) {
+    if (gardenPlant == null) {
+      _showSnackBar('Vui lòng thêm cây vào vườn trước khi ghi nhật ký.');
+      return;
+    }
 
+    final log = PlantCareLogEntry(
+      title: 'Bón phân hữu cơ',
+      timeLabel: 'Vừa xong',
+      note: 'Người dùng vừa xác nhận bón phân cho cây.',
+      icon: Icons.eco_rounded,
+      accentColor: const Color(0xFF6C8F49),
+    );
+
+    controller.addCareLog(gardenPlant.id, log);
     _showSnackBar('Đã lưu nhật ký bón phân cho ${widget.plant.name}.');
   }
 
-  Future<void> _openAddSnapshotDialog() async {
+  Future<void> _openAddSnapshotDialog(
+    BuildContext context,
+    MyGardenController controller,
+    MyGardenItem gardenPlant,
+  ) async {
     final String currentMonth = 'Tháng ${DateTime.now().month}';
     _monthController.text = currentMonth;
     _imageController.text = widget.plant.imageUrl;
@@ -448,27 +506,23 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
       },
     );
 
-    if (saved != true) {
+    if (saved != true || !context.mounted) {
       return;
     }
 
-    setState(() {
-      _growthTimeline.insert(
-        0,
-        PlantGrowthSnapshot(
-          monthLabel: _monthController.text.trim().isEmpty
-              ? currentMonth
-              : _monthController.text.trim(),
-          imageUrl: _imageController.text.trim().isEmpty
-              ? widget.plant.imageUrl
-              : _imageController.text.trim(),
-          note: _noteController.text.trim().isEmpty
-              ? 'Người dùng vừa cập nhật ảnh mới cho cây.'
-              : _noteController.text.trim(),
-        ),
-      );
-    });
+    final snapshot = PlantGrowthSnapshot(
+      monthLabel: _monthController.text.trim().isEmpty
+          ? currentMonth
+          : _monthController.text.trim(),
+      imageUrl: _imageController.text.trim().isEmpty
+          ? widget.plant.imageUrl
+          : _imageController.text.trim(),
+      note: _noteController.text.trim().isEmpty
+          ? 'Người dùng vừa cập nhật ảnh mới cho cây.'
+          : _noteController.text.trim(),
+    );
 
+    controller.addGrowthSnapshot(gardenPlant.id, snapshot);
     _showSnackBar('Đã thêm ảnh sinh trưởng mới.');
   }
 
@@ -490,18 +544,14 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
 class _OverviewCard extends StatelessWidget {
   const _OverviewCard({
     required this.plant,
-    required this.healthStatus,
-    required this.wateringFrequencyLabel,
-    required this.lastWateredLabel,
+    required this.gardenPlant,
     required this.onWateringConfirmed,
     required this.onEditInfo,
     required this.showActions,
   });
 
   final LibraryPlantItem plant;
-  final String healthStatus;
-  final String wateringFrequencyLabel;
-  final String lastWateredLabel;
+  final MyGardenItem? gardenPlant;
   final VoidCallback onWateringConfirmed;
   final VoidCallback onEditInfo;
   final bool showActions;
@@ -554,51 +604,54 @@ class _OverviewCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF94EA91),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF12612D),
-                        shape: BoxShape.circle,
+              if (gardenPlant != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF94EA91),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF12612D),
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      healthStatus,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF11331A),
+                      const SizedBox(width: 8),
+                      Text(
+                        gardenPlant!.healthStatus,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF11331A),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 18),
           Row(
             children: [
-              Expanded(
-                child: _StatTile(
-                  label: 'WATERING',
-                  value: wateringFrequencyLabel,
-                  icon: Icons.water_drop_rounded,
+              if (gardenPlant != null) ...[
+                Expanded(
+                  child: _StatTile(
+                    label: 'WATERING',
+                    value: gardenPlant!.wateringFrequencyLabel,
+                    icon: Icons.water_drop_rounded,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
+                const SizedBox(width: 10),
+              ],
               Expanded(
                 child: _StatTile(
                   label: 'LIGHT',
@@ -615,7 +668,7 @@ class _OverviewCard extends StatelessWidget {
                       ? Icons.calendar_month_rounded
                       : Icons.star_rounded,
                 ),
-              ),
+              ],
             ],
           ),
           if (showActions) ...[
@@ -1001,4 +1054,3 @@ class _FactRow extends StatelessWidget {
     );
   }
 }
-
