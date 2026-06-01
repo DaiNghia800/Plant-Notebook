@@ -12,3 +12,4 @@ const String communityPostDetailRoute = "community_post_detail";
 const String splashViewRoute = "splash";
 const String onboardingViewRoute = "onboarding";
 const String registerViewRoute = "register";
+const String forgotPasswordViewRoute = "forgot_password";

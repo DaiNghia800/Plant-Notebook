@@ -14,6 +14,8 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       return MaterialPageRoute(builder: (context) => const LoginScreen());
     case registerViewRoute:
       return MaterialPageRoute(builder: (context) => const RegisterScreen());
+    case forgotPasswordViewRoute:
+      return MaterialPageRoute(builder: (context) => const ForgotPasswordScreen());
     case appViewRoute:
       return MaterialPageRoute(builder: (context) => const App());
     case homeViewRoute:

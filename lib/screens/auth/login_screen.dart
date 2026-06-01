@@ -202,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       // Email Field
                       const Text(
-                        'EMAIL HOẶC SỐ ĐIỆN THOẠI',
+                        'EMAIL CỦA BẠN',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -215,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          hintText: 'example@gmail.com hoặc 09...',
+                          hintText: 'example@gmail.com',
                           hintStyle: const TextStyle(color: Color(0xFF90A496)),
                           filled: true,
                           fillColor: const Color(0xFFEFF4F0),
@@ -227,9 +227,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             horizontal: 20,
                             vertical: 18,
                           ),
-                          suffixIcon: const Icon(
-                            Icons.person_outline_rounded,
-                            color: Color(0xFF90A496),
+                          prefixIcon: const Icon(
+                            Icons.email_outlined,
+                            color: Color(0xFF7A8D81),
+                            size: 22,
                           ),
                         ),
                       ),
@@ -250,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              // Forgot password action
+                              Navigator.of(context).pushNamed(forgotPasswordViewRoute);
                             },
                             child: const Text(
                               'Quên mật khẩu?',
@@ -280,11 +281,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             horizontal: 20,
                             vertical: 18,
                           ),
+                          prefixIcon: const Icon(
+                            Icons.lock_rounded,
+                            color: Color(0xFF7A8D81),
+                            size: 22,
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
-                                  ? Icons.lock_outline
-                                  : Icons.lock_open_rounded,
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
                               color: const Color(0xFF90A496),
                             ),
                             onPressed: () {

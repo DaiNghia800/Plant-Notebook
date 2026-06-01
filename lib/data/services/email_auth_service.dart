@@ -19,18 +19,19 @@ class EmailAuthService {
   }
 
   Future<void> register({
-    required String identifier,
+    required String email,
+    required String phone,
     required String password,
     required String name,
   }) async {
     final Uri endpoint = Uri.parse('$_backendBaseUrl/auth/register');
-    final bool isEmail = identifier.contains('@');
 
     final http.Response response = await http.post(
       endpoint,
       headers: const {'Content-Type': 'application/json'},
       body: jsonEncode({
-        if (isEmail) 'email': identifier else 'phone': identifier,
+        'email': email,
+        'phone': phone,
         'password': password,
         'name': name,
       }),
@@ -74,5 +75,55 @@ class EmailAuthService {
     await preferences.setString(_tokenStorageKey, backendToken);
     await preferences.setString(_userStorageKey, jsonEncode(user));
     await preferences.setString('userId', user['id'].toString());
+  }
+
+  Future<void> sendForgotPasswordOtp({required String email}) async {
+    final Uri endpoint = Uri.parse('$_backendBaseUrl/auth/forgot-password');
+    final http.Response response = await http.post(
+      endpoint,
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Lỗi gửi mã OTP');
+    }
+  }
+
+  Future<void> verifyOtp({required String email, required String otp}) async {
+    final Uri endpoint = Uri.parse('$_backendBaseUrl/auth/verify-otp');
+    final http.Response response = await http.post(
+      endpoint,
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'otp': otp}),
+    );
+
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Mã OTP không hợp lệ');
+    }
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final Uri endpoint = Uri.parse('$_backendBaseUrl/auth/reset-password');
+    final http.Response response = await http.post(
+      endpoint,
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'otp': otp,
+        'newPassword': newPassword,
+      }),
+    );
+
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Lỗi đặt lại mật khẩu');
+    }
   }
 }

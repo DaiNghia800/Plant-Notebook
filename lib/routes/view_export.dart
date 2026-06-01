@@ -12,3 +12,4 @@ export 'package:plant_notebook/screens/splash/splash_screen.dart';
 export 'package:plant_notebook/screens/onboarding/onboarding_screen.dart';
 export 'package:plant_notebook/screens/auth/login_screen.dart';
 export 'package:plant_notebook/screens/auth/register_screen.dart';
+export 'package:plant_notebook/screens/auth/forgot_password_screen.dart';

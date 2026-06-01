@@ -16,6 +16,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
   final GoogleAuthService _googleAuthService = GoogleAuthService();
@@ -63,6 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
     super.dispose();
@@ -72,12 +74,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_isEmailRegistering) return;
 
     final name = _nameController.text.trim();
-    final identifier = _emailController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
     final confirm = _confirmController.text.trim();
 
     if (name.isEmpty ||
-        identifier.isEmpty ||
+        email.isEmpty ||
+        phone.isEmpty ||
         password.isEmpty ||
         confirm.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -99,14 +103,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       await _emailAuthService.register(
-        identifier: identifier,
+        email: email,
+        phone: phone,
         password: password,
         name: name,
       );
       if (!mounted) return;
 
       // Sau khi đăng ký thành công, tự động đăng nhập
-      await _emailAuthService.login(identifier: identifier, password: password);
+      await _emailAuthService.login(identifier: email, password: password);
       if (!mounted) return;
 
       Navigator.of(
@@ -274,12 +279,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 18),
 
                           // Email Field
-                          _buildLabel('EMAIL HOẶC SỐ ĐIỆN THOẠI'),
+                          _buildLabel('EMAIL CỦA BẠN'),
                           _buildTextField(
                             controller: _emailController,
-                            hintText: 'example@gmail.com hoặc 09...',
-                            prefixIcon: Icons.person_outline_rounded,
+                            hintText: 'example@gmail.com',
+                            prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
+                          ),
+                          const SizedBox(height: 18),
+
+                          // Phone Field
+                          _buildLabel('SỐ ĐIỆN THOẠI'),
+                          _buildTextField(
+                            controller: _phoneController,
+                            hintText: '09...',
+                            prefixIcon: Icons.phone_outlined,
+                            keyboardType: TextInputType.phone,
                           ),
                           const SizedBox(height: 18),
 
