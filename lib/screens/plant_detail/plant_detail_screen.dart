@@ -31,6 +31,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
   Widget build(BuildContext context) {
     return Consumer<MyGardenController>(
       builder: (context, gardenController, _) {
+        final bool isAdded = gardenController.containsPlant(widget.plant.id);
         final gardenPlantList = gardenController.savedPlants
             .where((p) => p.libraryPlantId == widget.plant.id)
             .toList();
@@ -80,11 +81,16 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                         },
                       ),
                       Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [Colors.transparent, Color(0xA6000000)],
+                            colors: [
+                              Colors.black.withValues(alpha: 0.35),
+                              Colors.black.withValues(alpha: 0.1),
+                              primaryColor.withValues(alpha: 0.3),
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
                           ),
                         ),
                       ),
@@ -98,22 +104,18 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Transform.translate(
-                        offset: const Offset(0, -36),
-                        child: _OverviewCard(
-                          plant: widget.plant,
-                          gardenPlant: gardenPlant,
-                          onWateringConfirmed: () => _confirmWatering(
-                            context,
-                            gardenController,
-                            gardenPlant,
-                          ),
-                          onEditInfo: _showEditInfoMessage,
-                        ),
+                      const SizedBox(height: 20),
+                      _OverviewCard(
+                        plant: widget.plant,
+                        healthStatus: _healthStatus,
+                        wateringFrequencyLabel: _wateringFrequencyLabel,
+                        lastWateredLabel: _lastWateredLabel,
+                        onWateringConfirmed: _confirmWatering,
+                        onEditInfo: _showEditInfoMessage,
+                        showActions: isAdded,
                       ),
-                      const SizedBox(height: 2),
-
-                      if (gardenPlant != null) ...[
+                      if (isAdded) ...[
+                        const SizedBox(height: 24),
                         _SectionHeader(
                           title: 'Thống kê & Nhật ký',
                           subtitle:
@@ -125,6 +127,113 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Nhật ký chăm sóc',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF14311F),
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: _showQuickActionsHint,
+                                    child: const Text('Xác nhận nhanh'),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _ActionButton(
+                                      label: 'Đã tưới',
+                                      icon: Icons.water_drop_rounded,
+                                      onTap: _confirmWatering,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _ActionButton(
+                                      label: 'Đã bón phân',
+                                      icon: Icons.eco_rounded,
+                                      secondary: true,
+                                      onTap: _confirmFertilizer,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              ..._careLogs.map(
+                                (entry) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _CareLogTile(entry: entry),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      _PanelCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    'Dòng thời gian sinh trưởng',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF14311F),
+                                    ),
+                                  ),
+                                ),
+                                if (isAdded)
+                                  TextButton.icon(
+                                    onPressed: _openAddSnapshotDialog,
+                                    icon: const Icon(Icons.add_a_photo_outlined),
+                                    label: const Text('Thêm ảnh tháng'),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 255,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _growthTimeline.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final PlantGrowthSnapshot snapshot =
+                                      _growthTimeline[index];
+                                  return _GrowthSnapshotCard(snapshot: snapshot);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                  _SectionHeader(
+                    title: 'Hướng dẫn chăm sóc',
+                    subtitle:
+                        'Tóm tắt những lưu ý quan trọng để cây giữ dáng và phát triển đều.',
+                  ),
+                  const SizedBox(height: 12),
+                  _PanelCard(
+                    child: Column(
+                      children: widget.plant.careGuide
+                          .map(
+                            (tip) => Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Expanded(
                                     child: Text(
@@ -211,156 +320,84 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              if (gardenPlant.growthTimeline.isEmpty)
-                                const Text('Chưa có ảnh sinh trưởng nào.')
-                              else
-                                SizedBox(
-                                  height: 220,
-                                  child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount:
-                                        gardenPlant.growthTimeline.length,
-                                    separatorBuilder: (_, __) =>
-                                        const SizedBox(width: 12),
-                                    itemBuilder: (context, index) {
-                                      final PlantGrowthSnapshot snapshot =
-                                          gardenPlant.growthTimeline[index];
-                                      return _GrowthSnapshotCard(
-                                        snapshot: snapshot,
-                                      );
-                                    },
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      _SectionHeader(
-                        title: 'Hướng dẫn chăm sóc',
-                        subtitle:
-                            'Tóm tắt những lưu ý quan trọng để cây giữ dáng và phát triển đều.',
-                      ),
-                      const SizedBox(height: 12),
-                      _PanelCard(
-                        child: Column(
-                          children: widget.plant.careGuide
-                              .map(
-                                (tip) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 14),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        width: 34,
-                                        height: 34,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFE8F4EA),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Icons.lightbulb_outline_rounded,
-                                          size: 18,
-                                          color: primaryColor,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          tip,
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            height: 1.55,
-                                            color: Color(0xFF3E4E43),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _SectionHeader(
-                        title: 'Bạn có biết?',
-                        subtitle:
-                            'Những điểm thú vị giúp người dùng hiểu cây nhanh hơn trước khi chăm sóc.',
-                      ),
-                      const SizedBox(height: 12),
-                      _PanelCard(
-                        child: Column(
-                          children: widget.plant.funFacts
-                              .map(
-                                (fact) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _FactRow(text: fact),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: gardenPlant != null
-                              ? null
-                              : () async {
-                                  final bool added = await gardenController
-                                      .addPlant(widget.plant.id);
-                                  if (!context.mounted) {
-                                    return;
-                                  }
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        added
-                                            ? 'Đã thêm ${widget.plant.name} vào vườn của tôi'
-                                            : '${widget.plant.name} đã có trong vườn',
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                },
-                          icon: Icon(
-                            gardenPlant != null
-                                ? Icons.check_circle_rounded
-                                : Icons.add_circle_outline,
-                          ),
-                          label: Text(
-                            gardenPlant != null
-                                ? 'Đã có trong vườn của tôi'
-                                : 'Thêm vào vườn của tôi',
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            textStyle: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                          )
+                          .toList(),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  _SectionHeader(
+                    title: 'Bạn có biết?',
+                    subtitle:
+                        'Những điểm thú vị giúp người dùng hiểu cây nhanh hơn trước khi chăm sóc.',
+                  ),
+                  const SizedBox(height: 12),
+                  _PanelCard(
+                    child: Column(
+                      children: _funFacts
+                          .map(
+                            (fact) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _FactRow(text: fact),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: isAdded
+                          ? null
+                          : () async {
+                              final bool added = await gardenController
+                                  .addPlant(widget.plant.id);
+                              if (!context.mounted) {
+                                return;
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    added
+                                        ? 'Đã thêm ${widget.plant.name} vào vườn của tôi'
+                                        : '${widget.plant.name} đã có trong vườn',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                      icon: Icon(
+                        isAdded
+                            ? Icons.check_circle_rounded
+                            : Icons.add_circle_outline,
+                      ),
+                      label: Text(
+                        isAdded
+                            ? 'Đã có trong vườn của tôi'
+                            : 'Thêm vào vườn của tôi',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        textStyle: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  )
+                ],
               ),
             ],
           ),
         );
+      },
+    );
       },
     );
   }
@@ -510,12 +547,14 @@ class _OverviewCard extends StatelessWidget {
     required this.gardenPlant,
     required this.onWateringConfirmed,
     required this.onEditInfo,
+    required this.showActions,
   });
 
   final LibraryPlantItem plant;
   final MyGardenItem? gardenPlant;
   final VoidCallback onWateringConfirmed;
   final VoidCallback onEditInfo;
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -620,19 +659,19 @@ class _OverviewCard extends StatelessWidget {
                   icon: Icons.wb_sunny_rounded,
                 ),
               ),
-              if (gardenPlant != null) ...[
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _StatTile(
-                    label: 'LAST WATER',
-                    value: gardenPlant!.lastWateredLabel,
-                    icon: Icons.calendar_month_rounded,
-                  ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _StatTile(
+                  label: showActions ? 'LAST WATER' : 'DIFFICULTY',
+                  value: showActions ? lastWateredLabel : plant.difficulty,
+                  icon: showActions
+                      ? Icons.calendar_month_rounded
+                      : Icons.star_rounded,
                 ),
               ],
             ],
           ),
-          if (gardenPlant != null) ...[
+          if (showActions) ...[
             const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
@@ -856,7 +895,7 @@ class _CareLogTile extends StatelessWidget {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: entry.accentColor.withOpacity(0.12),
+            color: entry.accentColor.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(entry.icon, color: entry.accentColor, size: 20),

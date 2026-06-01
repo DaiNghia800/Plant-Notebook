@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/screens/plant_detail/plant_detail_screen.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
@@ -7,6 +7,7 @@ import 'package:plant_notebook/data/models/garden_plant.dart';
 import 'package:plant_notebook/data/models/my_garden_item.dart';
 import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plant_form_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/library_plant_controller.dart';
 
 class MyGardenScreen extends StatefulWidget {
   const MyGardenScreen({super.key});

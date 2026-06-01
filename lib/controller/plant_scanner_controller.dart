@@ -1,10 +1,11 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:plant_notebook/data/models/plant_analysis_result.dart';
-import 'package:plant_notebook/data/services/gemini_scanner_service.dart';
+import 'package:plant_notebook/data/services/plant_scanner_service.dart';
+import 'package:plant_notebook/data/services/library_plant_api_service.dart';
 
 class PlantScannerController extends ChangeNotifier {
   // ── Camera State ─────────────────────────────────────────
@@ -16,10 +17,14 @@ class PlantScannerController extends ChangeNotifier {
   bool isFlashOn = false;
 
   // ── Analysis State ───────────────────────────────────────
-  final GeminiScannerService _scannerService = GeminiScannerService();
+  final PlantScannerService _scannerService = PlantScannerService();
+  final LibraryPlantApiService _libraryApiService = LibraryPlantApiService();
   bool isAnalyzing = true;
   PlantAnalysisResult? analysisResult;
   String? analysisErrorMessage;
+  bool existsInLibrary = true;
+  bool isSubmittingProposal = false;
+  bool proposalSubmitted = false;
 
   // ── Lifecycle Mgt ────────────────────────────────────────
   Future<void> initCamera({Function(String)? onError}) async {
@@ -42,7 +47,7 @@ class PlantScannerController extends ChangeNotifier {
 
     final controller = CameraController(
       cameras[index],
-      ResolutionPreset.medium,
+      ResolutionPreset.veryHigh,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
@@ -160,21 +165,91 @@ class PlantScannerController extends ChangeNotifier {
     isAnalyzing = true;
     analysisErrorMessage = null;
     analysisResult = null;
+    existsInLibrary = true;
+    proposalSubmitted = false;
+    isSubmittingProposal = false;
     notifyListeners();
 
     try {
       final file = File(imagePath);
       final result = await _scannerService
           .analyzePlantImage(file)
-          .timeout(const Duration(seconds: 45));
+          .timeout(
+            const Duration(seconds: 60),
+            onTimeout: () {
+              throw Exception('timeout');
+            },
+          );
 
       analysisResult = result;
+
+      // Kiểm tra xem cây đã tồn tại trong thư viện chưa
+      try {
+        final checkResult = await _libraryApiService.checkPlantExistence(
+          name: result.tenPhoThong,
+          scientificName: result.tenKhoaHoc,
+        );
+        existsInLibrary = checkResult['exists'] == true;
+      } catch (e) {
+        // ignore: avoid_print
+        print('[PlantScannerController] checkPlantExistence error: $e');
+        // Fallback: Nếu lỗi kết nối, xem như đã có để tránh gây phiền
+        existsInLibrary = true;
+      }
+
       isAnalyzing = false;
       notifyListeners();
     } catch (e) {
+      // Log lỗi chi tiết ra terminal cho dev
+      // ignore: avoid_print
+      print('[PlantScannerController] analyzeImage ERROR: $e');
       analysisErrorMessage = _mapAnalysisErrorMessage(e);
       isAnalyzing = false;
       notifyListeners();
+    }
+  }
+
+  /// Gửi đề xuất đóng góp cây mới lên Admin
+  Future<void> submitProposal(String imagePath) async {
+    final result = analysisResult;
+    if (result == null || isSubmittingProposal || proposalSubmitted) return;
+
+    isSubmittingProposal = true;
+    notifyListeners();
+
+    try {
+      await _libraryApiService.contributePlant(
+        name: result.tenPhoThong,
+        scientificName: result.tenKhoaHoc,
+        category: 'Trong nhà', // Mặc định xếp vào Trong nhà
+        shortDescription: result.benhDangGap,
+        description: result.loiKhuyenChamSoc,
+        lightLevel: 'Sáng gián tiếp',
+        waterNeed: 'Trung bình',
+        difficulty: 'Dễ',
+        temperature: '20-30°C',
+        humidity: 'Trung bình',
+        toxicity: 'Chưa xác định',
+        funFacts: [result.banCoBiet],
+        careGuide: [
+          {
+            'step': 1,
+            'title': 'Tổng quan lời khuyên chăm sóc',
+            'content': result.loiKhuyenChamSoc,
+          }
+        ],
+        imagePath: imagePath,
+      );
+
+      proposalSubmitted = true;
+      isSubmittingProposal = false;
+      notifyListeners();
+    } catch (e) {
+      // ignore: avoid_print
+      print('[PlantScannerController] submitProposal error: $e');
+      isSubmittingProposal = false;
+      notifyListeners();
+      rethrow;
     }
   }
 
@@ -182,42 +257,59 @@ class PlantScannerController extends ChangeNotifier {
     final raw = error.toString();
     final normalized = raw.toLowerCase();
 
-    if (normalized.contains('all_ai_keys_rate_limited')) {
-      return 'Các API key AI hiện đang bị giới hạn tạm thời (429/503). Vui lòng bấm "Thử Lại" sau ít phút, hệ thống sẽ tự chuyển sang key khả dụng tiếp theo.';
-    }
-
-    if (normalized.contains('503') ||
-        normalized.contains('unavailable') ||
-        normalized.contains('high demand')) {
-      return 'Máy chủ AI đang quá tải tạm thời. Hệ thống đã tự thử lại, nhưng vẫn chưa thành công. Vui lòng bấm "Thử Lại" sau ít phút.';
-    }
-
-    if (normalized.contains('429') ||
-        normalized.contains('resource_exhausted')) {
-      return 'Bạn đang gửi yêu cầu quá nhanh hoặc đã chạm giới hạn tạm thời. Vui lòng chờ một chút rồi thử lại.';
-    }
-
-    if (normalized.contains('timeout') ||
-        normalized.contains('deadline exceeded')) {
-      return 'Kết nối đến dịch vụ AI bị chậm. Vui lòng kiểm tra mạng và thử lại.';
-    }
-
-    // Chỉ bắt lỗi API key khi rõ ràng là thiếu key (do chúng ta tự throw)
+    // ── Lỗi cứng: thiếu API key ─────────────────────────────────────────────
     if (normalized.contains('missing_ai_api_key')) {
-      return 'Thiếu API key trong file .env (Gemini/Groq). Vui lòng kiểm tra cấu hình.';
+      return 'Chưa cấu hình API key.\nVui lòng thêm GEMINI API key vào file .env và khởi động lại ứng dụng.';
     }
 
-    // Lỗi authentication rõ ràng từ API (401/403)
+    // ── Tất cả provider đều hết quota ────────────────────────────────────────
+    if (normalized.contains('all_providers_exhausted') ||
+        normalized.contains('all_ai_keys_rate_limited')) {
+      return 'Tất cả dịch vụ AI đang bận.\nHệ thống đã thử nhiều lần nhưng đều bị giới hạn. Vui lòng thử lại sau vài phút.';
+    }
+
+    // ── Quá tải / Server bận ──────────────────────────────────────────────────
+    if (normalized.contains('503') ||
+        normalized.contains('overloaded') ||
+        normalized.contains('high demand') ||
+        normalized.contains('too many requests')) {
+      return 'Máy chủ AI đang quá tải.\nHệ thống đã tự thử lại nhiều lần nhưng chưa thành công. Vui lòng thử lại sau ít phút.';
+    }
+
+    // ── Rate limit (429) ──────────────────────────────────────────────────────
+    if (normalized.contains('429') ||
+        normalized.contains('rate_limit') ||
+        normalized.contains('resource_exhausted') ||
+        normalized.contains('quota')) {
+      return 'Đã đạt giới hạn yêu cầu AI tạm thời.\nVui lòng đợi khoảng 30 giây rồi bấm "Thử Lại".';
+    }
+
+    // ── Timeout / Mạng chậm ──────────────────────────────────────────────────
+    if (normalized.contains('timeout') ||
+        normalized.contains('deadline exceeded') ||
+        normalized.contains('timed out')) {
+      return 'Kết nối đến dịch vụ AI quá chậm.\nVui lòng kiểm tra mạng và bấm "Thử Lại".';
+    }
+
+    // ── API key không hợp lệ (401/403) ───────────────────────────────────────
     if (normalized.contains('401') ||
         normalized.contains('403') ||
         normalized.contains('api_key_invalid') ||
         normalized.contains('invalid api key') ||
-        normalized.contains('api key not valid')) {
-      return 'API key không hợp lệ hoặc không có quyền truy cập. Vui lòng kiểm tra lại API key trong file .env.';
+        normalized.contains('api key not valid') ||
+        normalized.contains('authentication')) {
+      return 'API key không hợp lệ.\nVui lòng kiểm tra lại GEMINI_API_KEY trong file .env.';
     }
 
-    // Hiển thị lỗi gốc để dễ debug
-    return 'Lỗi phân tích: $raw';
+    // ── Lỗi parse JSON từ AI ──────────────────────────────────────────────────
+    if (normalized.contains('json') ||
+        normalized.contains('format') ||
+        normalized.contains('không đúng định dạng')) {
+      return 'AI trả về dữ liệu không đúng định dạng.\nVui lòng thử lại – đôi khi AI cần thêm một lần để phân tích chính xác.';
+    }
+
+    // ── Fallback: thông báo chung, ẩn chi tiết kỹ thuật khỏi UI ─────────────
+    return 'Không thể phân tích ảnh lúc này.\nVui lòng thử lại sau ít phút.';
   }
 
   @override

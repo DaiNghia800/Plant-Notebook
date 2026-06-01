@@ -11,11 +11,12 @@ class LibraryPlantItem {
     required this.careGuide,
     required this.funFacts,
     required this.imageUrl,
+    this.scientificName,
+    this.humidity,
     this.isTrending = false,
     this.isRare = false,
     this.temperatureRange,
     this.badge,
-    this.scientificName,
     this.humidityLevel,
     this.toxicity,
     this.wateringIntervalDays,
@@ -33,6 +34,11 @@ class LibraryPlantItem {
   final List<String> careGuide;
   final List<String> funFacts;
   final String imageUrl;
+  final String? scientificName;
+  final String? temperature;
+  final String? humidity;
+  final String? toxicity;
+  final String? badge;
   final bool isTrending;
   final bool isRare;
   final String? temperatureRange;

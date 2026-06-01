@@ -10,6 +10,10 @@ import 'package:plant_notebook/data/models/library_plant_item.dart';
 import 'package:plant_notebook/data/models/my_garden_item.dart';
 import 'package:plant_notebook/data/services/my_garden_storage.dart';
 
+/// Controller quản lý danh sách cây trong vườn của người dùng.
+///
+/// Thay vì dùng seed tĩnh, [savedPlants] nhận vào danh sách cây từ
+/// [LibraryPlantController] thông qua phương thức [resolveFrom].
 class MyGardenController extends ChangeNotifier {
   MyGardenController({MyGardenService? apiService, MyGardenStorage? storage})
     : _apiService = apiService ?? MyGardenService(),
@@ -43,6 +47,16 @@ class MyGardenController extends ChangeNotifier {
     return _careHistoryCache[gardenPlantId] ?? [];
   }
 
+  /// ID các cây đã lưu.
+  Set<String> get savedPlantIds => Set.unmodifiable(_savedPlantIds);
+
+  /// Resolve danh sách cây đã lưu từ danh sách đầy đủ truyền vào.
+  /// Gọi trong UI: `controller.resolveFrom(libraryController.plants)`.
+  List<LibraryPlantItem> resolveFrom(List<LibraryPlantItem> allPlants) {
+    return allPlants
+        .where((plant) => _savedPlantIds.contains(plant.id))
+        .toList(growable: false);
+  }
   /// Danh sách cây đã lưu (instances của MyGardenItem).
   List<MyGardenItem> get savedPlants {
     return List.unmodifiable(_savedPlants);

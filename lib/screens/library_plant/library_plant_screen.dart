@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
-import 'package:plant_notebook/data/library_plant_seed.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
 import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
@@ -22,28 +23,32 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   String _selectedWater = _all;
   String _selectedDifficulty = _all;
 
-  List<String> get _categoryOptions => <String>[
-    _all,
-    ...{for (final plant in libraryPlantSeed) plant.category},
-  ];
+  int _visibleCount = 10;
+  List<Map<String, dynamic>> _randomFacts = [];
+  List<LibraryPlantItem>? _previousPlants;
 
-  List<String> get _lightOptions => <String>[
-    _all,
-    ...{for (final plant in libraryPlantSeed) plant.lightLevel},
-  ];
+  List<String> _categoryOptions(List<LibraryPlantItem> plants) => <String>[
+        _all,
+        ...{for (final plant in plants) plant.category},
+      ];
 
-  List<String> get _waterOptions => <String>[
-    _all,
-    ...{for (final plant in libraryPlantSeed) plant.waterNeed},
-  ];
+  List<String> _lightOptions(List<LibraryPlantItem> plants) => <String>[
+        _all,
+        ...{for (final plant in plants) plant.lightLevel},
+      ];
 
-  List<String> get _difficultyOptions => <String>[
-    _all,
-    ...{for (final plant in libraryPlantSeed) plant.difficulty},
-  ];
+  List<String> _waterOptions(List<LibraryPlantItem> plants) => <String>[
+        _all,
+        ...{for (final plant in plants) plant.waterNeed},
+      ];
 
-  List<LibraryPlantItem> get _filteredPlants {
-    return libraryPlantSeed.where((plant) {
+  List<String> _difficultyOptions(List<LibraryPlantItem> plants) => <String>[
+        _all,
+        ...{for (final plant in plants) plant.difficulty},
+      ];
+
+  List<LibraryPlantItem> _filteredPlants(List<LibraryPlantItem> plants) {
+    return plants.where((plant) {
       final bool matchesQuery =
           plant.name.toLowerCase().contains(_query.toLowerCase()) ||
           plant.category.toLowerCase().contains(_query.toLowerCase());
@@ -66,6 +71,14 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LibraryPlantController>().loadPlants();
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -73,40 +86,118 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<LibraryPlantItem> plants = _filteredPlants;
-    final LibraryPlantItem? featured =
-        plants.cast<LibraryPlantItem?>().firstWhere(
-          (p) => p?.isTrending ?? false,
-          orElse: () => null,
-        ) ??
-        (plants.isNotEmpty ? plants.first : null);
+    return Consumer<LibraryPlantController>(
+      builder: (context, controller, _) {
+        // ── Loading ──────────────────────────────────────────────────────────
+        if (controller.isLoading) {
+          return const _LoadingView();
+        }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSearchBox(),
-        const SizedBox(height: 16),
-        _buildCategoryRow(),
-        const SizedBox(height: 14),
-        _buildFilterRow(),
-        const SizedBox(height: 16),
-        _buildDidYouKnowSection(),
-        const SizedBox(height: 16),
-        if (featured != null) _buildFeaturedCard(featured),
-        if (featured != null) const SizedBox(height: 16),
-        if (plants.isEmpty)
-          _buildEmptyState()
-        else
-          ...plants.map(
-            (plant) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: _PlantListCard(
-                plant: plant,
-                onTap: () => _openDetail(plant),
-              ),
+        // ── Error ────────────────────────────────────────────────────────────
+        if (controller.hasError) {
+          return _ErrorView(
+            message: controller.errorMessage ?? 'Đã xảy ra lỗi.',
+            onRetry: controller.refresh,
+          );
+        }
+
+        final List<LibraryPlantItem> allPlants = controller.plants;
+        
+        // Trộn ngẫu nhiên 3 fun facts từ danh sách cây thật
+        if (_previousPlants == null || _previousPlants != allPlants) {
+          _previousPlants = allPlants;
+          final List<Map<String, dynamic>> allFacts = [];
+          for (final plant in allPlants) {
+            for (final fact in plant.funFacts) {
+              allFacts.add({
+                'plant': plant,
+                'fact': fact,
+              });
+            }
+          }
+          if (allFacts.isEmpty) {
+            _randomFacts = [];
+          } else {
+            final list = List<Map<String, dynamic>>.from(allFacts)..shuffle();
+            _randomFacts = list.take(3).toList();
+          }
+        }
+
+        final List<LibraryPlantItem> plants = _filteredPlants(allPlants);
+
+        final LibraryPlantItem? featured =
+            plants.cast<LibraryPlantItem?>().firstWhere(
+                  (p) => p?.isTrending ?? false,
+                  orElse: () => null,
+                ) ??
+            (plants.isNotEmpty ? plants.first : null);
+
+        final displayedPlants = plants.take(_visibleCount).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSearchBox(),
+            const SizedBox(height: 16),
+            _buildCategoryRow(_categoryOptions(allPlants)),
+            const SizedBox(height: 14),
+            _buildFilterRow(
+              lightOptions: _lightOptions(allPlants),
+              waterOptions: _waterOptions(allPlants),
+              difficultyOptions: _difficultyOptions(allPlants),
             ),
-          ),
-      ],
+            const SizedBox(height: 16),
+            _buildDidYouKnowSection(),
+            const SizedBox(height: 16),
+            if (featured != null) _buildFeaturedCard(featured),
+            if (featured != null) const SizedBox(height: 16),
+            if (plants.isEmpty)
+              _buildEmptyState()
+            else ...[
+              ...displayedPlants.map(
+                (plant) => Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: _PlantListCard(
+                    plant: plant,
+                    onTap: () => _openDetail(plant),
+                  ),
+                ),
+              ),
+              if (plants.length > _visibleCount) ...[
+                const SizedBox(height: 10),
+                Center(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        _visibleCount += 10;
+                      });
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: primaryColor,
+                      side: const BorderSide(color: primaryColor, width: 1.5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                    child: const Text(
+                      'Xem thêm cây trồng',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+            const SizedBox(height: 24),
+          ],
+        );
+      },
     );
   }
 
@@ -118,7 +209,10 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
       ),
       child: TextField(
         controller: _searchController,
-        onChanged: (value) => setState(() => _query = value.trim()),
+        onChanged: (value) => setState(() {
+          _query = value.trim();
+          _visibleCount = 10;
+        }),
         decoration: InputDecoration(
           hintText: 'Tìm kiếm cây trồng...',
           prefixIcon: const Icon(Icons.search_rounded),
@@ -127,7 +221,10 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
               : IconButton(
                   onPressed: () {
                     _searchController.clear();
-                    setState(() => _query = '');
+                    setState(() {
+                      _query = '';
+                      _visibleCount = 10;
+                    });
                   },
                   icon: const Icon(Icons.close_rounded),
                 ),
@@ -138,20 +235,23 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
     );
   }
 
-  Widget _buildCategoryRow() {
+  Widget _buildCategoryRow(List<String> categoryOptions) {
     return SizedBox(
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _categoryOptions.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemCount: categoryOptions.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
-          final String category = _categoryOptions[index];
+          final String category = categoryOptions[index];
           final bool selected = _selectedCategory == category;
           return ChoiceChip(
             label: Text(category),
             selected: selected,
-            onSelected: (_) => setState(() => _selectedCategory = category),
+            onSelected: (_) => setState(() {
+              _selectedCategory = category;
+              _visibleCount = 10;
+            }),
             selectedColor: primaryColor,
             backgroundColor: const Color(0xFF7BCF7A),
             labelStyle: TextStyle(
@@ -168,7 +268,11 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
     );
   }
 
-  Widget _buildFilterRow() {
+  Widget _buildFilterRow({
+    required List<String> lightOptions,
+    required List<String> waterOptions,
+    required List<String> difficultyOptions,
+  }) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -176,20 +280,29 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
         _FilterMenuChip(
           label: 'Ánh sáng: $_selectedLight',
           icon: Icons.wb_sunny_outlined,
-          options: _lightOptions,
-          onSelected: (value) => setState(() => _selectedLight = value),
+          options: lightOptions,
+          onSelected: (value) => setState(() {
+            _selectedLight = value;
+            _visibleCount = 10;
+          }),
         ),
         _FilterMenuChip(
           label: 'Nước: $_selectedWater',
           icon: Icons.water_drop_outlined,
-          options: _waterOptions,
-          onSelected: (value) => setState(() => _selectedWater = value),
+          options: waterOptions,
+          onSelected: (value) => setState(() {
+            _selectedWater = value;
+            _visibleCount = 10;
+          }),
         ),
         _FilterMenuChip(
           label: 'Độ khó: $_selectedDifficulty',
           icon: Icons.stacked_line_chart,
-          options: _difficultyOptions,
-          onSelected: (value) => setState(() => _selectedDifficulty = value),
+          options: difficultyOptions,
+          onSelected: (value) => setState(() {
+            _selectedDifficulty = value;
+            _visibleCount = 10;
+          }),
         ),
       ],
     );
@@ -273,7 +386,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
                   Text(
                     plant.shortDescription,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.92),
+                      color: Colors.white.withValues(alpha: 0.92),
                       fontSize: 16,
                     ),
                   ),
@@ -313,12 +426,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   }
 
   Widget _buildDidYouKnowSection() {
-    final List<LibraryPlantItem> knowledgePlants = libraryPlantSeed
-        .where((plant) => plant.funFacts.isNotEmpty)
-        .take(3)
-        .toList(growable: false);
-
-    if (knowledgePlants.isEmpty) {
+    if (_randomFacts.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -338,11 +446,13 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
           height: 150,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: knowledgePlants.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemCount: _randomFacts.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
-              final LibraryPlantItem plant = knowledgePlants[index];
-              return _DidYouKnowCard(plant: plant, fact: plant.funFacts.first);
+              final Map<String, dynamic> item = _randomFacts[index];
+              final LibraryPlantItem plant = item['plant'] as LibraryPlantItem;
+              final String fact = item['fact'] as String;
+              return _DidYouKnowCard(plant: plant, fact: fact);
             },
           ),
         ),
@@ -372,7 +482,7 @@ class _PlantListCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.92),
+          color: Colors.white.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(26),
           border: Border.all(color: Colors.black12),
         ),
@@ -621,6 +731,83 @@ class _FilterMenuChip extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             const Icon(Icons.expand_more, size: 14, color: Color(0xFF1D5630)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LoadingView extends StatelessWidget {
+  const _LoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 80),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: primaryColor),
+            SizedBox(height: 16),
+            Text(
+              'Đang tải thư viện cây...',
+              style: TextStyle(
+                color: Color(0xFF4A5A4E),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.wifi_off_rounded,
+              size: 52,
+              color: Color(0xFFB05C5C),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF4A3A3A),
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Thử lại'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ],
         ),
       ),
