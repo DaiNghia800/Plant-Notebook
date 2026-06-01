@@ -6,6 +6,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:plant_notebook/utils/url_resolver.dart';
+
 class GoogleAuthResult {
   GoogleAuthResult({
     required this.googleUser,
@@ -66,7 +68,8 @@ class GoogleAuthService {
         ? dotenv.env['GOOGLE_AUTH_BACKEND_URL']!.trim()
         : defaultUrl;
 
-    final Uri endpoint = Uri.parse('$backendBaseUrl/auth/google');
+    final String resolvedBase = await UrlResolver.resolve(backendBaseUrl);
+    final Uri endpoint = Uri.parse('$resolvedBase/auth/google');
     final http.Response response = await http.post(
       endpoint,
       headers: const {'Content-Type': 'application/json'},

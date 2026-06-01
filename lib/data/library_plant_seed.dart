@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
 
 const List<String> _defaultFunFacts = [
@@ -84,7 +84,7 @@ const List<LibraryPlantItem> libraryPlantSeed = [
   LibraryPlantItem(
     id: 'string-of-pearls',
     name: 'String of Pearls',
-    category: 'Sen đá',
+    category: 'Ban công',
     shortDescription:
         'Loại mọng nước chuỗi hạt này mọc rủ rất đẹp, thích hợp treo ban công.',
     description:
@@ -110,7 +110,7 @@ const List<LibraryPlantItem> libraryPlantSeed = [
   LibraryPlantItem(
     id: 'aloe-vera',
     name: 'Aloe Vera',
-    category: 'Sen đá',
+    category: 'Ban công',
     shortDescription:
         'Vừa là cây cảnh vừa là dược liệu quý với khả năng làm dịu da tức thì.',
     description:

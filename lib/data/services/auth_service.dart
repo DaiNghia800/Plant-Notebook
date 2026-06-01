@@ -2,12 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:plant_notebook/utils/url_resolver.dart';
 
 class AuthService {
   static String _baseUrl() {
     final String? url = dotenv.env['API_BASE_URL'];
     final String resolved = (url == null || url.isEmpty)
-        ? 'http://localhost:3000'
+        ? 'http://localhost:5000'
         : url;
     return resolved.replaceFirst(RegExp(r'/+$'), '');
   }
@@ -16,7 +17,8 @@ class AuthService {
     String email,
     String password,
   ) async {
-    final Uri uri = Uri.parse('${_baseUrl()}/auth/login');
+    final String resolvedBase = await UrlResolver.resolve(_baseUrl());
+    final Uri uri = Uri.parse('$resolvedBase/auth/login');
     final http.Response response = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},

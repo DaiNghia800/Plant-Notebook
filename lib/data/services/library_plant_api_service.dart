@@ -42,7 +42,7 @@ class LibraryPlantApiService {
             .replaceAll('127.0.0.1', '10.0.2.2');
       } catch (_) {
         // Nếu thất bại hoặc quá thời gian -> Sử dụng 127.0.0.1 (máy thật + adb reverse)
-        _resolvedUrl = envUrl;
+        _resolvedUrl = envUrl.replaceAll('localhost', '127.0.0.1');
       }
     } else {
       _resolvedUrl = envUrl;
