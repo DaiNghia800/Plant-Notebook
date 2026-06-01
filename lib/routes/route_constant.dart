@@ -9,3 +9,7 @@ const String profileViewRoute = "profile";
 const String storeMapRoute = "store_map";
 const String storeDetailRoute = "store_detail";
 const String communityPostDetailRoute = "community_post_detail";
+const String splashViewRoute = "splash";
+const String onboardingViewRoute = "onboarding";
+const String registerViewRoute = "register";
+const String forgotPasswordViewRoute = "forgot_password";

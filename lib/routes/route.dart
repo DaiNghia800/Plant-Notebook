@@ -6,8 +6,16 @@ import 'package:plant_notebook/data/models/garden_plant.dart';
 
 Route<dynamic> generateRoute(RouteSettings settings) {
   switch (settings.name) {
+    case splashViewRoute:
+      return MaterialPageRoute(builder: (context) => const SplashScreen());
+    case onboardingViewRoute:
+      return MaterialPageRoute(builder: (context) => const OnboardingScreen());
     case loginViewRoute:
       return MaterialPageRoute(builder: (context) => const LoginScreen());
+    case registerViewRoute:
+      return MaterialPageRoute(builder: (context) => const RegisterScreen());
+    case forgotPasswordViewRoute:
+      return MaterialPageRoute(builder: (context) => const ForgotPasswordScreen());
     case appViewRoute:
       return MaterialPageRoute(builder: (context) => const App());
     case homeViewRoute:
