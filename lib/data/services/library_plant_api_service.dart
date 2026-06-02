@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:plant_notebook/data/models/library_plant_item.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LibraryPlantApiService {
   LibraryPlantApiService({http.Client? client})
@@ -138,6 +139,7 @@ class LibraryPlantApiService {
     String? toxicity,
     List<String> funFacts = const [],
     List<Map<String, dynamic>> careGuide = const [],
+    List<Map<String, dynamic>> growthTimeline = const [],
     String? imagePath,
   }) async {
     // Tạo ID đề xuất dựa trên tên tiếng Việt không dấu hoặc slug
@@ -148,8 +150,11 @@ class LibraryPlantApiService {
     final Uri uri = Uri.parse('$baseUrl/contribute');
     final request = http.MultipartRequest('POST', uri);
 
-    // Gửi fake user ID trong header
-    request.headers['x-user-id'] = 'fake-user-123';
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    final String? token = preferences.getString('auth_jwt_token');
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
 
     // Thêm các trường text
     request.fields['id'] = id;
@@ -166,6 +171,7 @@ class LibraryPlantApiService {
     request.fields['toxicity'] = toxicity ?? '';
     request.fields['funFacts'] = jsonEncode(funFacts);
     request.fields['careGuide'] = jsonEncode(careGuide);
+    request.fields['growthTimeline'] = jsonEncode(growthTimeline);
 
     // Thêm file ảnh nếu có
     if (imagePath != null && imagePath.isNotEmpty) {
