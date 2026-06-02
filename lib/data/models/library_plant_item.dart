@@ -35,15 +35,11 @@ class LibraryPlantItem {
   final List<String> funFacts;
   final String imageUrl;
   final String? scientificName;
-  final String? temperature;
   final String? humidity;
-  final String? toxicity;
-  final String? badge;
   final bool isTrending;
   final bool isRare;
   final String? temperatureRange;
   final String? badge;
-  final String? scientificName;
   final String? humidityLevel;
   final String? toxicity;
   final int? wateringIntervalDays;
