@@ -19,7 +19,7 @@ class GardenCategory {
         return Category.indoor;
       case 'Ban công':
         return Category.balcony;
-      case 'Sân vườn':
+      case 'Ngoài trời':
         return Category.outdoor;
       default:
         return Category.all;
@@ -33,7 +33,7 @@ class GardenCategory {
       case Category.balcony:
         return 'Ban công';
       case Category.outdoor:
-        return 'Sân vườn';
+        return 'Ngoài trời';
       default:
         return 'Tất cả';
     }

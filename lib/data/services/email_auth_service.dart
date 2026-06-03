@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:plant_notebook/utils/url_resolver.dart';
 
 class EmailAuthService {
   static const String _defaultBackendUrl = 'http://10.0.2.2:5000';
@@ -24,7 +25,8 @@ class EmailAuthService {
     required String password,
     required String name,
   }) async {
-    final Uri endpoint = Uri.parse('$_backendBaseUrl/auth/register');
+    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
+    final Uri endpoint = Uri.parse('$resolvedBase/auth/register');
 
     final http.Response response = await http.post(
       endpoint,
@@ -48,7 +50,8 @@ class EmailAuthService {
     required String identifier,
     required String password,
   }) async {
-    final Uri endpoint = Uri.parse('$_backendBaseUrl/auth/login');
+    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
+    final Uri endpoint = Uri.parse('$resolvedBase/auth/login');
     final bool isEmail = identifier.contains('@');
 
     final http.Response response = await http.post(
@@ -78,7 +81,8 @@ class EmailAuthService {
   }
 
   Future<void> sendForgotPasswordOtp({required String email}) async {
-    final Uri endpoint = Uri.parse('$_backendBaseUrl/auth/forgot-password');
+    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
+    final Uri endpoint = Uri.parse('$resolvedBase/auth/forgot-password');
     final http.Response response = await http.post(
       endpoint,
       headers: const {'Content-Type': 'application/json'},
@@ -92,7 +96,8 @@ class EmailAuthService {
   }
 
   Future<void> verifyOtp({required String email, required String otp}) async {
-    final Uri endpoint = Uri.parse('$_backendBaseUrl/auth/verify-otp');
+    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
+    final Uri endpoint = Uri.parse('$resolvedBase/auth/verify-otp');
     final http.Response response = await http.post(
       endpoint,
       headers: const {'Content-Type': 'application/json'},
@@ -110,7 +115,8 @@ class EmailAuthService {
     required String otp,
     required String newPassword,
   }) async {
-    final Uri endpoint = Uri.parse('$_backendBaseUrl/auth/reset-password');
+    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
+    final Uri endpoint = Uri.parse('$resolvedBase/auth/reset-password');
     final http.Response response = await http.post(
       endpoint,
       headers: const {'Content-Type': 'application/json'},

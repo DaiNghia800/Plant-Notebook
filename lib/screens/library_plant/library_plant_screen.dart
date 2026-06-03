@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
-import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
+import 'package:plant_notebook/screens/plant_detail/plant_detail_screen.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 
 class LibraryPlantScreen extends StatefulWidget {
@@ -134,68 +134,78 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
 
         final displayedPlants = plants.take(_visibleCount).toList();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSearchBox(),
-            const SizedBox(height: 16),
-            _buildCategoryRow(_categoryOptions(allPlants)),
-            const SizedBox(height: 14),
-            _buildFilterRow(
-              lightOptions: _lightOptions(allPlants),
-              waterOptions: _waterOptions(allPlants),
-              difficultyOptions: _difficultyOptions(allPlants),
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(
+              top: 100,
+              left: 20,
+              right: 20,
+              bottom: 120,
             ),
-            const SizedBox(height: 16),
-            _buildDidYouKnowSection(),
-            const SizedBox(height: 16),
-            if (featured != null) _buildFeaturedCard(featured),
-            if (featured != null) const SizedBox(height: 16),
-            if (plants.isEmpty)
-              _buildEmptyState()
-            else ...[
-              ...displayedPlants.map(
-                (plant) => Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: _PlantListCard(
-                    plant: plant,
-                    onTap: () => _openDetail(plant),
-                  ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSearchBox(),
+                const SizedBox(height: 16),
+                _buildCategoryRow(_categoryOptions(allPlants)),
+                const SizedBox(height: 14),
+                _buildFilterRow(
+                  lightOptions: _lightOptions(allPlants),
+                  waterOptions: _waterOptions(allPlants),
+                  difficultyOptions: _difficultyOptions(allPlants),
                 ),
-              ),
-              if (plants.length > _visibleCount) ...[
-                const SizedBox(height: 10),
-                Center(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      setState(() {
-                        _visibleCount += 10;
-                      });
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: primaryColor,
-                      side: const BorderSide(color: primaryColor, width: 1.5),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                    ),
-                    child: const Text(
-                      'Xem thêm cây trồng',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                const SizedBox(height: 16),
+                _buildDidYouKnowSection(),
+                const SizedBox(height: 16),
+                if (featured != null) _buildFeaturedCard(featured),
+                if (featured != null) const SizedBox(height: 16),
+                if (plants.isEmpty)
+                  _buildEmptyState()
+                else ...[
+                  ...displayedPlants.map(
+                    (plant) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: _PlantListCard(
+                        plant: plant,
+                        onTap: () => _openDetail(plant),
                       ),
                     ),
                   ),
-                ),
+                  if (plants.length > _visibleCount) ...[
+                    const SizedBox(height: 10),
+                    Center(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          setState(() {
+                            _visibleCount += 10;
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: primaryColor,
+                          side: const BorderSide(color: primaryColor, width: 1.5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                        child: const Text(
+                          'Xem thêm cây trồng',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+                const SizedBox(height: 24),
               ],
-            ],
-            const SizedBox(height: 24),
-          ],
+            ),
+          ),
         );
       },
     );
@@ -313,7 +323,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
       onTap: () => _openDetail(plant),
       borderRadius: BorderRadius.circular(26),
       child: Container(
-        height: 198,
+        height: 210,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
           color: Colors.black,
@@ -375,9 +385,11 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
                   const SizedBox(height: 10),
                   Text(
                     plant.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 38,
-                      height: 1,
+                      fontSize: 30,
+                      height: 1.1,
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                     ),
@@ -385,9 +397,11 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
                   const SizedBox(height: 8),
                   Text(
                     plant.shortDescription,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.92),
-                      fontSize: 16,
+                      fontSize: 14,
                     ),
                   ),
                 ],
@@ -443,7 +457,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 150,
+          height: 165,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _randomFacts.length,
@@ -461,10 +475,9 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   }
 
   void _openDetail(LibraryPlantItem plant) {
-    // TODO: Navigate to library plant detail screen
-    // Navigator.of(context).push(
-    //   MaterialPageRoute(builder: (context) => PlantDetailScreen(plant: plant)),
-    // );
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => PlantDetailScreen(plant: plant)),
+    );
   }
 }
 
@@ -669,7 +682,7 @@ class _DidYouKnowCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             fact,
-            maxLines: 4,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 13,

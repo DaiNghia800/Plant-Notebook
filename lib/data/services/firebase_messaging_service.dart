@@ -13,6 +13,7 @@ import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/main.dart' show navigatorKey;
+import 'package:plant_notebook/utils/url_resolver.dart';
 
 class FirebaseMessagingService {
   static final FirebaseMessaging _firebaseMessaging =
@@ -30,7 +31,7 @@ class FirebaseMessagingService {
   static String _baseUrl() {
     final String? url = dotenv.env['API_BASE_URL'];
     final String resolved = (url == null || url.isEmpty)
-        ? 'http://localhost:3000'
+        ? 'http://localhost:5000'
         : url;
     return resolved.replaceFirst(RegExp(r'/+$'), '');
   }
@@ -194,8 +195,9 @@ class FirebaseMessagingService {
 
   static Future<void> _sendTokenToServer(String userId, String token) async {
     try {
+      final String resolvedBase = await UrlResolver.resolve(_baseUrl());
       final response = await http.post(
-        Uri.parse('${_baseUrl()}/user/update-fcm-token'),
+        Uri.parse('$resolvedBase/user/update-fcm-token'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'userId': userId, 'fcmToken': token}),
       );
@@ -214,8 +216,9 @@ class FirebaseMessagingService {
 
   static Future<void> removeFcmTokenFromServer(String userId) async {
     try {
+      final String resolvedBase = await UrlResolver.resolve(_baseUrl());
       final response = await http.post(
-        Uri.parse('${_baseUrl()}/user/update-fcm-token'),
+        Uri.parse('$resolvedBase/user/update-fcm-token'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'userId': userId, 'fcmToken': null}),
       );
