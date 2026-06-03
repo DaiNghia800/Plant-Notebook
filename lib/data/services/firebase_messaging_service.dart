@@ -306,6 +306,7 @@ class FirebaseMessagingService {
       // For now, navigate to MyGarden and let user find it
       // In a production app, you would fetch the plant details by ID
       final profile = await fetchPlantProfileById(gardenPlantId);
+      debugPrint("profile: ${profile.toJson()}");
       navigatorKey.currentState?.push(
         MaterialPageRoute(builder: (_) => PlantDetailScreen(profile: profile)),
       );

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/data/models/category.dart';
 import 'package:plant_notebook/data/services/my_garden_service.dart';
@@ -31,6 +31,34 @@ class MyGardenController extends ChangeNotifier {
   bool _isLoading = true;
   String? _errorMessage;
 
+  String _searchQuery = '';
+  String _sortBy = 'dateAdded';
+
+  String get searchQuery => _searchQuery;
+  set searchQuery(String value) {
+    if (_searchQuery != value) {
+      _searchQuery = value;
+      notifyListeners();
+    }
+  }
+
+  String get sortBy => _sortBy;
+  set sortBy(String value) {
+    if (_sortBy != value) {
+      _sortBy = value;
+      notifyListeners();
+    }
+  }
+
+  bool _isGridView = true;
+  bool get isGridView => _isGridView;
+  set isGridView(bool value) {
+    if (_isGridView != value) {
+      _isGridView = value;
+      notifyListeners();
+    }
+  }
+
   /// Trạng thái tải dữ liệu ban đầu từ local storage.
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -57,6 +85,7 @@ class MyGardenController extends ChangeNotifier {
         .where((plant) => _savedPlantIds.contains(plant.id))
         .toList(growable: false);
   }
+
   /// Danh sách cây đã lưu (instances của MyGardenItem).
   List<MyGardenItem> get savedPlants {
     return List.unmodifiable(_savedPlants);
@@ -132,12 +161,10 @@ class MyGardenController extends ChangeNotifier {
   /// Xóa cây khỏi vườn (dựa trên garden item id) và cập nhật storage.
   Future<void> removePlant(String gardenPlantId) async {
     final int index = _savedPlants.indexWhere((p) => p.id == gardenPlantId);
-    if (index == -1) {
-      return;
+    if (index != -1) {
+      _savedPlants.removeAt(index);
+      await _persist();
     }
-    _savedPlants.removeAt(index);
-    await _persist();
-    notifyListeners();
 
     try {
       final int profileIndex = _plantProfiles.indexWhere(

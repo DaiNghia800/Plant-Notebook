@@ -12,7 +12,7 @@ import 'package:plant_notebook/data/models/plant_analysis_result.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class PlantScannerService {
   static final http.Client _client = http.Client();
-  
+
   // ── Service URL ─────────────────────────────────────────────────────────
   static String? _resolvedUrl;
 
@@ -29,10 +29,14 @@ class PlantScannerService {
       envUrl = envUrl.substring(0, envUrl.length - 1);
     }
 
-    if (!kIsWeb && Platform.isAndroid && (envUrl.contains('localhost') || envUrl.contains('127.0.0.1'))) {
+    if (!kIsWeb &&
+        Platform.isAndroid &&
+        (envUrl.contains('localhost') || envUrl.contains('127.0.0.1'))) {
       try {
-        final socket = await Socket.connect('10.0.2.2', 5000)
-            .timeout(const Duration(milliseconds: 200));
+        final socket = await Socket.connect(
+          '10.0.2.2',
+          5000,
+        ).timeout(const Duration(milliseconds: 200));
         socket.destroy();
         _resolvedUrl = envUrl
             .replaceAll('localhost', '10.0.2.2')
@@ -50,9 +54,9 @@ class PlantScannerService {
   Future<PlantAnalysisResult> analyzePlantImage(File imageFile) async {
     final String baseUrl = await _initServiceUrl();
     final Uri uri = Uri.parse('$baseUrl/scan');
-    
+
     final request = http.MultipartRequest('POST', uri);
-    
+
     // Đọc file ảnh dưới dạng stream
     final stream = http.ByteStream(imageFile.openRead());
     final length = await imageFile.length();
@@ -73,7 +77,9 @@ class PlantScannerService {
     );
     request.files.add(multipartFile);
 
-    final streamedResponse = await _client.send(request).timeout(const Duration(seconds: 60));
+    final streamedResponse = await _client
+        .send(request)
+        .timeout(const Duration(seconds: 60));
     final response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode == 200) {
@@ -83,7 +89,9 @@ class PlantScannerService {
       throw const PlantScannerException('all_ai_keys_rate_limited');
     } else {
       final String errMsg = _extractMessage(response.body);
-      if (errMsg.contains('api_key') || errMsg.contains('banned') || errMsg.contains('invalid')) {
+      if (errMsg.contains('api_key') ||
+          errMsg.contains('banned') ||
+          errMsg.contains('invalid')) {
         throw const PlantScannerException('api_key_invalid');
       }
       throw Exception('Server error ${response.statusCode}: $errMsg');
