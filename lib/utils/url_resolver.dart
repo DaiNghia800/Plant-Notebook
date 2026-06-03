@@ -16,16 +16,20 @@ class UrlResolver {
       envUrl = envUrl.substring(0, envUrl.length - 1);
     }
 
-    if (!kIsWeb && Platform.isAndroid && (envUrl.contains('localhost') || envUrl.contains('127.0.0.1'))) {
+    if (!kIsWeb &&
+        Platform.isAndroid &&
+        (envUrl.contains('localhost') || envUrl.contains('127.0.0.1'))) {
       try {
         final uri = Uri.parse(envUrl);
         final port = uri.hasPort ? uri.port : defaultPort;
-        
+
         // Thử kết nối nhanh tới 10.0.2.2 (máy ảo Android). Dùng timeout rất ngắn (200ms) để không bị nghẽn trên máy thật.
-        final socket = await Socket.connect('10.0.2.2', port)
-            .timeout(const Duration(milliseconds: 200));
+        final socket = await Socket.connect(
+          '10.0.2.2',
+          port,
+        ).timeout(const Duration(milliseconds: 200));
         socket.destroy();
-        
+
         // Nếu thành công -> Đang dùng máy ảo (Emulator)
         final resolved = envUrl
             .replaceAll('localhost', '10.0.2.2')

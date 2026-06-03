@@ -64,6 +64,7 @@ class MyApp extends StatelessWidget {
     final profileController = context.watch<ProfileController>();
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       themeMode: profileController.isDarkModeOn
           ? ThemeMode.dark

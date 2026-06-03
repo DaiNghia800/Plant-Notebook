@@ -17,24 +17,32 @@ class LibraryPlantApiService {
 
   static Future<String> _initServiceUrl() async {
     // ignore: avoid_print
-    print('[LibraryPlantApiService] _initServiceUrl starting, rawEnv: ${dotenv.env['LIBRARY_PLANTS_SERVICE_URL']}');
+    print(
+      '[LibraryPlantApiService] _initServiceUrl starting, rawEnv: ${dotenv.env['LIBRARY_PLANTS_SERVICE_URL']}',
+    );
     if (_resolvedUrl != null) return _resolvedUrl!;
 
     final String? rawEnvUrl = dotenv.env['LIBRARY_PLANTS_SERVICE_URL'];
     String envUrl = rawEnvUrl ?? '';
     if (envUrl.isEmpty) {
-      envUrl = kIsWeb ? 'http://localhost:5000/library-plants' : 'http://localhost:5000/library-plants';
+      envUrl = kIsWeb
+          ? 'http://localhost:5000/library-plants'
+          : 'http://localhost:5000/library-plants';
     }
 
     if (envUrl.endsWith('/')) {
       envUrl = envUrl.substring(0, envUrl.length - 1);
     }
 
-    if (!kIsWeb && Platform.isAndroid && (envUrl.contains('localhost') || envUrl.contains('127.0.0.1'))) {
+    if (!kIsWeb &&
+        Platform.isAndroid &&
+        (envUrl.contains('localhost') || envUrl.contains('127.0.0.1'))) {
       try {
         // Thử kết nối nhanh tới 10.0.2.2 (máy ảo Android). Dùng thêm .timeout() của Dart để chắc chắn không bị nghẽn mạng trên máy thật.
-        final socket = await Socket.connect('10.0.2.2', 5000)
-            .timeout(const Duration(milliseconds: 200));
+        final socket = await Socket.connect(
+          '10.0.2.2',
+          5000,
+        ).timeout(const Duration(milliseconds: 200));
         socket.destroy();
         // Nếu thành công -> Bạn đang dùng máy ảo (Emulator)
         _resolvedUrl = envUrl
@@ -114,12 +122,15 @@ class LibraryPlantApiService {
       'scientificName': scientificName,
     };
     final String baseUrl = await _initServiceUrl();
-    final Uri uri = Uri.parse('$baseUrl/check-existence').replace(queryParameters: params);
+    final Uri uri = Uri.parse(
+      '$baseUrl/check-existence',
+    ).replace(queryParameters: params);
     final http.Response response = await _client.get(uri).timeout(_timeout);
 
     _assertOk(response);
 
-    final Map<String, dynamic> body = jsonDecode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> body =
+        jsonDecode(response.body) as Map<String, dynamic>;
     return body['data'] as Map<String, dynamic>? ?? {'exists': false};
   }
 
@@ -141,8 +152,12 @@ class LibraryPlantApiService {
     String? imagePath,
   }) async {
     // Tạo ID đề xuất dựa trên tên tiếng Việt không dấu hoặc slug
-    final String cleanName = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-');
-    final String id = 'proposal-$cleanName-${DateTime.now().millisecondsSinceEpoch}';
+    final String cleanName = name.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9]'),
+      '-',
+    );
+    final String id =
+        'proposal-$cleanName-${DateTime.now().millisecondsSinceEpoch}';
 
     final String baseUrl = await _initServiceUrl();
     final Uri uri = Uri.parse('$baseUrl/contribute');
@@ -199,7 +214,8 @@ class LibraryPlantApiService {
 
     _assertOk(response);
 
-    final Map<String, dynamic> body = jsonDecode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> body =
+        jsonDecode(response.body) as Map<String, dynamic>;
     return body;
   }
 

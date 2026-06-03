@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/data/models/category.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
@@ -74,11 +74,17 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
   Future<void> _loadCareHistory() async {
     try {
       final controller = context.read<MyGardenController>();
+      await controller.initialize();
       await controller.fetchCareHistory(
         _currentProfile.id ?? _currentProfile.plantId,
       );
       if (mounted) {
         setState(() {
+          try {
+            _currentProfile = controller.plantProfiles.firstWhere(
+              (p) => p.id == _currentProfile.id || p.plantId == _currentProfile.plantId,
+            );
+          } catch (_) {}
           _careHistory = controller.getCareHistory(
             _currentProfile.id ?? _currentProfile.plantId,
           );
@@ -96,73 +102,129 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
+      body: RefreshIndicator(
+        onRefresh: _loadCareHistory,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
           SliverAppBar(
-            expandedHeight: screenHeight / 3,
+            expandedHeight: 280,
             pinned: true,
+            backgroundColor: const Color(0xFF2E7D32),
+            elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.white, shadows: [Shadow(color: Colors.black45, blurRadius: 4)]),
             flexibleSpace: FlexibleSpaceBar(
-              background: Hero(
-                tag: profile.id ?? profile.plantId,
-                child: Image.network(
-                  profile.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        size: 50,
-                        color: Colors.grey,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Hero(
+                    tag: profile.id ?? profile.plantId,
+                    child: Image.network(
+                      profile.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: const Color(0xFFE6EFE8),
+                          child: const Icon(
+                            Icons.local_florist,
+                            size: 80,
+                            color: Color(0xFF2E7D32),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Dark gradient from top for back button readability
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.4),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.3],
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: () => _showDeleteDialog(context),
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.white),
+                  onPressed: () => _showDeleteDialog(context),
+                ),
               ),
             ],
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Plant name and status
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              profile.name,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              profile.latinName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                // Floating Title Card (now a normal card)
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
-                      ),
-                      StatusBadge(status: profile.status),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                profile.name,
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  height: 1.1,
+                                  color: Color(0xFF102A17),
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                profile.latinName,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontStyle: FontStyle.italic,
+                                  color: Color(0xFF587064),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        StatusBadge(status: profile.status),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
 
                   // Care metrics
                   Row(
@@ -219,131 +281,145 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                   const SizedBox(height: 32),
 
                   // Water button
-                  SizedBox(
+                  Container(
                     width: double.infinity,
-                    height: 56,
-                    child: _isLoading
-                        ? ElevatedButton(
-                            onPressed: null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey[300],
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            ),
-                          )
-                        : ElevatedButton(
-                            onPressed:
-                                isReadyToWater(
-                                  _lastWatered!,
-                                  _wateringCycleDays,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: isReadyToWater(_lastWatered!, _wateringCycleDays) && !_isLoading
+                          ? [
+                              BoxShadow(
+                                color: const Color(0xFF2196F3).withOpacity(0.3),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              )
+                            ]
+                          : [],
+                      gradient: isReadyToWater(_lastWatered!, _wateringCycleDays) && !_isLoading
+                          ? const LinearGradient(
+                              colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isReadyToWater(_lastWatered!, _wateringCycleDays) && !_isLoading
+                          ? null
+                          : const Color(0xFFE3E9E5),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: _isLoading || !isReadyToWater(_lastWatered!, _wateringCycleDays)
+                            ? null
+                            : () => _waterPlant(context),
+                        child: Center(
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
                                 )
-                                ? () => _waterPlant(context)
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  isReadyToWater(
-                                    _lastWatered!,
-                                    _wateringCycleDays,
-                                  )
-                                  ? const Color(0xFF2E7D32)
-                                  : Colors.grey[300],
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              isReadyToWater(_lastWatered!, _wateringCycleDays)
-                                  ? 'XÁC NHẬN ĐÃ TƯỚI'
-                                  : 'ĐÃ TƯỚI (${DateTime.now().difference(_lastWatered!).inHours > 24 ? "${DateTime.now().difference(_lastWatered!).inDays} ngày" : "${DateTime.now().difference(_lastWatered!).inHours}h"} trước)',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      isReadyToWater(_lastWatered!, _wateringCycleDays)
+                                          ? Icons.water_drop
+                                          : Icons.check_circle,
+                                      color: isReadyToWater(_lastWatered!, _wateringCycleDays)
+                                          ? Colors.white
+                                          : const Color(0xFF7A9384),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      isReadyToWater(_lastWatered!, _wateringCycleDays)
+                                          ? 'TƯỚI NƯỚC'
+                                          : 'ĐÃ TƯỚI (${DateTime.now().difference(_lastWatered!).inHours > 24 ? "${DateTime.now().difference(_lastWatered!).inDays} ngày" : "${DateTime.now().difference(_lastWatered!).inHours}h"} trước)',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5,
+                                        color: isReadyToWater(_lastWatered!, _wateringCycleDays)
+                                            ? Colors.white
+                                            : const Color(0xFF7A9384),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   // Fertilizer button
-                  SizedBox(
+                  Container(
                     width: double.infinity,
-                    height: 56,
-                    child: _isLoading
-                        ? OutlinedButton(
-                            onPressed: null,
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: Colors.grey,
-                                width: 2,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: isReadyToWater(_lastFertilized!, _fertilizingCycleDays) && !_isLoading
+                          ? [
+                              BoxShadow(
+                                color: const Color(0xFF4CAF50).withOpacity(0.3),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              )
+                            ]
+                          : [],
+                      gradient: isReadyToWater(_lastFertilized!, _fertilizingCycleDays) && !_isLoading
+                          ? const LinearGradient(
+                              colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isReadyToWater(_lastFertilized!, _fertilizingCycleDays) && !_isLoading
+                          ? null
+                          : const Color(0xFFE3E9E5),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: _isLoading || !isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                            ? null
+                            : () => _showFertilizerDialog(context),
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                                    ? Icons.eco
+                                    : Icons.check_circle,
+                                color: isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                                    ? Colors.white
+                                    : const Color(0xFF7A9384),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Color(0xFF2E7D32),
+                              const SizedBox(width: 8),
+                              Text(
+                                isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                                    ? 'BÓN PHÂN'
+                                    : 'ĐÃ BÓN (${DateTime.now().difference(_lastFertilized!).inHours > 24 ? "${DateTime.now().difference(_lastFertilized!).inDays} ngày" : "${DateTime.now().difference(_lastFertilized!).inHours}h"} trước)',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                  color: isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                                      ? Colors.white
+                                      : const Color(0xFF7A9384),
                                 ),
                               ),
-                            ),
-                          )
-                        : OutlinedButton(
-                            onPressed:
-                                isReadyToWater(
-                                  _lastFertilized!,
-                                  _fertilizingCycleDays,
-                                )
-                                ? () => _showFertilizerDialog(context)
-                                : null,
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                color:
-                                    isReadyToWater(
-                                      _lastFertilized!,
-                                      _fertilizingCycleDays,
-                                    )
-                                    ? const Color(0xFF2E7D32)
-                                    : Colors.grey,
-                                width: 2,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              isReadyToWater(
-                                    _lastFertilized!,
-                                    _fertilizingCycleDays,
-                                  )
-                                  ? 'XÁC NHẬN ĐÃ BÓN PHÂN'
-                                  : 'ĐÃ BÓN (${DateTime.now().difference(_lastFertilized!).inHours > 24 ? "${DateTime.now().difference(_lastFertilized!).inDays} ngày" : "${DateTime.now().difference(_lastFertilized!).inHours}h"} trước)',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color:
-                                    isReadyToWater(
-                                      _lastFertilized!,
-                                      _fertilizingCycleDays,
-                                    )
-                                    ? const Color(0xFF2E7D32)
-                                    : Colors.grey,
-                              ),
-                            ),
+                            ],
                           ),
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 32),
 
@@ -354,11 +430,14 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildCareHistoryTimeline(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -539,43 +618,88 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
           Column(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: Colors.white,
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(color: color.withOpacity(0.3), width: 1.5),
                 ),
-                child: Icon(icon, color: color, size: 20),
+                child: Icon(icon, color: color, size: 22),
               ),
               if (!isLast)
-                Container(width: 2, height: 40, color: Colors.grey[300]),
+                Container(
+                  width: 2, 
+                  height: 60, 
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
             ],
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  history.actionTypeLabel,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  timeAgo,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-                if (history.notes != null && history.notes!.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    history.notes!,
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE8EFEA)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ],
-              ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        history.actionTypeLabel,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Color(0xFF102A17),
+                        ),
+                      ),
+                      Text(
+                        timeAgo,
+                        style: const TextStyle(
+                          color: Color(0xFF7A9384), 
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (history.notes != null && history.notes!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      history.notes!,
+                      style: const TextStyle(
+                        fontSize: 14, 
+                        color: Color(0xFF587064),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ],

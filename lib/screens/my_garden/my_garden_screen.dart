@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:plant_notebook/screens/plant_detail/plant_detail_screen.dart';
-import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
+import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/data/models/category.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
-import 'package:plant_notebook/data/models/my_garden_item.dart';
+import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_add_plant_card.dart';
+import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_add_plant_list_card.dart';
+import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_filter_chips.dart';
+import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_header.dart';
+import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plant_card.dart';
+import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plant_list_card.dart';
 import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plant_form_sheet.dart';
+import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:plant_notebook/controller/library_plant_controller.dart';
 
 class MyGardenScreen extends StatefulWidget {
   const MyGardenScreen({super.key});
@@ -17,26 +21,180 @@ class MyGardenScreen extends StatefulWidget {
 }
 
 class _MyGardenScreenState extends State<MyGardenScreen> {
+  Category _selectedCategory = Category.all;
+
   @override
   Widget build(BuildContext context) {
     return Consumer<MyGardenController>(
       builder: (context, controller, _) {
+        final List<GardenPlantProfile> allPlants = controller.plantProfiles;
         final List<GardenCategory> category = controller.plantCategory;
-        final gardenPlants = controller.savedPlants;
+        final List<GardenPlantProfile> visiblePlants = allPlants
+            .where((plant) {
+              if (_selectedCategory != Category.all &&
+                  plant.category.name != _selectedCategory) {
+                return false;
+              }
+              if (controller.searchQuery.isNotEmpty) {
+                final query = controller.searchQuery.toLowerCase();
+                final matchesName = plant.name.toLowerCase().contains(query);
+                final matchesLatin = plant.latinName.toLowerCase().contains(query);
+                if (!matchesName && !matchesLatin) {
+                  return false;
+                }
+              }
+              return true;
+            })
+            .toList(growable: true);
+
+        if (controller.sortBy == 'name') {
+          visiblePlants.sort((a, b) => a.name.compareTo(b.name));
+        } else if (controller.sortBy == 'waterNeed') {
+          int getStatusPriority(GardenPlantStatus s) {
+            switch (s) {
+              case GardenPlantStatus.thirsty:
+                return 0;
+              case GardenPlantStatus.sick:
+                return 1;
+              case GardenPlantStatus.healthy:
+                return 2;
+            }
+          }
+          visiblePlants.sort((a, b) => getStatusPriority(a.status).compareTo(getStatusPriority(b.status)));
+        } else {
+          visiblePlants.sort((a, b) => b.startDate.compareTo(a.startDate));
+        }
 
         return Stack(
           children: [
             SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.only(
+                padding: EdgeInsets.only(
                   top: 100,
                   left: 20,
                   right: 20,
                   bottom: 60,
                 ),
-                child: gardenPlants.isEmpty
-                    ? _buildEmptyState()
-                    : _buildGardenList(context, gardenPlants, controller),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    MyGardenHeader(totalPlants: allPlants.length),
+                    if (controller.errorMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        controller.errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    MyGardenFilterChips(
+                      selectedCategory: _selectedCategory,
+                      onCategoryChanged: (category) {
+                        setState(() {
+                          _selectedCategory = category;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    if (controller.searchQuery.isNotEmpty && visiblePlants.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Không tìm thấy cây phù hợp',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else if (controller.isGridView)
+                      GridView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: visiblePlants.length + 1,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 14,
+                              crossAxisSpacing: 14,
+                              childAspectRatio: 0.72,
+                            ),
+                        itemBuilder: (context, index) {
+                          if (index == visiblePlants.length) {
+                            return MyGardenAddPlantCard(
+                              onTap: () => _openPlantForm(
+                                context,
+                                controller,
+                                category: category,
+                              ),
+                            );
+                          }
+                          final GardenPlantProfile profile = visiblePlants[index];
+                          return MyGardenPlantCard(
+                            profile: profile,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    PlantDetailScreen(profile: profile),
+                              ),
+                            ),
+                            onEdit: () => _openPlantForm(
+                              context,
+                              controller,
+                              category: category,
+                              initialValue: profile,
+                            ),
+                          );
+                        },
+                      )
+                    else
+                      ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: visiblePlants.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == visiblePlants.length) {
+                            return MyGardenAddPlantListCard(
+                              onTap: () => _openPlantForm(
+                                context,
+                                controller,
+                                category: category,
+                              ),
+                            );
+                          }
+                          final GardenPlantProfile profile = visiblePlants[index];
+                          return MyGardenPlantListCard(
+                            profile: profile,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    PlantDetailScreen(profile: profile),
+                              ),
+                            ),
+                            onEdit: () => _openPlantForm(
+                              context,
+                              controller,
+                              category: category,
+                              initialValue: profile,
+                            ),
+                          );
+                        },
+                      ),
+                    const SizedBox(height: 100),
+                  ],
+                ),
               ),
             ),
             Positioned(
@@ -48,14 +206,14 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
                 child: Container(
                   width: 56,
                   height: 56,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF2E7D32),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D32),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black38,
+                        color: Colors.black.withOpacity(0.3),
                         blurRadius: 8,
-                        offset: Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
@@ -66,163 +224,6 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.spa_outlined, size: 48, color: primaryColor),
-          SizedBox(height: 12),
-          Text(
-            'Vườn của bạn chưa có cây nào.',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF21352A),
-            ),
-          ),
-          SizedBox(height: 6),
-          Text(
-            'Vào Từ điển cây để thêm cây yêu thích vào vườn.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF4F6458)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGardenList(
-    BuildContext context,
-    List<MyGardenItem> gardenPlants,
-    MyGardenController controller,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Cây của tôi (${gardenPlants.length})',
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF173722),
-          ),
-        ),
-        const SizedBox(height: 14),
-        ...gardenPlants.map((gardenPlant) {
-          final libraryPlant = controller.getLibraryPlant(
-            gardenPlant.libraryPlantId,
-          );
-
-          // Bỏ qua nếu cây gốc không còn tồn tại trong thư viện (phòng hờ)
-          if (libraryPlant == null) return const SizedBox.shrink();
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => PlantDetailScreen(plant: libraryPlant),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: 72,
-                        height: 72,
-                        child: Image.network(
-                          libraryPlant.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: const Color(0xFFE3EEE6),
-                              child: const Icon(
-                                Icons.local_florist,
-                                color: primaryColor,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            libraryPlant.name,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF183224),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            libraryPlant.shortDescription,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFF4B6255),
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Xóa khỏi vườn',
-                      onPressed: () async {
-                        // Xóa cây khỏi vườn và hiển thị thông báo.
-                        await controller.removePlant(gardenPlant.id);
-                        if (!context.mounted) {
-                          return;
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Đã xóa ${libraryPlant.name} khỏi vườn của tôi',
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Color(0xFF9B3A3A),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
-        const SizedBox(height: 100),
-      ],
     );
   }
 
