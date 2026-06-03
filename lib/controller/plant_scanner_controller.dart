@@ -221,23 +221,30 @@ class PlantScannerController extends ChangeNotifier {
       await _libraryApiService.contributePlant(
         name: result.tenPhoThong,
         scientificName: result.tenKhoaHoc,
-        category: 'Trong nhà', // Mặc định xếp vào Trong nhà
-        shortDescription: result.benhDangGap,
-        description: result.loiKhuyenChamSoc,
-        lightLevel: 'Sáng gián tiếp',
-        waterNeed: 'Trung bình',
-        difficulty: 'Dễ',
-        temperature: '20-30°C',
-        humidity: 'Trung bình',
-        toxicity: 'Chưa xác định',
-        funFacts: [result.banCoBiet],
-        careGuide: [
-          {
-            'step': 1,
-            'title': 'Tổng quan lời khuyên chăm sóc',
-            'content': result.loiKhuyenChamSoc,
-          }
-        ],
+        category: result.category,
+        shortDescription: result.shortDescription.isNotEmpty ? result.shortDescription : result.benhDangGap,
+        description: result.description.isNotEmpty ? result.description : result.loiKhuyenChamSoc,
+        lightLevel: result.lightLevel,
+        waterNeed: result.waterNeed,
+        difficulty: result.difficulty,
+        temperature: result.temperature,
+        humidity: result.humidity,
+        toxicity: result.toxicity,
+        funFacts: result.funFacts,
+        careGuide: result.careGuide.isNotEmpty 
+            ? result.careGuide.asMap().entries.map((e) => {
+                'step': e.key + 1,
+                'title': 'Chăm sóc',
+                'content': e.value
+              }).toList()
+            : [
+                {
+                  'step': 1,
+                  'title': 'Tổng quan lời khuyên chăm sóc',
+                  'content': result.loiKhuyenChamSoc,
+                }
+              ],
+        growthTimeline: result.growthTimeline,
         imagePath: imagePath,
       );
 
