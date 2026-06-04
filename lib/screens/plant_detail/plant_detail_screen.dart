@@ -31,7 +31,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
   Widget build(BuildContext context) {
     return Consumer<MyGardenController>(
       builder: (context, gardenController, _) {
-        final bool isAdded = gardenController.containsLibraryPlant(widget.plant.id);
+        final bool isAdded = gardenController.containsLibraryPlant(
+          widget.plant.id,
+        );
         final gardenPlantList = gardenController.savedPlants
             .where((p) => p.libraryPlantId == widget.plant.id)
             .toList();
@@ -221,13 +223,16 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   height: 255,
                                   child: ListView.separated(
                                     scrollDirection: Axis.horizontal,
-                                    itemCount: gardenPlant.growthTimeline.length,
+                                    itemCount:
+                                        gardenPlant.growthTimeline.length,
                                     separatorBuilder: (context, index) =>
                                         const SizedBox(width: 12),
                                     itemBuilder: (context, index) {
                                       final PlantGrowthSnapshot snapshot =
                                           gardenPlant.growthTimeline[index];
-                                      return _GrowthSnapshotCard(snapshot: snapshot);
+                                      return _GrowthSnapshotCard(
+                                        snapshot: snapshot,
+                                      );
                                     },
                                   ),
                                 )
