@@ -4,6 +4,7 @@ import 'package:plant_notebook/data/services/google_auth_service.dart';
 import 'package:plant_notebook/common/widgets/widget.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:plant_notebook/data/services/email_auth_service.dart';
+import 'package:plant_notebook/utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +21,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _isGoogleSigningIn = false;
   bool _isEmailSigningIn = false;
+
+  // Validation error messages
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void initState() {
@@ -60,18 +65,22 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  bool _validateForm() {
+    final emailErr = AppValidators.validateEmail(_emailController.text);
+    final passwordErr = AppValidators.validatePasswordLogin(_passwordController.text);
+    setState(() {
+      _emailError = emailErr;
+      _passwordError = passwordErr;
+    });
+    return emailErr == null && passwordErr == null;
+  }
+
   Future<void> _onLoginPressed() async {
     if (_isEmailSigningIn) return;
+    if (!_validateForm()) return;
 
     final identifier = _emailController.text.trim();
     final password = _passwordController.text.trim();
-
-    if (identifier.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập email/sđt và mật khẩu')),
-      );
-      return;
-    }
 
     setState(() {
       _isEmailSigningIn = true;
@@ -214,26 +223,73 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        onChanged: (_) {
+                          if (_emailError != null) {
+                            setState(() => _emailError = null);
+                          }
+                        },
                         decoration: InputDecoration(
                           hintText: 'example@gmail.com',
                           hintStyle: const TextStyle(color: Color(0xFF90A496)),
                           filled: true,
-                          fillColor: const Color(0xFFEFF4F0),
+                          fillColor: _emailError != null
+                              ? const Color(0xFFFFF0F0)
+                              : const Color(0xFFEFF4F0),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: _emailError != null
+                                ? const BorderSide(
+                                    color: Color(0xFFE53935),
+                                    width: 1.5,
+                                  )
+                                : BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: _emailError != null
+                                  ? const Color(0xFFE53935)
+                                  : const Color(0xFF267A32),
+                              width: 1.5,
+                            ),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 18,
                           ),
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.email_outlined,
-                            color: Color(0xFF7A8D81),
+                            color: _emailError != null
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF7A8D81),
                             size: 22,
                           ),
                         ),
                       ),
+                      if (_emailError != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 14,
+                              color: Color(0xFFE53935),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _emailError!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFFE53935),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 20),
 
                       // Password Field
@@ -251,7 +307,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              Navigator.of(context).pushNamed(forgotPasswordViewRoute);
+                              Navigator.of(
+                                context,
+                              ).pushNamed(forgotPasswordViewRoute);
                             },
                             child: const Text(
                               'Quên mật khẩu?',
@@ -268,22 +326,49 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
+                        onChanged: (_) {
+                          if (_passwordError != null) {
+                            setState(() => _passwordError = null);
+                          }
+                        },
                         decoration: InputDecoration(
                           hintText: '••••••••',
                           hintStyle: const TextStyle(color: Color(0xFF90A496)),
                           filled: true,
-                          fillColor: const Color(0xFFEFF4F0),
+                          fillColor: _passwordError != null
+                              ? const Color(0xFFFFF0F0)
+                              : const Color(0xFFEFF4F0),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: _passwordError != null
+                                ? const BorderSide(
+                                    color: Color(0xFFE53935),
+                                    width: 1.5,
+                                  )
+                                : BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: _passwordError != null
+                                  ? const Color(0xFFE53935)
+                                  : const Color(0xFF267A32),
+                              width: 1.5,
+                            ),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 18,
                           ),
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.lock_rounded,
-                            color: Color(0xFF7A8D81),
+                            color: _passwordError != null
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF7A8D81),
                             size: 22,
                           ),
                           suffixIcon: IconButton(
@@ -301,6 +386,26 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
+                      if (_passwordError != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 14,
+                              color: Color(0xFFE53935),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _passwordError!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFFE53935),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 32),
 
                       // Login Button
