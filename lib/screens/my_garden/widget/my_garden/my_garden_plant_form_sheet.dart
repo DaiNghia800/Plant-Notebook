@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/data/models/category.dart';
 import 'package:plant_notebook/data/models/reminder.dart';
@@ -92,151 +93,279 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
     final double bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final bool isEditing = widget.initialValue != null && widget.initialValue!.id != null;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomInset),
+    return Container(
+      decoration: const BoxDecoration(
+        color: neutral,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 10, 20, 20 + bottomInset),
       child: SingleChildScrollView(
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                isEditing ? 'Sửa hồ sơ cây' : 'Thêm cây mới',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isEditing ? 'Sửa hồ sơ cây' : 'Thêm cây mới',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: primaryColor,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
-              _buildPlantSelector(isEditing),
-              const SizedBox(height: 12),
+              
+              // 1. Image Picker Banner
+              GestureDetector(
+                onTap: _showPickImageOptions,
+                child: Container(
+                  width: double.infinity,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey[200]!),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: _plantImage != null
+                        ? Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              _plantImage!.startsWith('http')
+                                  ? Image.network(_plantImage!, fit: BoxFit.cover)
+                                  : Image.file(File(_plantImage!), fit: BoxFit.cover),
+                              Container(
+                                color: Colors.black.withOpacity(0.3),
+                              ),
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.9),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.camera_alt, color: primaryColor, size: 18),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Thay đổi ảnh',
+                                        style: TextStyle(
+                                          color: primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _plantImage = null;
+                                    });
+                                  },
+                                  child: CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: Colors.white.withOpacity(0.9),
+                                    child: const Icon(Icons.close, size: 18, color: Colors.red),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: const BoxDecoration(
+                                  color: neutral,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.add_a_photo_rounded,
+                                  size: 32,
+                                  color: primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Thêm hình ảnh cho cây',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Chụp ảnh hoặc chọn từ thư viện',
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 2. Category selection (Position)
+              _buildCategorySelector(isEditing),
+              const SizedBox(height: 20),
+
+              // 3. Plant Name Input
               TextFormField(
                 controller: _nicknameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Tên cây',
-                  border: OutlineInputBorder(),
+                  hintText: 'Ví dụ: Sen đá ban công, Trầu bà...',
+                  prefixIcon: const Icon(Icons.eco_rounded, color: primaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: primaryColor, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Nhập tên cho cây';
+                    return 'Vui lòng nhập tên cho cây';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 12),
-              ListTile(
-                tileColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                title: const Text('Ngày bắt đầu trồng'),
-                subtitle: Text(
-                  '${_startDate.day}/${_startDate.month}/${_startDate.year}',
-                ),
-                trailing: const Icon(Icons.calendar_today),
+              const SizedBox(height: 20),
+
+              // 4. Start Date
+              InkWell(
                 onTap: _pickStartDate,
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: _showPickImageOptions,
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Chụp ảnh'),
-              ),
-              if (_plantImage != null) ...[
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: _plantImage!.startsWith('http')
-                      ? Image.network(
-                          // Nếu là link online
-                          _plantImage!,
-                          height: 140,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.file(
-                          // Nếu là file trong máy
-                          File(_plantImage!),
-                          height: 140,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: neutral,
+                          shape: BoxShape.circle,
                         ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              const Text(
-                'Trạng thái hiện tại',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<GardenPlantStatus>(
-                value: _status,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(
-                    value: GardenPlantStatus.thirsty,
-                    child: Text('Đang khát'),
+                        child: const Icon(
+                          Icons.calendar_today_rounded,
+                          color: primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ngày bắt đầu trồng',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_startDate.day}/${_startDate.month}/${_startDate.year}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                    ],
                   ),
-                  DropdownMenuItem(
-                    value: GardenPlantStatus.healthy,
-                    child: Text('Khỏe mạnh'),
-                  ),
-                  DropdownMenuItem(
-                    value: GardenPlantStatus.sick,
-                    child: Text('Đang bênh'),
-                  ),
-                ],
-                onChanged: (status) {
-                  if (status == null) {
-                    return;
-                  }
-                  setState(() {
-                    _status = status;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Cài đặt nhắc nhở',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _wateringController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Chu kỳ tưới nước (ngày/lần)',
-                  border: OutlineInputBorder(),
                 ),
-                validator: _validateCycle,
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _fertilizingController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Chù kỳ bón phân (ngày/lần)',
-                  border: OutlineInputBorder(),
-                ),
-                validator: _validateCycle,
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                value: _pushEnabled,
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Bật cảnh báo'),
-                onChanged: (value) {
-                  setState(() {
-                    _pushEnabled = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
+
+              // 5. Status Selector
+              _buildStatusSelector(),
+              const SizedBox(height: 24),
+
+              // 6. Reminder Settings
+              _buildReminderSettingsCard(),
+              const SizedBox(height: 28),
+
+              // 7. Submit Button
               SizedBox(
                 width: double.infinity,
-                child: FilledButton(
+                height: 52,
+                child: ElevatedButton.icon(
                   onPressed: _submitForm,
-                  child: Text(isEditing ? 'Lưu thay đổi' : 'Thêm vào vườn'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shadowColor: primaryColor.withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: Icon(isEditing ? Icons.save_rounded : Icons.add_circle_outline_rounded),
+                  label: Text(
+                    isEditing ? 'Lưu thay đổi' : 'Thêm vào vườn',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -246,44 +375,336 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
     );
   }
 
-  Widget _buildPlantSelector(bool isEditing) {
-    return DropdownButtonFormField<String>(
-      initialValue: _categoryId,
-      value: _categoryId,
-      decoration: const InputDecoration(
-        labelText: 'Loai cay',
-        border: OutlineInputBorder(),
-      ),
-      items: widget.plantOptions
-          .where(
-            (option) => GardenCategory.categoryToText(option.name) != "Tất cả",
-          )
-          .map(
-            (option) => DropdownMenuItem<String>(
-              value: option.id,
-              child: Text(GardenCategory.categoryToText(option.name)),
+  Widget _buildCategorySelector(bool isEditing) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Vị trí đặt cây',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: widget.plantOptions
+              .where((option) => GardenCategory.categoryToText(option.name) != "Tất cả")
+              .map((option) {
+                final bool isSelected = _categoryId == option.id;
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: ChoiceChip(
+                      label: Center(
+                        child: Text(
+                          GardenCategory.categoryToText(option.name),
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                      selected: isSelected,
+                      selectedColor: primaryColor,
+                      backgroundColor: Colors.white,
+                      checkmarkColor: Colors.white,
+                      showCheckmark: false,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: isSelected ? primaryColor : Colors.grey[300]!,
+                        ),
+                      ),
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() {
+                            _categoryId = option.id;
+                            _category = option.name;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                );
+              })
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Tình trạng sức khỏe',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            _buildStatusChip(
+              status: GardenPlantStatus.healthy,
+              label: 'Khỏe mạnh',
+              icon: Icons.check_circle_rounded,
+              activeColor: Colors.green,
+              backgroundColor: Colors.green[50]!,
             ),
-          )
-          .toList(growable: false),
-      onChanged: (id) {
-        if (id == null) {
-          return;
-        }
-        final GardenCategory selected = widget.plantOptions.firstWhere(
-          (option) => option.id == id,
-        );
-        setState(() {
-          _categoryId = selected.id;
-          _category = selected.name;
-        });
-      },
+            const SizedBox(width: 8),
+            _buildStatusChip(
+              status: GardenPlantStatus.thirsty,
+              label: 'Đang khát',
+              icon: Icons.opacity_rounded,
+              activeColor: Colors.blue,
+              backgroundColor: Colors.blue[50]!,
+            ),
+            const SizedBox(width: 8),
+            _buildStatusChip(
+              status: GardenPlantStatus.sick,
+              label: 'Đang bệnh',
+              icon: Icons.medical_services_rounded,
+              activeColor: Colors.orange,
+              backgroundColor: Colors.orange[50]!,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusChip({
+    required GardenPlantStatus status,
+    required String label,
+    required IconData icon,
+    required Color activeColor,
+    required Color backgroundColor,
+  }) {
+    final bool isSelected = _status == status;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _status = status;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? backgroundColor : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? activeColor : Colors.grey[300]!,
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: activeColor.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    )
+                  ]
+                : [],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? activeColor : Colors.grey[500],
+                size: 20,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? activeColor : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReminderSettingsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.01),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: neutral,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.notifications_active_rounded,
+                  color: primaryColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Tự động nhắc nhở',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const Spacer(),
+              Switch(
+                value: _pushEnabled,
+                activeColor: primaryColor,
+                onChanged: (value) {
+                  setState(() {
+                    _pushEnabled = value;
+                  });
+                },
+              ),
+            ],
+          ),
+          if (_pushEnabled) ...[
+            const Divider(height: 24),
+            _buildCycleInput(
+              controller: _wateringController,
+              label: 'Chu kỳ tưới nước',
+              icon: Icons.opacity_rounded,
+              iconColor: Colors.blue,
+              quickDays: [1, 3, 5, 7],
+            ),
+            const SizedBox(height: 20),
+            _buildCycleInput(
+              controller: _fertilizingController,
+              label: 'Chu kỳ bón phân',
+              icon: Icons.grass_rounded,
+              iconColor: Colors.brown,
+              quickDays: [7, 14, 30, 60],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCycleInput({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+    required List<int> quickDays,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: iconColor, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            suffixText: 'ngày',
+            hintText: 'Nhập số ngày...',
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: primaryColor, width: 2),
+            ),
+            filled: true,
+            fillColor: neutral,
+          ),
+          validator: _validateCycle,
+        ),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: quickDays.map((days) {
+              final String valStr = days.toString();
+              final bool isSelected = controller.text == valStr;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text('$days ngày'),
+                  selected: isSelected,
+                  selectedColor: primaryColor.withOpacity(0.15),
+                  backgroundColor: Colors.grey[100],
+                  showCheckmark: false,
+                  labelStyle: TextStyle(
+                    color: isSelected ? primaryColor : Colors.black87,
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: isSelected ? primaryColor : Colors.transparent,
+                    ),
+                  ),
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        controller.text = valStr;
+                      });
+                    }
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 
   String? _validateCycle(String? value) {
     final int? parsed = int.tryParse(value ?? '');
     if (parsed == null || parsed <= 0) {
-      return 'Nhap so ngay hop le';
+      return 'Vui lòng nhập số ngày hợp lệ';
     }
     return null;
   }
@@ -324,26 +745,55 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
   void _showPickImageOptions() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.camera_alt),
-            title: const Text('Chụp ảnh mới'),
-            onTap: () {
-              Navigator.pop(context);
-              _pickPhoto(ImageSource.camera);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo_library),
-            title: const Text('Chọn từ thư viện'),
-            onTap: () {
-              Navigator.pop(context);
-              _pickPhoto(ImageSource.gallery);
-            },
-          ),
-        ],
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Chọn ảnh cho cây',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.camera_alt, color: Colors.blue),
+              ),
+              title: const Text('Chụp ảnh mới'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.photo_library, color: Colors.green),
+              ),
+              title: const Text('Chọn từ thư viện'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
 import 'package:plant_notebook/data/models/my_garden_item.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
@@ -68,19 +69,25 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        widget.plant.imageUrl,
+                      CachedNetworkImage(
+                        imageUrl: widget.plant.imageUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: const Color(0xFFE6EFE8),
-                            child: const Icon(
-                              Icons.local_florist,
-                              size: 80,
-                              color: primaryColor,
+                        placeholder: (context, url) => Container(
+                          color: const Color(0xFFE6EFE8),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                             ),
-                          );
-                        },
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: const Color(0xFFE6EFE8),
+                          child: const Icon(
+                            Icons.local_florist,
+                            size: 80,
+                            color: primaryColor,
+                          ),
+                        ),
                       ),
                       Container(
                         decoration: BoxDecoration(
@@ -915,20 +922,26 @@ class _GrowthSnapshotCard extends StatelessWidget {
             child: SizedBox(
               height: 128,
               width: double.infinity,
-              child: Image.network(
-                snapshot.imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: snapshot.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: const Color(0xFFE8EFE7),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.photo_library_outlined,
-                      color: primaryColor,
-                      size: 40,
+                placeholder: (context, url) => Container(
+                  color: const Color(0xFFE8EFE7),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                     ),
-                  );
-                },
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: const Color(0xFFE8EFE7),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.photo_library_outlined,
+                    color: primaryColor,
+                    size: 40,
+                  ),
+                ),
               ),
             ),
           ),

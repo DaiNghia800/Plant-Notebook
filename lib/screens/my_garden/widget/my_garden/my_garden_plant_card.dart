@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
 
 class MyGardenPlantCard extends StatelessWidget {
@@ -158,7 +159,34 @@ class _PlantImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (profile.imageUrl.isNotEmpty) {
-      return Image.network(profile.imageUrl, fit: BoxFit.cover);
+      if (profile.imageUrl.startsWith('http') || profile.imageUrl.startsWith('https')) {
+        return CachedNetworkImage(
+          imageUrl: profile.imageUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            color: const Color(0xFFF1F6F2),
+            child: const Center(
+              child: Icon(Icons.local_florist, size: 42, color: Color(0xFF88AA90)),
+            ),
+          ),
+        );
+      } else {
+        return Image.file(
+          File(profile.imageUrl),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: const Color(0xFFF1F6F2),
+            child: const Center(
+              child: Icon(Icons.local_florist, size: 42, color: Color(0xFF88AA90)),
+            ),
+          ),
+        );
+      }
     }
 
     return Container(

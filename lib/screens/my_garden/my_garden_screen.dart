@@ -3,8 +3,6 @@ import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/data/models/category.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
-import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_add_plant_card.dart';
-import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_add_plant_list_card.dart';
 import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_filter_chips.dart';
 import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_header.dart';
 import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plant_card.dart';
@@ -132,7 +130,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
                         padding: EdgeInsets.zero,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: visiblePlants.length + 1,
+                        itemCount: visiblePlants.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
@@ -141,15 +139,6 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
                               childAspectRatio: 0.72,
                             ),
                         itemBuilder: (context, index) {
-                          if (index == visiblePlants.length) {
-                            return MyGardenAddPlantCard(
-                              onTap: () => _openPlantForm(
-                                context,
-                                controller,
-                                category: category,
-                              ),
-                            );
-                          }
                           final GardenPlantProfile profile = visiblePlants[index];
                           return MyGardenPlantCard(
                             profile: profile,
@@ -173,17 +162,8 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
                         padding: EdgeInsets.zero,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: visiblePlants.length + 1,
+                        itemCount: visiblePlants.length,
                         itemBuilder: (context, index) {
-                          if (index == visiblePlants.length) {
-                            return MyGardenAddPlantListCard(
-                              onTap: () => _openPlantForm(
-                                context,
-                                controller,
-                                category: category,
-                              ),
-                            );
-                          }
                           final GardenPlantProfile profile = visiblePlants[index];
                           return MyGardenPlantListCard(
                             profile: profile,

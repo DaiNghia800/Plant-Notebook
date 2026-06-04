@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
 
 class MyGardenPlantListCard extends StatelessWidget {
@@ -56,7 +59,37 @@ class MyGardenPlantListCard extends StatelessWidget {
                 width: 72,
                 height: 72,
                 child: profile.imageUrl.isNotEmpty
-                    ? Image.network(profile.imageUrl, fit: BoxFit.cover)
+                    ? (profile.imageUrl.startsWith('http') || profile.imageUrl.startsWith('https'))
+                        ? CachedNetworkImage(
+                            imageUrl: profile.imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
+                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: const Color(0xFFF1F6F2),
+                              child: const Icon(
+                                Icons.local_florist,
+                                size: 32,
+                                color: Color(0xFF88AA90),
+                              ),
+                            ),
+                          )
+                        : Image.file(
+                            File(profile.imageUrl),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: const Color(0xFFF1F6F2),
+                              child: const Icon(
+                                Icons.local_florist,
+                                size: 32,
+                                color: Color(0xFF88AA90),
+                              ),
+                            ),
+                          )
                     : Container(
                         color: const Color(0xFFF1F6F2),
                         child: const Icon(
