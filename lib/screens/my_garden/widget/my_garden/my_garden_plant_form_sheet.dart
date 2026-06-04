@@ -90,7 +90,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
   @override
   Widget build(BuildContext context) {
     final double bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final bool isEditing = widget.initialValue != null;
+    final bool isEditing = widget.initialValue != null && widget.initialValue!.id != null;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomInset),

@@ -13,9 +13,11 @@ class MyGardenService {
   late final Dio _dio = DioClient.createDio();
 
   Future<List<GardenPlantProfile>> fetchPlantProfiles() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? userId = prefs.getString('userId');
     final dynamic decoded = await _request(
       method: 'GET',
-      path: '/my-garden/plants',
+      path: '/my-garden/plants${userId != null ? '?userId=$userId' : ''}',
     );
     final List<dynamic> list = _extractList(decoded, fallbackKey: 'data');
     return list
@@ -56,7 +58,9 @@ class MyGardenService {
       'userId': userId,
     });
 
-    if (profile.imageUrl.isNotEmpty) {
+    final bool hasLocalImage =
+        profile.imageUrl.isNotEmpty && !profile.imageUrl.startsWith('http');
+    if (hasLocalImage) {
       formData.files.add(
         MapEntry(
           'image',
@@ -66,6 +70,8 @@ class MyGardenService {
           ),
         ),
       );
+    } else if (profile.imageUrl.isNotEmpty) {
+      formData.fields.add(MapEntry('imageUrl', profile.imageUrl));
     }
 
     try {
