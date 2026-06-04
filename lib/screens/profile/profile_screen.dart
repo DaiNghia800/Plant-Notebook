@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:plant_notebook/data/services/firebase_messaging_service.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
+import 'package:plant_notebook/controller/my_garden_controller.dart';
 import '../../controller/profile_controller.dart';
 import '../../utils/app_colors.dart';
 
@@ -26,6 +27,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadUserData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<ProfileController>().loadUserData();
+      }
+    });
   }
 
   Future<void> _loadUserData() async {
@@ -131,81 +137,13 @@ class ProfileView extends StatelessWidget {
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  controller.pickAvatar();
-                },
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.edit,
-                  color: Theme.of(context).primaryColor,
-                ),
-                title: Text(
-                  'Đổi tên hiển thị',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showEditNameDialog(context, controller);
+                onTap: () async {
+                  await controller.pickAvatar();
+                  if (context.mounted) Navigator.pop(context);
                 },
               ),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  void _showEditNameDialog(BuildContext context, ProfileController controller) {
-    final TextEditingController nameController = TextEditingController(
-      text: controller.userName,
-    );
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(
-            'Đổi tên hiển thị',
-            style: TextStyle(
-              color: Theme.of(context).primaryColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: TextField(
-            controller: nameController,
-            decoration: InputDecoration(
-              hintText: 'Nhập tên mới',
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Theme.of(context).primaryColor),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Hủy',
-                style: TextStyle(color: Theme.of(context).hintColor),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                controller.updateUserName(nameController.text);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-              ),
-              child: Text(
-                'Lưu',
-                style: TextStyle(color: Theme.of(context).colorScheme.surface),
-              ),
-            ),
-          ],
         );
       },
     );
@@ -312,12 +250,15 @@ class ProfileView extends StatelessWidget {
     // Gọi controller từ Provider
     final controller = context.watch<ProfileController>();
 
-    return SingleChildScrollView(
-      physics: BouncingScrollPhysics(),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return SafeArea(
+      bottom: true,
+      top: false,
+      child: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
+        child: Padding(
+          padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 100.0, bottom: 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 2. Nội dung Profile
             _buildProfileCard(context, controller),
@@ -334,15 +275,22 @@ class ProfileView extends StatelessWidget {
             _buildSettingsCard(context, controller),
             SizedBox(height: 30),
             _buildLogoutButton(context, controller),
-            SizedBox(height: 50), // Khoảng trống dưới cùng
+            SizedBox(height: 80), // Khoảng trống phụ trợ (SafeArea đã lo phần lớn thanh điều hướng)
           ],
         ),
       ),
-    );
+    ));
   }
 
   // 1. Thẻ Thông tin cá nhân
   Widget _buildProfileCard(BuildContext context, ProfileController controller) {
+    final myGardenController = context.watch<MyGardenController>();
+    final int plantCount = myGardenController.savedPlants.length;
+    final int level = 1 + (plantCount ~/ 3); // Mỗi 3 cây tăng 1 cấp
+    
+    final String textPlants = controller.currentLanguage == 'English' ? '$plantCount Plants' : '$plantCount Cây trồng';
+    final String textLevel = controller.currentLanguage == 'English' ? 'Level $level' : 'Cấp $level';
+
     return Container(
       padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -365,19 +313,26 @@ class ProfileView extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.secondary.withOpacity(0.2),
-                  backgroundImage: controller.avatarBytes != null
-                      ? MemoryImage(controller.avatarBytes!)
-                      : null,
+                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
                   child: controller.avatarBytes == null
                       ? Icon(
                           Icons.person,
                           size: 50,
                           color: Theme.of(context).primaryColor,
                         )
-                      : null,
+                      : ClipOval(
+                          child: Image.memory(
+                            controller.avatarBytes!,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.broken_image,
+                              size: 50,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
                 ),
                 Container(
                   padding: EdgeInsets.all(6),
@@ -407,6 +362,16 @@ class ProfileView extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
+          if (controller.userEmail.isNotEmpty) ...[
+            SizedBox(height: 2),
+            Text(
+              controller.userEmail,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ],
           SizedBox(height: 5),
           Text(
             controller.textMemberSince,
@@ -421,12 +386,12 @@ class ProfileView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildStatChip(context, Icons.eco, controller.textPlants),
+              _buildStatChip(context, Icons.eco, textPlants),
               SizedBox(width: 15),
               _buildStatChip(
                 context,
                 Icons.military_tech,
-                controller.textLevel,
+                textLevel,
               ),
             ],
           ),

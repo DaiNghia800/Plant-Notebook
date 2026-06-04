@@ -1,14 +1,42 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileController extends ChangeNotifier {
   bool isNotificationOn = true;
   bool isDarkModeOn = false;
   
-  String userName = 'Nguyễn Văn An';
+  String userName = 'Người dùng';
+  String userEmail = '';
+  String memberSince = '2024';
   Uint8List? avatarBytes;
   String currentLanguage = 'Tiếng Việt';
+
+  Future<void> loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userString = prefs.getString('auth_user_profile');
+    if (userString != null) {
+      final user = jsonDecode(userString);
+      userName = user['name'] ?? user['fullName'] ?? 'Người dùng';
+      userEmail = user['email'] ?? '';
+      if (user['createdAt'] != null) {
+        try {
+          final date = DateTime.parse(user['createdAt']);
+          memberSince = date.year.toString();
+        } catch (_) {}
+      }
+      notifyListeners();
+    }
+    
+    // Load Avatar
+    final avatarString = prefs.getString('user_avatar_base64');
+    if (avatarString != null) {
+      avatarBytes = base64Decode(avatarString);
+      notifyListeners();
+    }
+  }
 
   void toggleNotification(bool value) {
     isNotificationOn = value;
@@ -22,9 +50,7 @@ class ProfileController extends ChangeNotifier {
 
   // Translations
   String get textTitle => currentLanguage == 'English' ? 'Plant Notebook' : 'Sổ tay cây trồng';
-  String get textMemberSince => currentLanguage == 'English' ? 'MEMBER SINCE 2024' : 'THÀNH VIÊN TỪ 2024';
-  String get textPlants => currentLanguage == 'English' ? '12 Plants' : '12 Cây trồng';
-  String get textLevel => currentLanguage == 'English' ? 'Level 5' : 'Cấp 5';
+  String get textMemberSince => currentLanguage == 'English' ? 'MEMBER SINCE $memberSince' : 'THÀNH VIÊN TỪ $memberSince';
   String get textSettings => currentLanguage == 'English' ? 'APP SETTINGS' : 'CÀI ĐẶT ỨNG DỤNG';
   String get textNotification => currentLanguage == 'English' ? 'Notifications' : 'Thông báo';
   String get textDarkMode => currentLanguage == 'English' ? 'Dark Mode' : 'Chế độ tối';
@@ -56,13 +82,27 @@ class ProfileController extends ChangeNotifier {
     if (image != null) {
       avatarBytes = await image.readAsBytes();
       notifyListeners();
+      
+      // Save Avatar to local storage
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_avatar_base64', base64Encode(avatarBytes!));
     }
   }
 
-  void updateUserName(String newName) {
+  Future<void> updateUserName(String newName) async {
     if (newName.trim().isNotEmpty) {
       userName = newName.trim();
       notifyListeners();
+      
+      // Save back to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final userString = prefs.getString('auth_user_profile');
+      if (userString != null) {
+        final user = jsonDecode(userString);
+        user['name'] = userName;
+        user['fullName'] = userName; // for backward compatibility
+        await prefs.setString('auth_user_profile', jsonEncode(user));
+      }
     }
   }
 
