@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/data/models/category.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
@@ -218,20 +221,39 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                       children: [
                         Hero(
                           tag: isAdded ? (profile.id ?? profile.plantId) : _libraryPlant.id,
-                          child: Image.network(
-                            isAdded ? profile.imageUrl : _libraryPlant.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: const Color(0xFFE6EFE8),
-                                child: const Icon(
-                                  Icons.local_florist,
-                                  size: 80,
-                                  color: Color(0xFF2E7D32),
+                          child: (isAdded && profile.imageUrl.isNotEmpty && !profile.imageUrl.startsWith('http') && !profile.imageUrl.startsWith('https'))
+                              ? Image.file(
+                                  File(profile.imageUrl),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: const Color(0xFFE6EFE8),
+                                    child: const Icon(
+                                      Icons.local_florist,
+                                      size: 80,
+                                      color: Color(0xFF2E7D32),
+                                    ),
+                                  ),
+                                )
+                              : CachedNetworkImage(
+                                  imageUrl: isAdded ? profile.imageUrl : _libraryPlant.imageUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: const Color(0xFFE6EFE8),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) => Container(
+                                    color: const Color(0xFFE6EFE8),
+                                    child: const Icon(
+                                      Icons.local_florist,
+                                      size: 80,
+                                      color: Color(0xFF2E7D32),
+                                    ),
+                                  ),
                                 ),
-                              );
-                            },
-                          ),
                         ),
                         Positioned.fill(
                           child: DecoratedBox(
