@@ -5,6 +5,7 @@ import 'package:plant_notebook/data/services/google_auth_service.dart';
 import 'package:plant_notebook/common/widgets/widget.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:plant_notebook/data/services/email_auth_service.dart';
+import 'package:plant_notebook/utils/validators.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -23,8 +24,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final EmailAuthService _emailAuthService = EmailAuthService();
 
   bool _obscurePassword = true;
+  bool _obscureConfirm = true;
   bool _isGoogleRegistering = false;
   bool _isEmailRegistering = false;
+
+  // Validation error messages
+  String? _nameError;
+  String? _emailError;
+  String? _phoneError;
+  String? _passwordError;
+  String? _confirmError;
 
   @override
   void initState() {
@@ -70,32 +79,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  // ── Validators ──────────────────────────────────────────────────────────────
+
+  bool _validateForm() {
+    final nameErr = AppValidators.validateName(_nameController.text);
+    final emailErr = AppValidators.validateEmail(_emailController.text);
+    final phoneErr = AppValidators.validatePhone(_phoneController.text);
+    final passwordErr = AppValidators.validatePassword(_passwordController.text);
+    final confirmErr = AppValidators.validateConfirmPassword(
+      _confirmController.text,
+      _passwordController.text,
+    );
+    setState(() {
+      _nameError = nameErr;
+      _emailError = emailErr;
+      _phoneError = phoneErr;
+      _passwordError = passwordErr;
+      _confirmError = confirmErr;
+    });
+    return nameErr == null &&
+        emailErr == null &&
+        phoneErr == null &&
+        passwordErr == null &&
+        confirmErr == null;
+  }
+
+  // ── Actions ─────────────────────────────────────────────────────────────────
+
   Future<void> _onRegisterPressed() async {
     if (_isEmailRegistering) return;
+    if (!_validateForm()) return;
 
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
-    final confirm = _confirmController.text.trim();
-
-    if (name.isEmpty ||
-        email.isEmpty ||
-        phone.isEmpty ||
-        password.isEmpty ||
-        confirm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
-      );
-      return;
-    }
-
-    if (password != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mật khẩu xác nhận không khớp')),
-      );
-      return;
-    }
 
     setState(() {
       _isEmailRegistering = true;
@@ -174,6 +192,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     }
   }
+
+  // ── Build ────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +295,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: _nameController,
                             hintText: 'Nguyễn Văn A',
                             prefixIcon: Icons.person_rounded,
+                            errorText: _nameError,
+                            onChanged: (_) {
+                              if (_nameError != null) setState(() => _nameError = null);
+                            },
                           ),
+                          _buildErrorText(_nameError),
                           const SizedBox(height: 18),
 
                           // Email Field
@@ -285,17 +310,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hintText: 'example@gmail.com',
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
+                            errorText: _emailError,
+                            onChanged: (_) {
+                              if (_emailError != null) setState(() => _emailError = null);
+                            },
                           ),
+                          _buildErrorText(_emailError),
                           const SizedBox(height: 18),
 
                           // Phone Field
                           _buildLabel('SỐ ĐIỆN THOẠI'),
                           _buildTextField(
                             controller: _phoneController,
-                            hintText: '09...',
+                            hintText: '0912345678',
                             prefixIcon: Icons.phone_outlined,
                             keyboardType: TextInputType.phone,
+                            errorText: _phoneError,
+                            onChanged: (_) {
+                              if (_phoneError != null) setState(() => _phoneError = null);
+                            },
                           ),
+                          _buildErrorText(_phoneError),
                           const SizedBox(height: 18),
 
                           // Password Field
@@ -305,6 +340,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hintText: '••••••••',
                             prefixIcon: Icons.lock_rounded,
                             obscureText: _obscurePassword,
+                            errorText: _passwordError,
+                            onChanged: (_) {
+                              if (_passwordError != null) setState(() => _passwordError = null);
+                              // Re-validate confirm nếu đã nhập
+                              if (_confirmController.text.isNotEmpty) {
+                                setState(() {
+                                  _confirmError = AppValidators.validateConfirmPassword(
+                                    _confirmController.text,
+                                    _passwordController.text,
+                                  );
+                                });
+                              }
+                            },
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword
@@ -319,6 +367,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               },
                             ),
                           ),
+                          _buildErrorText(_passwordError),
+                          if (_passwordError == null && _passwordController.text.isNotEmpty)
+                            _buildPasswordStrengthIndicator(_passwordController.text),
                           const SizedBox(height: 18),
 
                           // Confirm Password Field
@@ -327,8 +378,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: _confirmController,
                             hintText: '••••••••',
                             prefixIcon: Icons.history_rounded,
-                            obscureText: _obscurePassword,
+                            obscureText: _obscureConfirm,
+                            errorText: _confirmError,
+                            onChanged: (_) {
+                              if (_confirmError != null) setState(() => _confirmError = null);
+                            },
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirm
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: const Color(0xFF90A496),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureConfirm = !_obscureConfirm;
+                                });
+                              },
+                            ),
                           ),
+                          _buildErrorText(_confirmError),
                           const SizedBox(height: 28),
 
                           // Register Button
@@ -429,38 +498,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 20),
 
                     // Social Buttons Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GoogleSignInButton(
-                            onPressed: _onGoogleRegisterPressed,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                GoogleLogoWidget(size: 20.0),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Google',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF111C14),
-                                  ),
-                                ),
-                              ],
+                    GoogleSignInButton(
+                      onPressed: _onGoogleRegisterPressed,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          GoogleLogoWidget(size: 20.0),
+                          SizedBox(width: 8),
+                          Text(
+                            'Google',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF111C14),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _SocialButton(
-                            label: 'Facebook',
-                            iconData: Icons.facebook,
-                            iconColor: const Color(0xFF1877F2),
-                            onTap: () {},
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 40),
                   ],
@@ -472,6 +526,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
 
   Widget _buildLabel(String text) {
     return Padding(
@@ -488,6 +544,68 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  Widget _buildErrorText(String? error) {
+    if (error == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, size: 14, color: Color(0xFFE53935)),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              error,
+              style: const TextStyle(fontSize: 12, color: Color(0xFFE53935)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordStrengthIndicator(String password) {
+    final strength = AppValidators.passwordStrength(password);
+
+    final labels = ['Yếu', 'Trung bình', 'Khá mạnh', 'Mạnh'];
+    final colors = [
+      const Color(0xFFE53935),
+      const Color(0xFFFF9800),
+      const Color(0xFF8BC34A),
+      const Color(0xFF267A32),
+    ];
+    final idx = (strength - 1).clamp(0, 3);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: List.generate(4, (i) {
+              return Expanded(
+                child: Container(
+                  margin: const EdgeInsets.only(right: 4),
+                  height: 4,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    color: i < strength
+                        ? colors[idx]
+                        : const Color(0xFFE0E8E3),
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Độ mạnh: ${labels[idx]}',
+            style: TextStyle(fontSize: 11, color: colors[idx]),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
@@ -495,75 +613,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
     bool obscureText = false,
     TextInputType keyboardType = TextInputType.text,
     Widget? suffixIcon,
+    String? errorText,
+    void Function(String)? onChanged,
   }) {
+    final hasError = errorText != null;
     return TextField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: const TextStyle(color: Color(0xFFB0C2B6)),
         filled: true,
-        fillColor: const Color(0xFFF1F6F3),
+        fillColor: hasError ? const Color(0xFFFFF0F0) : const Color(0xFFF1F6F3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: hasError
+              ? const BorderSide(color: Color(0xFFE53935), width: 1.5)
+              : BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: hasError ? const Color(0xFFE53935) : const Color(0xFF2E7B36),
+            width: 1.5,
+          ),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 18,
         ),
-        prefixIcon: Icon(prefixIcon, color: const Color(0xFF7A8D81), size: 22),
+        prefixIcon: Icon(
+          prefixIcon,
+          color: hasError ? const Color(0xFFE53935) : const Color(0xFF7A8D81),
+          size: 22,
+        ),
         suffixIcon: suffixIcon,
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.label,
-    required this.onTap,
-    this.iconData,
-    this.iconColor,
-    this.iconWidget,
-  });
-
-  final String label;
-  final IconData? iconData;
-  final Color? iconColor;
-  final Widget? iconWidget;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF2F6F3),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (iconWidget != null)
-              iconWidget!
-            else if (iconData != null)
-              Icon(iconData, color: iconColor),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF111C14),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
