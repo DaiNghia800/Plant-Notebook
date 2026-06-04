@@ -11,24 +11,34 @@ class ProfileController extends ChangeNotifier {
 
   bool isNotificationOn = true;
   bool isDarkModeOn = false;
-
-  String userName = 'Nguyễn Văn An';
+  
+  String userName = 'Người dùng';
+  String userEmail = '';
+  String memberSince = '2024';
   Uint8List? avatarBytes;
   String currentLanguage = 'Tiếng Việt';
 
-  Future<void> loadUserProfile() async {
-    try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? profileJson = prefs.getString('auth_user_profile');
-      if (profileJson != null) {
-        final Map<String, dynamic> profile = jsonDecode(profileJson);
-        if (profile.containsKey('name') && profile['name'] != null) {
-          userName = profile['name'].toString();
-          notifyListeners();
-        }
+  Future<void> loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userString = prefs.getString('auth_user_profile');
+    if (userString != null) {
+      final user = jsonDecode(userString);
+      userName = user['name'] ?? user['fullName'] ?? 'Người dùng';
+      userEmail = user['email'] ?? '';
+      if (user['createdAt'] != null) {
+        try {
+          final date = DateTime.parse(user['createdAt']);
+          memberSince = date.year.toString();
+        } catch (_) {}
       }
-    } catch (e) {
-      debugPrint('Error loading user profile in ProfileController: $e');
+      notifyListeners();
+    }
+    
+    // Load Avatar
+    final avatarString = prefs.getString('user_avatar_base64');
+    if (avatarString != null) {
+      avatarBytes = base64Decode(avatarString);
+      notifyListeners();
     }
   }
 
@@ -43,28 +53,15 @@ class ProfileController extends ChangeNotifier {
   }
 
   // Translations
-  String get textTitle =>
-      currentLanguage == 'English' ? 'Plant Notebook' : 'Sổ tay cây trồng';
-  String get textMemberSince =>
-      currentLanguage == 'English' ? 'MEMBER SINCE 2024' : 'THÀNH VIÊN TỪ 2024';
-  String get textPlants =>
-      currentLanguage == 'English' ? '12 Plants' : '12 Cây trồng';
-  String get textLevel => currentLanguage == 'English' ? 'Level 5' : 'Cấp 5';
-  String get textSettings =>
-      currentLanguage == 'English' ? 'APP SETTINGS' : 'CÀI ĐẶT ỨNG DỤNG';
-  String get textNotification =>
-      currentLanguage == 'English' ? 'Notifications' : 'Thông báo';
-  String get textDarkMode =>
-      currentLanguage == 'English' ? 'Dark Mode' : 'Chế độ tối';
-  String get textLanguage =>
-      currentLanguage == 'English' ? 'Language' : 'Ngôn ngữ';
-  String get textInviteFriends =>
-      currentLanguage == 'English' ? 'Invite Friends' : 'Giới thiệu bạn bè';
-  String get textFeedback => currentLanguage == 'English'
-      ? 'Feedback / Report Issue'
-      : 'Phản hồi/Báo lỗi';
-  String get textLogout =>
-      currentLanguage == 'English' ? 'Logout' : 'Đăng xuất';
+  String get textTitle => currentLanguage == 'English' ? 'Plant Notebook' : 'Sổ tay cây trồng';
+  String get textMemberSince => currentLanguage == 'English' ? 'MEMBER SINCE $memberSince' : 'THÀNH VIÊN TỪ $memberSince';
+  String get textSettings => currentLanguage == 'English' ? 'APP SETTINGS' : 'CÀI ĐẶT ỨNG DỤNG';
+  String get textNotification => currentLanguage == 'English' ? 'Notifications' : 'Thông báo';
+  String get textDarkMode => currentLanguage == 'English' ? 'Dark Mode' : 'Chế độ tối';
+  String get textLanguage => currentLanguage == 'English' ? 'Language' : 'Ngôn ngữ';
+  String get textInviteFriends => currentLanguage == 'English' ? 'Invite Friends' : 'Giới thiệu bạn bè';
+  String get textFeedback => currentLanguage == 'English' ? 'Feedback / Report Issue' : 'Phản hồi/Báo lỗi';
+  String get textLogout => currentLanguage == 'English' ? 'Logout' : 'Đăng xuất';
 
   // Community Translations
   String get textCommunity =>
@@ -100,24 +97,26 @@ class ProfileController extends ChangeNotifier {
     if (image != null) {
       avatarBytes = await image.readAsBytes();
       notifyListeners();
+      
+      // Save Avatar to local storage
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_avatar_base64', base64Encode(avatarBytes!));
     }
   }
 
-  void updateUserName(String newName) async {
+  Future<void> updateUserName(String newName) async {
     if (newName.trim().isNotEmpty) {
       userName = newName.trim();
       notifyListeners();
-
-      try {
-        final SharedPreferences prefs = await SharedPreferences.getInstance();
-        final String? profileJson = prefs.getString('auth_user_profile');
-        if (profileJson != null) {
-          final Map<String, dynamic> profile = jsonDecode(profileJson);
-          profile['name'] = userName;
-          await prefs.setString('auth_user_profile', jsonEncode(profile));
-        }
-      } catch (e) {
-        debugPrint('Error saving user profile name in ProfileController: $e');
+      
+      // Save back to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final userString = prefs.getString('auth_user_profile');
+      if (userString != null) {
+        final user = jsonDecode(userString);
+        user['name'] = userName;
+        user['fullName'] = userName; // for backward compatibility
+        await prefs.setString('auth_user_profile', jsonEncode(user));
       }
     }
   }
