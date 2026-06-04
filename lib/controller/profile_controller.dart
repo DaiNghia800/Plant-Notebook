@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileController extends ChangeNotifier {
   ProfileController() {
-    loadUserProfile();
+    loadUserData();
   }
 
   bool isNotificationOn = true;

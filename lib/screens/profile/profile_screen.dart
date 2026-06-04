@@ -7,8 +7,6 @@ import 'package:plant_notebook/data/services/firebase_messaging_service.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import '../../controller/profile_controller.dart';
-import '../../controller/my_garden_controller.dart';
-import '../../utils/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -46,7 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (mounted) {
       // Reload profile controller's data in case user logged in or updated details
-      Provider.of<ProfileController>(context, listen: false).loadUserProfile();
+      Provider.of<ProfileController>(context, listen: false).loadUserData();
     }
 
     setState(() {
