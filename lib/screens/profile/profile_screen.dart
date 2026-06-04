@@ -7,6 +7,7 @@ import 'package:plant_notebook/data/services/firebase_messaging_service.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import '../../controller/profile_controller.dart';
+import '../../controller/my_garden_controller.dart';
 import '../../utils/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -41,6 +42,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final token = await FirebaseMessagingService.getToken();
     if (userId != null && token != null) {
       await FirebaseMessagingService.registerToken(userId);
+    }
+
+    if (mounted) {
+      // Reload profile controller's data in case user logged in or updated details
+      Provider.of<ProfileController>(context, listen: false).loadUserProfile();
     }
 
     setState(() {
@@ -93,6 +99,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Clear local data
     await prefs.remove('userId');
     await prefs.remove('userEmail');
+    await prefs.remove('auth_user_profile');
+    await prefs.remove('auth_jwt_token');
+
+    if (mounted) {
+      Provider.of<MyGardenController>(context, listen: false).clearData();
+    }
 
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, loginViewRoute);

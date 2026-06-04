@@ -5,6 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileController extends ChangeNotifier {
+  ProfileController() {
+    loadUserProfile();
+  }
+
   bool isNotificationOn = true;
   bool isDarkModeOn = false;
   
@@ -60,15 +64,26 @@ class ProfileController extends ChangeNotifier {
   String get textLogout => currentLanguage == 'English' ? 'Logout' : 'Đăng xuất';
 
   // Community Translations
-  String get textCommunity => currentLanguage == 'English' ? 'Community' : 'Cộng đồng';
-  String get textPostDetail => currentLanguage == 'English' ? 'Post Detail' : 'Bài viết';
-  String get textTimeAgo => currentLanguage == 'English' ? '2 hours ago' : '2 giờ trước';
-  String get textPostContent => currentLanguage == 'English' ? 'Repotted my succulents yesterday. So cute! 🌱' : 'Góc sen đá mới thay chậu hôm qua. Nhìn cưng xỉu luôn mọi người ơi! 🌱';
-  String get textPostImage => currentLanguage == 'English' ? 'Post Image' : 'Hình ảnh bài viết';
-  String get textComments => currentLanguage == 'English' ? 'Comments' : 'Bình luận';
-  String get textCommentTime => currentLanguage == 'English' ? '15 minutes ago' : '15 phút trước';
-  String get textCommentContent => currentLanguage == 'English' ? 'So beautiful! Where did you buy the pot?' : 'Đẹp quá bạn ơi! Chậu mua ở đâu vậy?';
-  String get textAddComment => currentLanguage == 'English' ? 'Add a comment...' : 'Thêm bình luận...';
+  String get textCommunity =>
+      currentLanguage == 'English' ? 'Community' : 'Cộng đồng';
+  String get textPostDetail =>
+      currentLanguage == 'English' ? 'Post Detail' : 'Bài viết';
+  String get textTimeAgo =>
+      currentLanguage == 'English' ? '2 hours ago' : '2 giờ trước';
+  String get textPostContent => currentLanguage == 'English'
+      ? 'Repotted my succulents yesterday. So cute! 🌱'
+      : 'Góc sen đá mới thay chậu hôm qua. Nhìn cưng xỉu luôn mọi người ơi! 🌱';
+  String get textPostImage =>
+      currentLanguage == 'English' ? 'Post Image' : 'Hình ảnh bài viết';
+  String get textComments =>
+      currentLanguage == 'English' ? 'Comments' : 'Bình luận';
+  String get textCommentTime =>
+      currentLanguage == 'English' ? '15 minutes ago' : '15 phút trước';
+  String get textCommentContent => currentLanguage == 'English'
+      ? 'So beautiful! Where did you buy the pot?'
+      : 'Đẹp quá bạn ơi! Chậu mua ở đâu vậy?';
+  String get textAddComment =>
+      currentLanguage == 'English' ? 'Add a comment...' : 'Thêm bình luận...';
 
   void reportIssue(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(

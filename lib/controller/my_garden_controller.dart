@@ -142,7 +142,16 @@ class MyGardenController extends ChangeNotifier {
 
   /// Kiểm tra cây đã có trong vườn hay chưa (dựa trên libraryPlantId để tránh trùng lặp loài).
   bool containsLibraryPlant(String libraryPlantId) {
-    return _savedPlants.any((plant) => plant.libraryPlantId == libraryPlantId);
+    return _plantProfiles.any((profile) => profile.plantId == libraryPlantId);
+  }
+
+  /// Lấy thông tin cây trong vườn dựa vào ID của thư viện.
+  GardenPlantProfile? getPlantProfileByLibraryId(String libraryPlantId) {
+    try {
+      return _plantProfiles.firstWhere((profile) => profile.plantId == libraryPlantId);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Thêm cây mới vào vườn, trả về false nếu đã tồn tại.
@@ -336,6 +345,17 @@ class MyGardenController extends ChangeNotifier {
     } catch (error) {
       debugPrint('Error recording care action: $error');
     }
+  }
+
+  void clearData() {
+    _savedPlantIds.clear();
+    _plantProfiles.clear();
+    _plantCategories.clear();
+    _careHistoryCache.clear();
+    _savedPlants.clear();
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
   }
 
   String _mapErrorMessage(Object error) {

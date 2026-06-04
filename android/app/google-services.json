@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "511657699751-b9otkaj19vurgvf99v19o8s7td2lk962.apps.googleusercontent.com",
+          "client_id": "511657699751-7h8fnh1b3j3deo97f42qogjib7906d20.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.plant_notebook",
-            "certificate_hash": "4fb4acd72363a39ab6c7b16ad035ff69e139a866"
+            "certificate_hash": "d66db08d234994fa9c4fdc80f6132405ab6cd299"
           }
         },
         {
@@ -37,6 +37,13 @@
             {
               "client_id": "511657699751-53gb2g7jui4htd28k2l7befoe2b59omf.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "511657699751-pi7m0eosm1bumo4m9bl8qeb6iv9hf8v2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.plantNotebook"
+              }
             }
           ]
         }
