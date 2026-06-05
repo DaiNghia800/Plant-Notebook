@@ -125,6 +125,31 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                         onEditInfo: _showEditInfoMessage,
                         showActions: isAdded,
                       ),
+                      const SizedBox(height: 24),
+                      _SectionHeader(
+                        title: 'Thông tin chi tiết',
+                        subtitle: 'Các đặc tính sinh học và nhu cầu sinh trưởng của cây.',
+                      ),
+                      const SizedBox(height: 12),
+                      _DetailedInfoCard(plant: widget.plant),
+                      const SizedBox(height: 24),
+                      _SectionHeader(
+                        title: 'Giới thiệu về cây',
+                        subtitle: 'Mô tả chi tiết đặc điểm và công dụng của cây.',
+                      ),
+                      const SizedBox(height: 12),
+                      _PanelCard(
+                        child: Text(
+                          widget.plant.description.isNotEmpty
+                              ? widget.plant.description
+                              : 'Chưa có mô tả chi tiết cho loại cây này.',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            height: 1.5,
+                            color: Color(0xFF2E4033),
+                          ),
+                        ),
+                      ),
                       if (isAdded && gardenPlant != null) ...[
                         const SizedBox(height: 24),
                         _SectionHeader(
@@ -1013,6 +1038,137 @@ class _FactRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DetailedInfoCard extends StatelessWidget {
+  const _DetailedInfoCard({required this.plant});
+
+  final LibraryPlantItem plant;
+
+  @override
+  Widget build(BuildContext context) {
+    final String humidity = plant.humidityLevel ?? plant.humidity ?? 'Trung bình';
+    final String temperature = plant.temperatureRange ?? plant.temperature ?? '18-30°C';
+    final String toxicity = plant.toxicity ?? 'An toàn / Không độc';
+
+    final bool isToxic = plant.toxicity != null &&
+        (plant.toxicity!.toLowerCase().contains('độc') ||
+         plant.toxicity!.toLowerCase().contains('toxic')) &&
+        !plant.toxicity!.toLowerCase().contains('không') &&
+        !plant.toxicity!.toLowerCase().contains('an toàn');
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _DetailTile(
+                icon: isToxic ? Icons.dangerous_rounded : Icons.health_and_safety_rounded,
+                iconColor: isToxic ? Colors.orange.shade800 : Colors.teal.shade700,
+                backgroundColor: isToxic ? const Color(0xFFFFF3E0) : const Color(0xFFE0F2F1),
+                label: 'ĐỘC TÍNH',
+                value: toxicity,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _DetailTile(
+                icon: Icons.thermostat_rounded,
+                iconColor: Colors.red.shade700,
+                backgroundColor: const Color(0xFFFFEBEE),
+                label: 'NHIỆT ĐỘ PHÙ HỢP',
+                value: temperature,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _DetailTile(
+                icon: Icons.water_rounded,
+                iconColor: Colors.blue.shade700,
+                backgroundColor: const Color(0xFFE3F2FD),
+                label: 'ĐỘ ẨM YÊU CẦU',
+                value: humidity,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailTile extends StatelessWidget {
+  const _DetailTile({
+    required this.icon,
+    required this.iconColor,
+    required this.backgroundColor,
+    required this.label,
+    required this.value,
+    this.isItalicValue = false,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final Color backgroundColor;
+  final String label;
+  final String value;
+  final bool isItalicValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: iconColor.withOpacity(0.08)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 20, color: iconColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 0.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF73847A),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    fontStyle: isItalicValue ? FontStyle.italic : FontStyle.normal,
+                    color: const Color(0xFF112C16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
