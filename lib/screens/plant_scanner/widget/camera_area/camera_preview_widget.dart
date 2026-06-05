@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 class CameraPreviewWidget extends StatelessWidget {
   final CameraController? controller;
@@ -25,14 +26,26 @@ class CameraPreviewWidget extends StatelessWidget {
       );
     }
 
+    final bool isDesktopOrWeb = kIsWeb ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.linux;
+
+    final double width = isDesktopOrWeb
+        ? controller!.value.previewSize!.width
+        : controller!.value.previewSize!.height;
+    final double height = isDesktopOrWeb
+        ? controller!.value.previewSize!.height
+        : controller!.value.previewSize!.width;
+
     return ClipRect(
       child: OverflowBox(
         alignment: Alignment.center,
         child: FittedBox(
           fit: BoxFit.cover,
           child: SizedBox(
-            width: controller!.value.previewSize!.height,
-            height: controller!.value.previewSize!.width,
+            width: width,
+            height: height,
             child: CameraPreview(controller!),
           ),
         ),
