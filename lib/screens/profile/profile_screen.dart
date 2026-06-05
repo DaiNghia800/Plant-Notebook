@@ -266,30 +266,38 @@ class ProfileView extends StatelessWidget {
       child: SingleChildScrollView(
         physics: BouncingScrollPhysics(),
         child: Padding(
-          padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 100.0, bottom: 20.0),
+          padding: EdgeInsets.only(
+            left: 24.0,
+            right: 24.0,
+            top: 100.0,
+            bottom: 20.0,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 2. Nội dung Profile
-            _buildProfileCard(context, controller),
-            SizedBox(height: 30),
-            Text(
-              controller.textSettings,
-              style: TextStyle(
-                color: Theme.of(context).hintColor,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
+            children: [
+              // 2. Nội dung Profile
+              _buildProfileCard(context, controller),
+              SizedBox(height: 30),
+              Text(
+                controller.textSettings,
+                style: TextStyle(
+                  color: Theme.of(context).hintColor,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
               ),
-            ),
-            SizedBox(height: 15),
-            _buildSettingsCard(context, controller),
-            SizedBox(height: 30),
-            _buildLogoutButton(context, controller),
-            SizedBox(height: 80), // Khoảng trống phụ trợ (SafeArea đã lo phần lớn thanh điều hướng)
-          ],
+              SizedBox(height: 15),
+              _buildSettingsCard(context, controller),
+              SizedBox(height: 30),
+              _buildLogoutButton(context, controller),
+              SizedBox(
+                height: 80,
+              ), // Khoảng trống phụ trợ (SafeArea đã lo phần lớn thanh điều hướng)
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 
   // 1. Thẻ Thông tin cá nhân
@@ -297,9 +305,13 @@ class ProfileView extends StatelessWidget {
     final myGardenController = context.watch<MyGardenController>();
     final int plantCount = myGardenController.savedPlants.length;
     final int level = 1 + (plantCount ~/ 3); // Mỗi 3 cây tăng 1 cấp
-    
-    final String textPlants = controller.currentLanguage == 'English' ? '$plantCount Plants' : '$plantCount Cây trồng';
-    final String textLevel = controller.currentLanguage == 'English' ? 'Level $level' : 'Cấp $level';
+
+    final String textPlants = controller.currentLanguage == 'English'
+        ? '$plantCount Plants'
+        : '$plantCount Cây trồng';
+    final String textLevel = controller.currentLanguage == 'English'
+        ? 'Level $level'
+        : 'Cấp $level';
 
     return Container(
       padding: EdgeInsets.all(24),
@@ -323,7 +335,9 @@ class ProfileView extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.secondary.withOpacity(0.2),
                   child: controller.avatarBytes == null
                       ? Icon(
                           Icons.person,
@@ -398,11 +412,7 @@ class ProfileView extends StatelessWidget {
             children: [
               _buildStatChip(context, Icons.eco, textPlants),
               SizedBox(width: 15),
-              _buildStatChip(
-                context,
-                Icons.military_tech,
-                textLevel,
-              ),
+              _buildStatChip(context, Icons.military_tech, textLevel),
             ],
           ),
         ],

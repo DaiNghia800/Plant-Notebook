@@ -12,14 +12,15 @@ import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plan
 import 'package:plant_notebook/screens/my_garden/widget/plant_detail/care_card.dart';
 import 'package:plant_notebook/screens/my_garden/widget/plant_detail/plant_action_progress.dart';
 import 'package:plant_notebook/screens/my_garden/widget/plant_detail/status_badge.dart';
+import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:provider/provider.dart';
 
 class PlantDetailScreen extends StatefulWidget {
-  const PlantDetailScreen({
-    super.key,
-    this.profile,
-    this.libraryPlant,
-  }) : assert(profile != null || libraryPlant != null, 'Either profile or libraryPlant must be provided');
+  const PlantDetailScreen({super.key, this.profile, this.libraryPlant})
+    : assert(
+        profile != null || libraryPlant != null,
+        'Either profile or libraryPlant must be provided',
+      );
 
   final GardenPlantProfile? profile;
   final LibraryPlantItem? libraryPlant;
@@ -45,13 +46,47 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     super.initState();
     _careHistory = [];
     final controller = context.read<MyGardenController>();
+    final libController = context.read<LibraryPlantController>();
     if (widget.profile != null) {
       _currentProfile = widget.profile;
-      _libraryPlant = controller.getLibraryPlant(_currentProfile!.plantId) ??
+      LibraryPlantItem? matchedPlant;
+      // 1. Ưu tiên so sánh tên khoa học (latinName)
+      if (_currentProfile!.latinName.trim().isNotEmpty) {
+        try {
+          matchedPlant = libController.plants.firstWhere(
+            (p) =>
+                p.scientificName != null &&
+                p.scientificName!.toLowerCase().trim() ==
+                    _currentProfile!.latinName.toLowerCase().trim(),
+          );
+        } catch (_) {}
+      }
+
+      // 2. Không có tên khoa học hoặc không khớp -> so sánh tên tiếng Việt
+      if (matchedPlant == null) {
+        try {
+          matchedPlant = libController.plants.firstWhere(
+            (p) =>
+                p.name.toLowerCase().trim() ==
+                _currentProfile!.name.toLowerCase().trim(),
+          );
+        } catch (_) {}
+      }
+
+      // 3. Fallback cuối cùng -> so sánh ID
+      if (matchedPlant == null) {
+        matchedPlant = libController.findById(_currentProfile!.plantId);
+      }
+
+      _libraryPlant =
+          matchedPlant ??
+          controller.getLibraryPlant(_currentProfile!.plantId) ??
           LibraryPlantItem(
             id: _currentProfile!.plantId,
             name: _currentProfile!.name,
-            category: GardenCategory.categoryToText(_currentProfile!.category.name),
+            category: GardenCategory.categoryToText(
+              _currentProfile!.category.name,
+            ),
             shortDescription: '',
             description: '',
             lightLevel: 'Vừa',
@@ -85,7 +120,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     _fertilizingCycleDays =
         _currentProfile!.reminderSetting.fertilizingCycleDays;
     _daysSinceLastWater = DateTime.now().difference(_lastWatered!).inDays;
-    _daysSinceLastFertilize = DateTime.now().difference(_lastFertilized!).inDays;
+    _daysSinceLastFertilize = DateTime.now()
+        .difference(_lastFertilized!)
+        .inDays;
   }
 
   Future<void> _loadCareHistory() async {
@@ -100,7 +137,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
         setState(() {
           try {
             _currentProfile = controller.plantProfiles.firstWhere(
-              (p) => p.id == _currentProfile!.id || p.plantId == _currentProfile!.plantId,
+              (p) =>
+                  p.id == _currentProfile!.id ||
+                  p.plantId == _currentProfile!.plantId,
             );
           } catch (_) {}
           _careHistory = controller.getCareHistory(
@@ -126,12 +165,15 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     GardenCategory? matchedCategory;
     final String libCatText = _libraryPlant.category.trim();
     for (final cat in controller.plantCategory) {
-      if (GardenCategory.categoryToText(cat.name).toLowerCase() == libCatText.toLowerCase()) {
+      if (GardenCategory.categoryToText(cat.name).toLowerCase() ==
+          libCatText.toLowerCase()) {
         matchedCategory = cat;
         break;
       }
     }
-    matchedCategory ??= controller.plantCategory.firstOrNull ?? const GardenCategory(id: '1', name: Category.indoor);
+    matchedCategory ??=
+        controller.plantCategory.firstOrNull ??
+        const GardenCategory(id: '1', name: Category.indoor);
 
     return GardenPlantProfile(
       id: null,
@@ -150,9 +192,12 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     );
   }
 
-  Future<void> _openPlantForm(BuildContext context, MyGardenController controller) async {
+  Future<void> _openPlantForm(
+    BuildContext context,
+    MyGardenController controller,
+  ) async {
     final preFilled = _createPreFilledProfile(controller);
-    
+
     final result = await showModalBottomSheet<GardenPlantProfile>(
       context: context,
       isScrollControlled: true,
@@ -185,12 +230,15 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
         if (_currentProfile != null) {
           try {
             _currentProfile = controller.plantProfiles.firstWhere(
-              (p) => p.id == _currentProfile!.id || p.plantId == _libraryPlant.id,
+              (p) =>
+                  p.id == _currentProfile!.id || p.plantId == _libraryPlant.id,
             );
             _initCareTimings();
           } catch (_) {}
         } else {
-          _currentProfile = controller.getPlantProfileByLibraryId(_libraryPlant.id);
+          _currentProfile = controller.getPlantProfileByLibraryId(
+            _libraryPlant.id,
+          );
           if (_currentProfile != null) {
             _initCareTimings();
             _loadCareHistory();
@@ -220,39 +268,52 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                       fit: StackFit.expand,
                       children: [
                         Hero(
-                          tag: isAdded ? (profile.id ?? profile.plantId) : _libraryPlant.id,
-                          child: (isAdded && profile.imageUrl.isNotEmpty && !profile.imageUrl.startsWith('http') && !profile.imageUrl.startsWith('https'))
+                          tag: isAdded
+                              ? (profile.id ?? profile.plantId)
+                              : _libraryPlant.id,
+                          child:
+                              (isAdded &&
+                                  profile.imageUrl.isNotEmpty &&
+                                  !profile.imageUrl.startsWith('http') &&
+                                  !profile.imageUrl.startsWith('https'))
                               ? Image.file(
                                   File(profile.imageUrl),
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Container(
-                                    color: const Color(0xFFE6EFE8),
-                                    child: const Icon(
-                                      Icons.local_florist,
-                                      size: 80,
-                                      color: Color(0xFF2E7D32),
-                                    ),
-                                  ),
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        color: const Color(0xFFE6EFE8),
+                                        child: const Icon(
+                                          Icons.local_florist,
+                                          size: 80,
+                                          color: Color(0xFF2E7D32),
+                                        ),
+                                      ),
                                 )
                               : CachedNetworkImage(
-                                  imageUrl: isAdded ? profile.imageUrl : _libraryPlant.imageUrl,
+                                  imageUrl: isAdded
+                                      ? profile.imageUrl
+                                      : _libraryPlant.imageUrl,
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
                                     color: const Color(0xFFE6EFE8),
                                     child: const Center(
                                       child: CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Color(0xFF2E7D32),
+                                            ),
                                       ),
                                     ),
                                   ),
-                                  errorWidget: (context, url, error) => Container(
-                                    color: const Color(0xFFE6EFE8),
-                                    child: const Icon(
-                                      Icons.local_florist,
-                                      size: 80,
-                                      color: Color(0xFF2E7D32),
-                                    ),
-                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      Container(
+                                        color: const Color(0xFFE6EFE8),
+                                        child: const Icon(
+                                          Icons.local_florist,
+                                          size: 80,
+                                          color: Color(0xFF2E7D32),
+                                        ),
+                                      ),
                                 ),
                         ),
                         Positioned.fill(
@@ -282,7 +343,10 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.white),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.white,
+                          ),
                           onPressed: () => _showDeleteDialog(context),
                         ),
                       ),
@@ -323,15 +387,20 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    isAdded ? profile.latinName : (_libraryPlant.scientificName ?? _libraryPlant.name),
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontStyle: FontStyle.italic,
-                                      color: Color(0xFF587064),
+                                  if (_libraryPlant.scientificName != null &&
+                                      _libraryPlant
+                                          .scientificName!
+                                          .isNotEmpty) ...[
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      _libraryPlant.scientificName!,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontStyle: FontStyle.italic,
+                                        color: Color(0xFF587064),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -352,7 +421,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                     label: isAdded ? 'Chu kỳ' : 'Tưới nước',
                                     value: isAdded
                                         ? '${profile.reminderSetting.wateringCycleDays} ngày'
-                                        : (_libraryPlant.wateringFrequencyLabel ?? '${_libraryPlant.wateringIntervalDays ?? 7} ngày'),
+                                        : (_libraryPlant
+                                                  .wateringFrequencyLabel ??
+                                              '${_libraryPlant.wateringIntervalDays ?? 7} ngày'),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -361,8 +432,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                     label: isAdded ? 'Lần cuối' : 'Ánh sáng',
                                     value: isAdded
                                         ? (profile.lastWateredAt != null
-                                            ? '${DateTime.now().difference(_lastWatered!).inDays} ngày trước'
-                                            : 'Chưa tưới')
+                                              ? '${DateTime.now().difference(_lastWatered!).inDays} ngày trước'
+                                              : 'Chưa tưới')
                                         : _libraryPlant.lightLevel,
                                   ),
                                 ),
@@ -371,7 +442,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   child: CareCard(
                                     label: isAdded ? 'Vị trí' : 'Độ khó',
                                     value: isAdded
-                                        ? _getCategoryDisplayName(profile.category.name)
+                                        ? _getCategoryDisplayName(
+                                            profile.category.name,
+                                          )
                                         : _libraryPlant.difficulty,
                                   ),
                                 ),
@@ -382,7 +455,10 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                             if (isAdded) ...[
                               const Text(
                                 'Tiến độ chăm sóc',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               if (profile.reminderSetting.wateringCycleDays > 0)
@@ -392,7 +468,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   cycleDays: _wateringCycleDays,
                                   activeColor: Colors.blue,
                                 ),
-                              if (profile.reminderSetting.fertilizingCycleDays > 0) ...[
+                              if (profile.reminderSetting.fertilizingCycleDays >
+                                  0) ...[
                                 const SizedBox(height: 16),
                                 PlantActionProgress(
                                   label: "Bón Phân",
@@ -408,23 +485,43 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                 height: 58,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
-                                  boxShadow: isReadyToWater(_lastWatered!, _wateringCycleDays) && !_isLoading
+                                  boxShadow:
+                                      isReadyToWater(
+                                            _lastWatered!,
+                                            _wateringCycleDays,
+                                          ) &&
+                                          !_isLoading
                                       ? [
                                           BoxShadow(
-                                            color: const Color(0xFF2196F3).withOpacity(0.3),
+                                            color: const Color(
+                                              0xFF2196F3,
+                                            ).withOpacity(0.3),
                                             blurRadius: 16,
                                             offset: const Offset(0, 6),
-                                          )
+                                          ),
                                         ]
                                       : [],
-                                  gradient: isReadyToWater(_lastWatered!, _wateringCycleDays) && !_isLoading
+                                  gradient:
+                                      isReadyToWater(
+                                            _lastWatered!,
+                                            _wateringCycleDays,
+                                          ) &&
+                                          !_isLoading
                                       ? const LinearGradient(
-                                          colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)],
+                                          colors: [
+                                            Color(0xFF42A5F5),
+                                            Color(0xFF1E88E5),
+                                          ],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                         )
                                       : null,
-                                  color: isReadyToWater(_lastWatered!, _wateringCycleDays) && !_isLoading
+                                  color:
+                                      isReadyToWater(
+                                            _lastWatered!,
+                                            _wateringCycleDays,
+                                          ) &&
+                                          !_isLoading
                                       ? null
                                       : const Color(0xFFE3E9E5),
                                 ),
@@ -432,7 +529,12 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   color: Colors.transparent,
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(16),
-                                    onTap: _isLoading || !isReadyToWater(_lastWatered!, _wateringCycleDays)
+                                    onTap:
+                                        _isLoading ||
+                                            !isReadyToWater(
+                                              _lastWatered!,
+                                              _wateringCycleDays,
+                                            )
                                         ? null
                                         : () => _waterPlant(context),
                                     child: Center(
@@ -442,32 +544,52 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                               height: 24,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2.5,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.white),
                                               ),
                                             )
                                           : Row(
-                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
                                               children: [
                                                 Icon(
-                                                  isReadyToWater(_lastWatered!, _wateringCycleDays)
+                                                  isReadyToWater(
+                                                        _lastWatered!,
+                                                        _wateringCycleDays,
+                                                      )
                                                       ? Icons.water_drop
                                                       : Icons.check_circle,
-                                                  color: isReadyToWater(_lastWatered!, _wateringCycleDays)
+                                                  color:
+                                                      isReadyToWater(
+                                                        _lastWatered!,
+                                                        _wateringCycleDays,
+                                                      )
                                                       ? Colors.white
                                                       : const Color(0xFF7A9384),
                                                 ),
                                                 const SizedBox(width: 8),
                                                 Text(
-                                                  isReadyToWater(_lastWatered!, _wateringCycleDays)
+                                                  isReadyToWater(
+                                                        _lastWatered!,
+                                                        _wateringCycleDays,
+                                                      )
                                                       ? 'TƯỚI NƯỚC'
                                                       : 'ĐÃ TƯỚI (${DateTime.now().difference(_lastWatered!).inHours > 24 ? "${DateTime.now().difference(_lastWatered!).inDays} ngày" : "${DateTime.now().difference(_lastWatered!).inHours}h"} trước)',
                                                   style: TextStyle(
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.w800,
                                                     letterSpacing: 0.5,
-                                                    color: isReadyToWater(_lastWatered!, _wateringCycleDays)
+                                                    color:
+                                                        isReadyToWater(
+                                                          _lastWatered!,
+                                                          _wateringCycleDays,
+                                                        )
                                                         ? Colors.white
-                                                        : const Color(0xFF7A9384),
+                                                        : const Color(
+                                                            0xFF7A9384,
+                                                          ),
                                                   ),
                                                 ),
                                               ],
@@ -483,23 +605,43 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                 height: 58,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
-                                  boxShadow: isReadyToWater(_lastFertilized!, _fertilizingCycleDays) && !_isLoading
+                                  boxShadow:
+                                      isReadyToWater(
+                                            _lastFertilized!,
+                                            _fertilizingCycleDays,
+                                          ) &&
+                                          !_isLoading
                                       ? [
                                           BoxShadow(
-                                            color: const Color(0xFF4CAF50).withOpacity(0.3),
+                                            color: const Color(
+                                              0xFF4CAF50,
+                                            ).withOpacity(0.3),
                                             blurRadius: 16,
                                             offset: const Offset(0, 6),
-                                          )
+                                          ),
                                         ]
                                       : [],
-                                  gradient: isReadyToWater(_lastFertilized!, _fertilizingCycleDays) && !_isLoading
+                                  gradient:
+                                      isReadyToWater(
+                                            _lastFertilized!,
+                                            _fertilizingCycleDays,
+                                          ) &&
+                                          !_isLoading
                                       ? const LinearGradient(
-                                          colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
+                                          colors: [
+                                            Color(0xFF66BB6A),
+                                            Color(0xFF43A047),
+                                          ],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                         )
                                       : null,
-                                  color: isReadyToWater(_lastFertilized!, _fertilizingCycleDays) && !_isLoading
+                                  color:
+                                      isReadyToWater(
+                                            _lastFertilized!,
+                                            _fertilizingCycleDays,
+                                          ) &&
+                                          !_isLoading
                                       ? null
                                       : const Color(0xFFE3E9E5),
                                 ),
@@ -507,31 +649,51 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   color: Colors.transparent,
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(16),
-                                    onTap: _isLoading || !isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                                    onTap:
+                                        _isLoading ||
+                                            !isReadyToWater(
+                                              _lastFertilized!,
+                                              _fertilizingCycleDays,
+                                            )
                                         ? null
                                         : () => _showFertilizerDialog(context),
                                     child: Center(
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Icon(
-                                            isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                                            isReadyToWater(
+                                                  _lastFertilized!,
+                                                  _fertilizingCycleDays,
+                                                )
                                                 ? Icons.eco
                                                 : Icons.check_circle,
-                                            color: isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                                            color:
+                                                isReadyToWater(
+                                                  _lastFertilized!,
+                                                  _fertilizingCycleDays,
+                                                )
                                                 ? Colors.white
                                                 : const Color(0xFF7A9384),
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
-                                            isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                                            isReadyToWater(
+                                                  _lastFertilized!,
+                                                  _fertilizingCycleDays,
+                                                )
                                                 ? 'BÓN PHÂN'
                                                 : 'ĐÃ BÓN (${DateTime.now().difference(_lastFertilized!).inHours > 24 ? "${DateTime.now().difference(_lastFertilized!).inDays} ngày" : "${DateTime.now().difference(_lastFertilized!).inHours}h"} trước)',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w800,
                                               letterSpacing: 0.5,
-                                              color: isReadyToWater(_lastFertilized!, _fertilizingCycleDays)
+                                              color:
+                                                  isReadyToWater(
+                                                    _lastFertilized!,
+                                                    _fertilizingCycleDays,
+                                                  )
                                                   ? Colors.white
                                                   : const Color(0xFF7A9384),
                                             ),
@@ -546,7 +708,10 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
 
                               const Text(
                                 'Lịch sử chăm sóc',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               const SizedBox(height: 16),
                               _buildCareHistoryTimeline(),
@@ -557,7 +722,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                 width: double.infinity,
                                 height: 54,
                                 child: ElevatedButton.icon(
-                                  onPressed: () => _openPlantForm(context, controller),
+                                  onPressed: () =>
+                                      _openPlantForm(context, controller),
                                   icon: const Icon(Icons.add_circle_outline),
                                   label: const Text('Thêm vào vườn của tôi'),
                                   style: ElevatedButton.styleFrom(
@@ -576,10 +742,40 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                               const SizedBox(height: 32),
                             ],
 
+                            const SizedBox(height: 24),
+                            _SectionHeader(
+                              title: 'Thông tin chi tiết',
+                              subtitle:
+                                  'Các đặc tính sinh học và nhu cầu sinh trưởng của cây.',
+                            ),
+                            const SizedBox(height: 12),
+                            _DetailedInfoCard(plant: _libraryPlant),
+                            const SizedBox(height: 24),
+                            _SectionHeader(
+                              title: 'Giới thiệu về cây',
+                              subtitle:
+                                  'Mô tả chi tiết đặc điểm và công dụng của cây.',
+                            ),
+                            const SizedBox(height: 12),
+                            _PanelCard(
+                              child: Text(
+                                _libraryPlant.description.isNotEmpty
+                                    ? _libraryPlant.description
+                                    : 'Chưa có mô tả chi tiết cho loại cây này.',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  height: 1.5,
+                                  color: Color(0xFF2E4033),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
                             if (_libraryPlant.careGuide.isNotEmpty) ...[
                               _SectionHeader(
                                 title: 'Hướng dẫn chăm sóc',
-                                subtitle: 'Tóm tắt những lưu ý quan trọng để cây giữ dáng và phát triển đều.',
+                                subtitle:
+                                    'Tóm tắt những lưu ý quan trọng để cây giữ dáng và phát triển đều.',
                               ),
                               const SizedBox(height: 12),
                               _PanelCard(
@@ -587,7 +783,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   children: _libraryPlant.careGuide
                                       .map(
                                         (tip) => Padding(
-                                          padding: const EdgeInsets.only(bottom: 12),
+                                          padding: const EdgeInsets.only(
+                                            bottom: 12,
+                                          ),
                                           child: _FactRow(text: tip),
                                         ),
                                       )
@@ -600,7 +798,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                             if (_libraryPlant.funFacts.isNotEmpty) ...[
                               _SectionHeader(
                                 title: 'Bạn có biết?',
-                                subtitle: 'Những điểm thú vị giúp người dùng hiểu cây nhanh hơn trước khi chăm sóc.',
+                                subtitle:
+                                    'Những điểm thú vị giúp người dùng hiểu cây nhanh hơn trước khi chăm sóc.',
                               ),
                               const SizedBox(height: 12),
                               _PanelCard(
@@ -608,7 +807,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   children: _libraryPlant.funFacts
                                       .map(
                                         (fact) => Padding(
-                                          padding: const EdgeInsets.only(bottom: 12),
+                                          padding: const EdgeInsets.only(
+                                            bottom: 12,
+                                          ),
                                           child: _FactRow(text: fact),
                                         ),
                                       )
@@ -734,7 +935,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
   Future<void> _deletePlant(BuildContext context) async {
     if (_currentProfile == null) return;
     final controller = context.read<MyGardenController>();
-    await controller.removePlant(_currentProfile!.id ?? _currentProfile!.plantId);
+    await controller.removePlant(
+      _currentProfile!.id ?? _currentProfile!.plantId,
+    );
     if (mounted) {
       Navigator.of(context).pop();
     }
@@ -853,8 +1056,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
               ),
               if (!isLast)
                 Container(
-                  width: 2, 
-                  height: 60, 
+                  width: 2,
+                  height: 60,
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.2),
@@ -897,7 +1100,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                       Text(
                         timeAgo,
                         style: const TextStyle(
-                          color: Color(0xFF7A9384), 
+                          color: Color(0xFF7A9384),
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -909,7 +1112,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                     Text(
                       history.notes!,
                       style: const TextStyle(
-                        fontSize: 14, 
+                        fontSize: 14,
                         color: Color(0xFF587064),
                         height: 1.4,
                       ),
@@ -1124,6 +1327,148 @@ class _FactRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DetailedInfoCard extends StatelessWidget {
+  const _DetailedInfoCard({required this.plant});
+
+  final LibraryPlantItem plant;
+
+  @override
+  Widget build(BuildContext context) {
+    final String humidity =
+        plant.humidityLevel ?? plant.humidity ?? 'Trung bình';
+    final String temperature =
+        plant.temperatureRange ?? plant.temperature ?? '18-30°C';
+    final String toxicity = plant.toxicity ?? 'An toàn / Không độc';
+
+    final bool isToxic =
+        plant.toxicity != null &&
+        (plant.toxicity!.toLowerCase().contains('độc') ||
+            plant.toxicity!.toLowerCase().contains('toxic')) &&
+        !plant.toxicity!.toLowerCase().contains('không') &&
+        !plant.toxicity!.toLowerCase().contains('an toàn');
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _DetailTile(
+                icon: isToxic
+                    ? Icons.dangerous_rounded
+                    : Icons.health_and_safety_rounded,
+                iconColor: isToxic
+                    ? Colors.orange.shade800
+                    : Colors.teal.shade700,
+                backgroundColor: isToxic
+                    ? const Color(0xFFFFF3E0)
+                    : const Color(0xFFE0F2F1),
+                label: 'ĐỘC TÍNH',
+                value: toxicity,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _DetailTile(
+                icon: Icons.thermostat_rounded,
+                iconColor: Colors.red.shade700,
+                backgroundColor: const Color(0xFFFFEBEE),
+                label: 'NHIỆT ĐỘ PHÙ HỢP',
+                value: temperature,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _DetailTile(
+                icon: Icons.water_rounded,
+                iconColor: Colors.blue.shade700,
+                backgroundColor: const Color(0xFFE3F2FD),
+                label: 'ĐỘ ẨM YÊU CẦU',
+                value: humidity,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailTile extends StatelessWidget {
+  const _DetailTile({
+    required this.icon,
+    required this.iconColor,
+    required this.backgroundColor,
+    required this.label,
+    required this.value,
+    this.isItalicValue = false,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final Color backgroundColor;
+  final String label;
+  final String value;
+  final bool isItalicValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: iconColor.withOpacity(0.08)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 20, color: iconColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 0.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF73847A),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    fontStyle: isItalicValue
+                        ? FontStyle.italic
+                        : FontStyle.normal,
+                    color: const Color(0xFF112C16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
