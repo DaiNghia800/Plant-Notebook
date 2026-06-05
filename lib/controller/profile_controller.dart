@@ -3,9 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:plant_notebook/common/l10n/app_translations.dart';
 
 class ProfileController extends ChangeNotifier {
   ProfileController() {
+    _loadDarkMode();
+    _loadLanguage();
     loadUserData();
   }
 
@@ -16,7 +19,10 @@ class ProfileController extends ChangeNotifier {
   String userEmail = '';
   String memberSince = '2024';
   Uint8List? avatarBytes;
-  String currentLanguage = 'Tiếng Việt';
+  String currentLanguage = 'vi'; // 'vi' or 'en'
+
+  /// Lấy chuỗi dịch theo key
+  String tr(String key) => AppTranslations.tr(key, currentLanguage);
 
   Future<void> loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -47,43 +53,31 @@ class ProfileController extends ChangeNotifier {
     notifyListeners(); // Báo cho UI vẽ lại (Chuẩn của Provider)
   }
 
-  void toggleDarkMode(bool value) {
+  void toggleDarkMode(bool value) async {
     isDarkModeOn = value;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkModeOn', value);
+  }
+
+  Future<void> _loadDarkMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    isDarkModeOn = prefs.getBool('isDarkModeOn') ?? false;
     notifyListeners();
   }
 
-  // Translations
-  String get textTitle => currentLanguage == 'English' ? 'Plant Notebook' : 'Sổ tay cây trồng';
-  String get textMemberSince => currentLanguage == 'English' ? 'MEMBER SINCE $memberSince' : 'THÀNH VIÊN TỪ $memberSince';
-  String get textSettings => currentLanguage == 'English' ? 'APP SETTINGS' : 'CÀI ĐẶT ỨNG DỤNG';
-  String get textNotification => currentLanguage == 'English' ? 'Notifications' : 'Thông báo';
-  String get textDarkMode => currentLanguage == 'English' ? 'Dark Mode' : 'Chế độ tối';
-  String get textLanguage => currentLanguage == 'English' ? 'Language' : 'Ngôn ngữ';
-  String get textInviteFriends => currentLanguage == 'English' ? 'Invite Friends' : 'Giới thiệu bạn bè';
-  String get textFeedback => currentLanguage == 'English' ? 'Feedback / Report Issue' : 'Phản hồi/Báo lỗi';
-  String get textLogout => currentLanguage == 'English' ? 'Logout' : 'Đăng xuất';
+  void changeLanguage(String langCode) async {
+    currentLanguage = langCode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('appLanguage', langCode);
+  }
 
-  // Community Translations
-  String get textCommunity =>
-      currentLanguage == 'English' ? 'Community' : 'Cộng đồng';
-  String get textPostDetail =>
-      currentLanguage == 'English' ? 'Post Detail' : 'Bài viết';
-  String get textTimeAgo =>
-      currentLanguage == 'English' ? '2 hours ago' : '2 giờ trước';
-  String get textPostContent => currentLanguage == 'English'
-      ? 'Repotted my succulents yesterday. So cute! 🌱'
-      : 'Góc sen đá mới thay chậu hôm qua. Nhìn cưng xỉu luôn mọi người ơi! 🌱';
-  String get textPostImage =>
-      currentLanguage == 'English' ? 'Post Image' : 'Hình ảnh bài viết';
-  String get textComments =>
-      currentLanguage == 'English' ? 'Comments' : 'Bình luận';
-  String get textCommentTime =>
-      currentLanguage == 'English' ? '15 minutes ago' : '15 phút trước';
-  String get textCommentContent => currentLanguage == 'English'
-      ? 'So beautiful! Where did you buy the pot?'
-      : 'Đẹp quá bạn ơi! Chậu mua ở đâu vậy?';
-  String get textAddComment =>
-      currentLanguage == 'English' ? 'Add a comment...' : 'Thêm bình luận...';
+  Future<void> _loadLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    currentLanguage = prefs.getString('appLanguage') ?? 'vi';
+    notifyListeners();
+  }
 
   void reportIssue(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -121,11 +115,6 @@ class ProfileController extends ChangeNotifier {
     }
   }
 
-  void changeLanguage(String language) {
-    currentLanguage = language;
-    notifyListeners();
-  }
-
   void submitFeedback(BuildContext context, String content) {
     if (content.trim().isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -133,4 +122,6 @@ class ProfileController extends ChangeNotifier {
       );
     }
   }
+
+
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class WateringPlantCard extends StatelessWidget {
   final String name;
@@ -15,6 +17,8 @@ class WateringPlantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final lang = context.watch<ProfileController>();
     Widget imageWidget;
     if (imagePath.startsWith('http')) {
       imageWidget = Image.network(
@@ -42,7 +46,7 @@ class WateringPlantCard extends StatelessWidget {
       child: Container(
         width: 155,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -89,9 +93,9 @@ class WateringPlantCard extends StatelessWidget {
                           )
                         ],
                       ),
-                      child: const Text(
-                        'Cần tưới',
-                        style: TextStyle(
+                      child: Text(
+                        lang.tr('water_now'),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -112,10 +116,10 @@ class WateringPlantCard extends StatelessWidget {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
-                      color: Color(0xFF1B1B1B),
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -139,10 +143,10 @@ class WateringPlantCard extends StatelessWidget {
                           water,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF757575),
+                            color: theme.hintColor,
                           ),
                         ),
                       ),

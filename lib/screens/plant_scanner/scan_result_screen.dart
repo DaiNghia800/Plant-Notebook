@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 import 'package:plant_notebook/controller/plant_scanner_controller.dart';
 import 'package:plant_notebook/data/services/plant_scanner_service.dart';
@@ -27,6 +28,7 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
@@ -35,7 +37,7 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
           SliverToBoxAdapter(
             child: Consumer<PlantScannerController>(
               builder: (context, controller, child) {
-                return _buildBody(controller);
+                return _buildBody(controller, lang);
               },
             ),
           ),
@@ -44,7 +46,7 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
     );
   }
 
-  Widget _buildBody(PlantScannerController controller) {
+  Widget _buildBody(PlantScannerController controller, ProfileController lang) {
     if (controller.isAnalyzing) {
       return const ResultLoadingState();
     }
@@ -91,28 +93,28 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
           ResultInfoCard(
             icon: Icons.health_and_safety,
             iconColor: Colors.blue,
-            title: 'Tình trạng sức khỏe',
+            title: lang.tr('health_status'),
             content: data.tinhTrangSucKhoe,
           ),
           const SizedBox(height: 16),
           ResultInfoCard(
             icon: Icons.bug_report,
             iconColor: Colors.orange,
-            title: 'Bệnh đang gặp',
+            title: lang.tr('diseases'),
             content: data.benhDangGap,
           ),
           const SizedBox(height: 16),
           ResultInfoCard(
             icon: Icons.lightbulb,
             iconColor: Colors.amber,
-            title: 'Lời khuyên chăm sóc',
+            title: lang.tr('care_advice'),
             content: data.loiKhuyenChamSoc,
           ),
           const SizedBox(height: 16),
           ResultInfoCard(
             icon: Icons.auto_awesome,
             iconColor: Colors.purple,
-            title: 'Bạn có biết',
+            title: lang.tr('did_you_know'),
             content: data.banCoBiet,
           ),
           if (!controller.existsInLibrary) ...[
@@ -154,8 +156,8 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
                       Expanded(
                         child: Text(
                           controller.proposalSubmitted
-                              ? 'Đã gửi đề xuất thành công!'
-                              : 'Cây chưa có trong thư viện',
+                              ? lang.tr('proposal_sent_success')
+                              : lang.tr('plant_not_in_library'),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -168,8 +170,8 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
                   const SizedBox(height: 10),
                   Text(
                     controller.proposalSubmitted
-                        ? 'Đề xuất thêm loài cây "${data.tenPhoThong}" đã được gửi tới Admin để duyệt. Cảm ơn đóng góp quý giá của bạn!'
-                        : 'Bạn có muốn gửi yêu cầu đề xuất thêm loài cây mới này vào Thư viện hệ thống cho Admin kiểm duyệt không?',
+                        ? lang.tr('proposal_desc').replaceAll('{name}', data.tenPhoThong)
+                        : lang.tr('ask_propose'),
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF2E7D32),
@@ -198,7 +200,7 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Gửi đề xuất thêm cây "${data.tenPhoThong}" thành công!'),
+                                        content: Text(lang.tr('propose_success_msg').replaceAll('{name}', data.tenPhoThong)),
                                         backgroundColor: const Color(0xFF2E7D32),
                                       ),
                                     );
@@ -207,7 +209,7 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Lỗi khi gửi đề xuất: $e'),
+                                        content: Text(lang.tr('propose_error').replaceAll('{error}', e.toString())),
                                         backgroundColor: Colors.redAccent,
                                       ),
                                     );
@@ -226,8 +228,8 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
                             : const Icon(Icons.send_rounded, size: 18),
                         label: Text(
                           controller.isSubmittingProposal
-                              ? 'Đang gửi đề xuất...'
-                              : 'Gửi yêu cầu cho Admin',
+                              ? lang.tr('sending_proposal')
+                              : lang.tr('send_admin_request'),
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,

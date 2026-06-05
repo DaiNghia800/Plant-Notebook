@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/data/services/email_auth_service.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 enum ForgotPasswordStep { email, otp, newPassword }
 
@@ -41,7 +43,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _handleSendOtp() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      _showError('Vui lòng nhập email');
+      _showError(context.read<ProfileController>().tr('please_enter_email'));
       return;
     }
     
@@ -61,7 +63,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final email = _emailController.text.trim();
     final otp = _otpController.text.trim();
     if (otp.isEmpty) {
-      _showError('Vui lòng nhập mã OTP');
+      _showError(context.read<ProfileController>().tr('please_enter_otp'));
       return;
     }
 
@@ -84,11 +86,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final confirm = _confirmController.text.trim();
 
     if (password.isEmpty || confirm.isEmpty) {
-      _showError('Vui lòng nhập mật khẩu mới');
+      _showError(context.read<ProfileController>().tr('please_enter_new_pwd'));
       return;
     }
     if (password != confirm) {
-      _showError('Mật khẩu xác nhận không khớp');
+      _showError(context.read<ProfileController>().tr('pwd_not_match'));
       return;
     }
 
@@ -101,7 +103,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.')),
+        SnackBar(content: Text(context.read<ProfileController>().tr('reset_pwd_success'))),
       );
       Navigator.of(context).pop();
     } catch (e) {
@@ -113,6 +115,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     return Scaffold(
       backgroundColor: const Color(0xFFF1F8F6),
       appBar: AppBar(
@@ -122,8 +125,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           icon: const Icon(Icons.arrow_back, color: Color(0xFF135022)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Quên mật khẩu',
+        title: Text(
+          lang.tr('forgot_password_title'),
           style: TextStyle(
             color: Color(0xFF135022),
             fontWeight: FontWeight.w800,
@@ -157,10 +160,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               const SizedBox(height: 24),
               Text(
                 _currentStep == ForgotPasswordStep.email
-                    ? 'Tìm lại tài khoản'
+                    ? lang.tr('recover_account')
                     : _currentStep == ForgotPasswordStep.otp
-                        ? 'Xác thực OTP'
-                        : 'Đặt mật khẩu mới',
+                        ? lang.tr('verify_otp')
+                        : lang.tr('set_new_pwd'),
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -170,10 +173,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               const SizedBox(height: 8),
               Text(
                 _currentStep == ForgotPasswordStep.email
-                    ? 'Nhập email đã đăng ký để nhận mã OTP'
+                    ? lang.tr('enter_email_otp')
                     : _currentStep == ForgotPasswordStep.otp
-                        ? 'Nhập mã 6 số được gửi đến email của bạn'
-                        : 'Tạo mật khẩu mới cho tài khoản',
+                        ? lang.tr('enter_otp_code')
+                        : lang.tr('create_new_pwd'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 15, color: Color(0xFF4B6255)),
               ),
@@ -195,7 +198,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (_currentStep == ForgotPasswordStep.email) ...[
-                      _buildLabel('EMAIL CỦA BẠN'),
+                      _buildLabel(lang.tr('email').toUpperCase()),
                       _buildTextField(
                         controller: _emailController,
                         hintText: 'example@gmail.com',
@@ -204,11 +207,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 32),
                       _buildButton(
-                        text: 'Gửi mã OTP',
+                        text: lang.tr('send_otp'),
                         onPressed: _handleSendOtp,
                       ),
                     ] else if (_currentStep == ForgotPasswordStep.otp) ...[
-                      _buildLabel('MÃ OTP'),
+                      _buildLabel(lang.tr('otp_code')),
                       _buildTextField(
                         controller: _otpController,
                         hintText: '123456',
@@ -217,11 +220,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 32),
                       _buildButton(
-                        text: 'Xác nhận OTP',
+                        text: lang.tr('confirm_otp'),
                         onPressed: _handleVerifyOtp,
                       ),
                     ] else ...[
-                      _buildLabel('MẬT KHẨU MỚI'),
+                      _buildLabel(lang.tr('new_pwd_label')),
                       _buildTextField(
                         controller: _passwordController,
                         hintText: '••••••••',
@@ -236,7 +239,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      _buildLabel('XÁC NHẬN MẬT KHẨU MỚI'),
+                      _buildLabel(lang.tr('confirm_new_pwd_label')),
                       _buildTextField(
                         controller: _confirmController,
                         hintText: '••••••••',
@@ -245,7 +248,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 32),
                       _buildButton(
-                        text: 'Đổi mật khẩu',
+                        text: lang.tr('change_pwd'),
                         onPressed: _handleResetPassword,
                       ),
                     ],

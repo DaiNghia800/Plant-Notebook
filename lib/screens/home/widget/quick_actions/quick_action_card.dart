@@ -20,13 +20,16 @@ class QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -47,7 +50,7 @@ class QuickActionCard extends StatelessWidget {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: iconBgColor,
+                    color: isDark ? iconBgColor.withOpacity(0.2) : iconBgColor,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: iconColor, size: 24),
@@ -59,10 +62,10 @@ class QuickActionCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
-                          color: Color(0xFF1B1B1B),
+                          color: theme.colorScheme.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -72,7 +75,7 @@ class QuickActionCard extends StatelessWidget {
                         subtitle,
                         style: TextStyle(
                           fontSize: 12,
-                          color: const Color(0xFF757575).withOpacity(0.9),
+                          color: theme.hintColor,
                           height: 1.3,
                         ),
                         maxLines: 2,

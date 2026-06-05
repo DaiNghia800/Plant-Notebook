@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
+import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:plant_notebook/data/models/category.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
 import 'package:plant_notebook/data/models/care_history.dart';
@@ -12,8 +13,8 @@ import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plan
 import 'package:plant_notebook/screens/my_garden/widget/plant_detail/care_card.dart';
 import 'package:plant_notebook/screens/my_garden/widget/plant_detail/plant_action_progress.dart';
 import 'package:plant_notebook/screens/my_garden/widget/plant_detail/status_badge.dart';
-import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class PlantDetailScreen extends StatefulWidget {
   const PlantDetailScreen({super.key, this.profile, this.libraryPlant})
@@ -216,15 +217,15 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     if (result != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Đã thêm ${result.name} vào vườn của tôi'),
+          content: Text('${result.name} ${context.read<ProfileController>().tr('added_to_garden')}'),
           behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
 
-  @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     return Consumer<MyGardenController>(
       builder: (context, controller, _) {
         if (_currentProfile != null) {
@@ -418,34 +419,43 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                               children: [
                                 Expanded(
                                   child: CareCard(
-                                    label: isAdded ? 'Chu kỳ' : 'Tưới nước',
+                                    label: isAdded ? lang.tr('cycle') : lang.tr('water_plant'),
                                     value: isAdded
-                                        ? '${profile.reminderSetting.wateringCycleDays} ngày'
+                                        ? '${profile.reminderSetting.wateringCycleDays} ${lang.tr('days_label')}'
                                         : (_libraryPlant
                                                   .wateringFrequencyLabel ??
-                                              '${_libraryPlant.wateringIntervalDays ?? 7} ngày'),
+                                              '${_libraryPlant.wateringIntervalDays ?? 7} ${lang.tr('days_label')}'),
+                                    iconData: Icons.autorenew_rounded,
+                                    bgColor: const Color(0xFFE8F5E9),
+                                    iconColor: const Color(0xFF388E3C),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: CareCard(
-                                    label: isAdded ? 'Lần cuối' : 'Ánh sáng',
+                                    label: isAdded ? lang.tr('last_time') : lang.tr('light_filter'),
                                     value: isAdded
                                         ? (profile.lastWateredAt != null
-                                              ? '${DateTime.now().difference(_lastWatered!).inDays} ngày trước'
-                                              : 'Chưa tưới')
+                                              ? '${DateTime.now().difference(_lastWatered!).inDays} ${lang.tr('days_label')} ${lang.tr('ago')}'
+                                              : lang.tr('not_watered'))
                                         : _libraryPlant.lightLevel,
+                                    iconData: Icons.history_rounded,
+                                    bgColor: const Color(0xFFE3F2FD),
+                                    iconColor: const Color(0xFF1976D2),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: CareCard(
-                                    label: isAdded ? 'Vị trí' : 'Độ khó',
+                                    label: isAdded ? lang.tr('location') : lang.tr('difficulty_filter'),
                                     value: isAdded
                                         ? _getCategoryDisplayName(
                                             profile.category.name,
                                           )
                                         : _libraryPlant.difficulty,
+                                    iconData: Icons.location_on_rounded,
+                                    bgColor: const Color(0xFFFFF3E0),
+                                    iconColor: const Color(0xFFF57C00),
                                   ),
                                 ),
                               ],
@@ -453,9 +463,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                             const SizedBox(height: 24),
 
                             if (isAdded) ...[
-                              const Text(
-                                'Tiến độ chăm sóc',
-                                style: TextStyle(
+                              Text(
+                                lang.tr('care_progress'),
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -463,7 +473,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                               const SizedBox(height: 12),
                               if (profile.reminderSetting.wateringCycleDays > 0)
                                 PlantActionProgress(
-                                  label: "Tưới nước",
+                                  label: lang.tr('water_plant'),
                                   lastActionDate: _lastWatered!,
                                   cycleDays: _wateringCycleDays,
                                   activeColor: Colors.blue,
@@ -472,7 +482,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   0) ...[
                                 const SizedBox(height: 16),
                                 PlantActionProgress(
-                                  label: "Bón Phân",
+                                  label: lang.tr('fertilize_plant'),
                                   lastActionDate: _lastFertilized!,
                                   cycleDays: _fertilizingCycleDays,
                                   activeColor: Colors.green,
@@ -575,8 +585,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                                         _lastWatered!,
                                                         _wateringCycleDays,
                                                       )
-                                                      ? 'TƯỚI NƯỚC'
-                                                      : 'ĐÃ TƯỚI (${DateTime.now().difference(_lastWatered!).inHours > 24 ? "${DateTime.now().difference(_lastWatered!).inDays} ngày" : "${DateTime.now().difference(_lastWatered!).inHours}h"} trước)',
+                                                      ? lang.tr('water_plant').toUpperCase()
+                                                      : lang.tr('already_watered').replaceAll('{time}', '${DateTime.now().difference(_lastWatered!).inHours > 24 ? "${DateTime.now().difference(_lastWatered!).inDays} ${lang.tr('days_label')}" : "${DateTime.now().difference(_lastWatered!).inHours}${lang.tr('hours_short')}"}'),
                                                   style: TextStyle(
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.w800,
@@ -683,8 +693,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                                   _lastFertilized!,
                                                   _fertilizingCycleDays,
                                                 )
-                                                ? 'BÓN PHÂN'
-                                                : 'ĐÃ BÓN (${DateTime.now().difference(_lastFertilized!).inHours > 24 ? "${DateTime.now().difference(_lastFertilized!).inDays} ngày" : "${DateTime.now().difference(_lastFertilized!).inHours}h"} trước)',
+                                                ? lang.tr('fertilize_plant').toUpperCase()
+                                                : '${lang.tr('fertilized')} (${DateTime.now().difference(_lastFertilized!).inHours > 24 ? "${DateTime.now().difference(_lastFertilized!).inDays} ${lang.tr('days')}" : "${DateTime.now().difference(_lastFertilized!).inHours}h"} ${lang.tr('ago')})',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w800,
@@ -706,9 +716,9 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                               ),
                               const SizedBox(height: 32),
 
-                              const Text(
-                                'Lịch sử chăm sóc',
-                                style: TextStyle(
+                              Text(
+                                lang.tr('care_history'),
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -725,7 +735,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                   onPressed: () =>
                                       _openPlantForm(context, controller),
                                   icon: const Icon(Icons.add_circle_outline),
-                                  label: const Text('Thêm vào vườn của tôi'),
+                                  label: Text(lang.tr('add_to_my_garden')),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF2E7D32),
                                     foregroundColor: Colors.white,
@@ -744,24 +754,22 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
 
                             const SizedBox(height: 24),
                             _SectionHeader(
-                              title: 'Thông tin chi tiết',
-                              subtitle:
-                                  'Các đặc tính sinh học và nhu cầu sinh trưởng của cây.',
+                              title: lang.tr('detail_info'),
+                              subtitle: lang.tr('plant_bio_desc'),
                             ),
                             const SizedBox(height: 12),
                             _DetailedInfoCard(plant: _libraryPlant),
                             const SizedBox(height: 24),
                             _SectionHeader(
-                              title: 'Giới thiệu về cây',
-                              subtitle:
-                                  'Mô tả chi tiết đặc điểm và công dụng của cây.',
+                              title: lang.tr('about_plant'),
+                              subtitle: lang.tr('about_plant_desc'),
                             ),
                             const SizedBox(height: 12),
                             _PanelCard(
                               child: Text(
                                 _libraryPlant.description.isNotEmpty
                                     ? _libraryPlant.description
-                                    : 'Chưa có mô tả chi tiết cho loại cây này.',
+                                    : lang.tr('no_plant_desc'),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   height: 1.5,
@@ -773,9 +781,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
 
                             if (_libraryPlant.careGuide.isNotEmpty) ...[
                               _SectionHeader(
-                                title: 'Hướng dẫn chăm sóc',
-                                subtitle:
-                                    'Tóm tắt những lưu ý quan trọng để cây giữ dáng và phát triển đều.',
+                                title: lang.tr('care_guide'),
+                                subtitle: lang.tr('plant_care_summary'),
                               ),
                               const SizedBox(height: 12),
                               _PanelCard(
@@ -797,9 +804,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
 
                             if (_libraryPlant.funFacts.isNotEmpty) ...[
                               _SectionHeader(
-                                title: 'Bạn có biết?',
-                                subtitle:
-                                    'Những điểm thú vị giúp người dùng hiểu cây nhanh hơn trước khi chăm sóc.',
+                                title: lang.tr('did_you_know'),
+                                subtitle: lang.tr('interesting_facts_desc'),
                               ),
                               const SizedBox(height: 12),
                               _PanelCard(
@@ -836,17 +842,17 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Xác nhận xóa'),
-        content: const Text('Bạn có chắc chắn muốn xóa cây này?'),
+        title: Text(context.read<ProfileController>().tr('confirm_delete')),
+        content: Text(context.read<ProfileController>().tr('confirm_delete')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Hủy'),
+            child: Text(context.watch<ProfileController>().tr('cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Xóa'),
+            child: Text(context.watch<ProfileController>().tr('delete')),
           ),
         ],
       ),
@@ -870,18 +876,18 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Tưới sớm cho cây?'),
+            title: Text(context.read<ProfileController>().tr('water_early')),
             content: Text(
-              'Vẫn chưa đến lịch tưới tiếp theo. Bạn có chắc muốn xác nhận đã tưới sớm cho ${_currentProfile!.name} không?',
+              context.read<ProfileController>().tr('water_early_confirm').replaceAll('{name}', _currentProfile!.name),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Không'),
+                child: Text(context.read<ProfileController>().tr('no')),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Có'),
+                child: Text(context.read<ProfileController>().tr('yes')),
               ),
             ],
           ),
@@ -908,8 +914,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
         });
         await _loadCareHistory();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Đã cập nhật tưới nước'),
+          SnackBar(
+            content: Text(context.read<ProfileController>().tr('water_success')),
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 2),
           ),
@@ -920,7 +926,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi: Không thể tưới nước ($e)'),
+            content: Text(context.read<ProfileController>().tr('water_error').replaceAll('{error}', e.toString())),
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 3),
             backgroundColor: Colors.red,
@@ -970,8 +976,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Chưa có lịch sử chăm sóc',
+            Text(
+              context.watch<ProfileController>().tr('no_care_history'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -980,8 +986,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Hãy thực hiện tưới nước hoặc bón phân để ghi lại hoạt động chăm sóc đầu tiên của bạn!',
+            Text(
+              context.watch<ProfileController>().tr('no_care_history_desc'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -1021,11 +1027,11 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
     final difference = now.difference(history.actionDate);
     String timeAgo;
     if (difference.inDays > 0) {
-      timeAgo = '${difference.inDays} ngày trước';
+      timeAgo = context.read<ProfileController>().tr('days_ago').replaceAll('{days}', difference.inDays.toString());
     } else if (difference.inHours > 0) {
       timeAgo = '${difference.inHours} giờ trước';
     } else if (difference.inMinutes > 0) {
-      timeAgo = '${difference.inMinutes} phút trước';
+      timeAgo = context.read<ProfileController>().tr('minutes_ago').replaceAll('{mins}', difference.inMinutes.toString());
     } else {
       timeAgo = 'Vừa xong';
     }
@@ -1136,18 +1142,18 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Bón phân sớm cho cây?'),
+          title: Text(context.read<ProfileController>().tr('fertilize_early')),
           content: Text(
-            'Vẫn chưa đến lịch bón phân tiếp theo. Bạn có chắc muốn xác nhận đã bón phân sớm cho cây ${_currentProfile!.name} không?',
+            context.read<ProfileController>().tr('fertilize_early_confirm').replaceAll('{name}', _currentProfile!.name),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Không'),
+              child: Text(context.read<ProfileController>().tr('no')),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Có'),
+              child: Text(context.read<ProfileController>().tr('yes')),
             ),
           ],
         ),
@@ -1184,8 +1190,8 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
         await _loadCareHistory();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✓ Đã cập nhật bón phân'),
+            SnackBar(
+              content: Text(context.read<ProfileController>().tr('fertilize_success')),
               behavior: SnackBarBehavior.floating,
               duration: Duration(seconds: 2),
             ),
@@ -1197,7 +1203,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi: Không thể bón phân ($e)'),
+            content: Text(context.read<ProfileController>().tr('fertilize_error').replaceAll('{error}', e.toString())),
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 3),
             backgroundColor: Colors.red,
@@ -1212,13 +1218,13 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
   String _getCategoryDisplayName(Category category) {
     switch (category) {
       case Category.all:
-        return 'Tất cả';
+        return context.read<ProfileController>().tr('category_all');
       case Category.indoor:
-        return 'Trong nhà';
+        return context.read<ProfileController>().tr('category_indoor');
       case Category.balcony:
-        return 'Ban công';
+        return context.read<ProfileController>().tr('category_balcony');
       case Category.outdoor:
-        return 'Ngoài trời';
+        return context.read<ProfileController>().tr('category_outdoor');
     }
   }
 }
@@ -1338,11 +1344,12 @@ class _DetailedInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     final String humidity =
-        plant.humidityLevel ?? plant.humidity ?? 'Trung bình';
+        plant.humidityLevel ?? plant.humidity ?? lang.tr('avg_humidity');
     final String temperature =
         plant.temperatureRange ?? plant.temperature ?? '18-30°C';
-    final String toxicity = plant.toxicity ?? 'An toàn / Không độc';
+    final String toxicity = plant.toxicity ?? lang.tr('safe_non_toxic');
 
     final bool isToxic =
         plant.toxicity != null &&

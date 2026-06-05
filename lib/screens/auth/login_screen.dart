@@ -5,6 +5,8 @@ import 'package:plant_notebook/common/widgets/widget.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:plant_notebook/data/services/email_auth_service.dart';
 import 'package:plant_notebook/utils/validators.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         } catch (error) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi đăng nhập Google: $error')),
+            SnackBar(content: Text('${context.read<ProfileController>().tr('google_login_error')}$error')),
           );
         } finally {
           if (mounted) {
@@ -123,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (result == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Người dùng đã hủy đăng nhập Google')),
+          SnackBar(content: Text(context.read<ProfileController>().tr('google_login_cancel'))),
         );
         return;
       }
@@ -136,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Lỗi đăng nhập Google: $error')));
+      ).showSnackBar(SnackBar(content: Text('${context.read<ProfileController>().tr('google_login_error')}$error')));
     } finally {
       if (mounted) {
         setState(() {
@@ -148,6 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     return Scaffold(
       backgroundColor: const Color(0xFFF1F8F6),
       body: SafeArea(
@@ -210,9 +213,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Email Field
-                      const Text(
-                        'EMAIL CỦA BẠN',
-                        style: TextStyle(
+                      Text(
+                        lang.tr('email').toUpperCase(),
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
@@ -296,9 +299,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'MẬT KHẨU',
-                            style: TextStyle(
+                          Text(
+                            lang.tr('password_label'),
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.5,
@@ -311,9 +314,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 context,
                               ).pushNamed(forgotPasswordViewRoute);
                             },
-                            child: const Text(
-                              'Quên mật khẩu?',
-                              style: TextStyle(
+                            child: Text(
+                              lang.tr('forgot_password'),
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF186F2F),
@@ -431,9 +434,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text(
-                                  'Đăng nhập',
-                                  style: TextStyle(
+                              : Text(
+                                  lang.tr('login'),
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -444,19 +447,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // Divider
                       Row(
-                        children: const [
-                          Expanded(child: Divider(color: Color(0xFFE5ECE7))),
+                        children: [
+                          const Expanded(child: Divider(color: Color(0xFFE5ECE7))),
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              'hoặc',
+                              lang.tr('or'),
                               style: TextStyle(
                                 color: Color(0xFF6B8071),
                                 fontSize: 13,
                               ),
                             ),
                           ),
-                          Expanded(child: Divider(color: Color(0xFFE5ECE7))),
+                          const Expanded(child: Divider(color: Color(0xFFE5ECE7))),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -485,8 +488,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(width: 12),
                               Text(
                                 _isGoogleSigningIn
-                                    ? 'Đang đăng nhập...'
-                                    : 'Đăng nhập với Google',
+                                    ? lang.tr('logging_in')
+                                    : lang.tr('login_with_google'),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -505,9 +508,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Bạn chưa có tài khoản? ',
-                      style: TextStyle(color: Color(0xFF4B6255), fontSize: 15),
+                    Text(
+                      lang.tr('dont_have_account'),
+                      style: const TextStyle(color: Color(0xFF4B6255), fontSize: 15),
                     ),
                     GestureDetector(
                       onTap: () {

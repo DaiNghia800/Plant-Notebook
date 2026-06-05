@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 import 'package:plant_notebook/screens/home/widget/watering_section/watering_plant_card.dart';
 
 class HomeWateringSection extends StatelessWidget {
@@ -8,6 +9,9 @@ class HomeWateringSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final lang = context.watch<ProfileController>();
     final gardenController = context.watch<MyGardenController>();
     final allPlants = gardenController.plantProfiles;
 
@@ -31,25 +35,25 @@ class HomeWateringSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Cần tưới hôm nay',
+            Text(
+              lang.tr('watering_today'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1B1B1B),
+                color: theme.colorScheme.onSurface,
               ),
             ),
             if (needsWateringPlants.isNotEmpty)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: isDark ? const Color(0xFF1E3323) : const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${needsWateringPlants.length} cây',
-                  style: const TextStyle(
-                    color: Color(0xFF2E7D32),
+                  '${needsWateringPlants.length} ${lang.tr('plants_count')}',
+                  style: TextStyle(
+                    color: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -63,9 +67,9 @@ class HomeWateringSection extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F8E9),
+              color: isDark ? const Color(0xFF1E3323) : const Color(0xFFF1F8E9),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDCEDC8)),
+              border: Border.all(color: isDark ? const Color(0xFF2D4C34) : const Color(0xFFDCEDC8)),
             ),
             child: Column(
               children: [
@@ -75,20 +79,20 @@ class HomeWateringSection extends StatelessWidget {
                   size: 40,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Tuyệt vời!',
+                Text(
+                  lang.tr('all_watered'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF33691E),
+                    color: isDark ? Colors.lightGreen : const Color(0xFF33691E),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tất cả cây của bạn đã đủ nước 💧',
+                  lang.tr('all_watered_desc'),
                   style: TextStyle(
                     fontSize: 14,
-                    color: const Color(0xFF558B2F).withOpacity(0.8),
+                    color: isDark ? Colors.lightGreen[200] : const Color(0xFF558B2F).withOpacity(0.8),
                   ),
                 ),
               ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 import 'dart:math';
 
 class HomeDiscoverPlant extends StatefulWidget {
@@ -24,6 +25,8 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final lang = context.watch<ProfileController>();
     final libraryController = context.watch<LibraryPlantController>();
     final plants = libraryController.plants;
 
@@ -41,7 +44,7 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
     final String imageUrl = plant.imageUrl;
     final String description = plant.description.isNotEmpty 
         ? plant.description 
-        : 'Cây này rất tốt cho không gian sống của bạn.';
+        : lang.tr('default_plant_desc');
     
     final plantName = plant.name.isNotEmpty ? plant.name : (plant.scientificName ?? 'Unknown');
 
@@ -51,12 +54,12 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Có thể bạn chưa biết?',
+            Text(
+              lang.tr('did_you_know_home'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1B1B1B),
+                color: theme.colorScheme.onSurface,
               ),
             ),
             IconButton(
@@ -74,7 +77,7 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
           height: 140,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: const Color(0xFFF5F5F5),
+            color: theme.colorScheme.surface,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),

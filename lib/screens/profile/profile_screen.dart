@@ -165,7 +165,7 @@ class ProfileView extends StatelessWidget {
       builder: (context) {
         return AlertDialog(
           title: Text(
-            'Chọn ngôn ngữ',
+            controller.tr('language'),
             style: TextStyle(
               color: Theme.of(context).primaryColor,
               fontWeight: FontWeight.bold,
@@ -175,26 +175,36 @@ class ProfileView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: Text(
-                  'Tiếng Việt',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                title: Row(
+                  children: [
+                    const Text('🇻🇳'),
+                    const SizedBox(width: 12),
+                    Text('Tiếng Việt', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                    if (controller.currentLanguage == 'vi') ...[
+                      const Spacer(),
+                      const Icon(Icons.check, color: Colors.green),
+                    ],
+                  ],
                 ),
                 onTap: () {
-                  controller.changeLanguage('Tiếng Việt');
+                  controller.changeLanguage('vi');
                   Navigator.pop(context);
                 },
               ),
               ListTile(
-                title: Text(
-                  'English',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                title: Row(
+                  children: [
+                    const Text('🇬🇧'),
+                    const SizedBox(width: 12),
+                    Text('English', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                    if (controller.currentLanguage == 'en') ...[
+                      const Spacer(),
+                      const Icon(Icons.check, color: Colors.green),
+                    ],
+                  ],
                 ),
                 onTap: () {
-                  controller.changeLanguage('English');
+                  controller.changeLanguage('en');
                   Navigator.pop(context);
                 },
               ),
@@ -279,7 +289,7 @@ class ProfileView extends StatelessWidget {
               _buildProfileCard(context, controller),
               SizedBox(height: 30),
               Text(
-                controller.textSettings,
+                controller.tr('app_settings'),
                 style: TextStyle(
                   color: Theme.of(context).hintColor,
                   fontWeight: FontWeight.bold,
@@ -306,10 +316,10 @@ class ProfileView extends StatelessWidget {
     final int plantCount = myGardenController.savedPlants.length;
     final int level = 1 + (plantCount ~/ 3); // Mỗi 3 cây tăng 1 cấp
 
-    final String textPlants = controller.currentLanguage == 'English'
-        ? '$plantCount Plants'
-        : '$plantCount Cây trồng';
-    final String textLevel = controller.currentLanguage == 'English'
+    final String textPlants = controller.currentLanguage == 'en'
+        ? '$plantCount plants'
+        : '$plantCount cây';
+    final String textLevel = controller.currentLanguage == 'en'
         ? 'Level $level'
         : 'Cấp $level';
 
@@ -398,7 +408,7 @@ class ProfileView extends StatelessWidget {
           ],
           SizedBox(height: 5),
           Text(
-            controller.textMemberSince,
+            '${controller.tr('member_since')} ${controller.memberSince}',
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.secondary,
@@ -465,7 +475,7 @@ class ProfileView extends StatelessWidget {
           _buildSettingTile(
             context,
             icon: Icons.notifications,
-            title: controller.textNotification,
+            title: controller.tr('notification'),
             trailing: Switch(
               value: controller.isNotificationOn,
               onChanged: controller.toggleNotification,
@@ -476,7 +486,7 @@ class ProfileView extends StatelessWidget {
           _buildSettingTile(
             context,
             icon: Icons.dark_mode,
-            title: controller.textDarkMode,
+            title: controller.tr('dark_mode'),
             trailing: Switch(
               value: controller.isDarkModeOn,
               onChanged: controller.toggleDarkMode,
@@ -487,12 +497,12 @@ class ProfileView extends StatelessWidget {
           _buildSettingTile(
             context,
             icon: Icons.translate,
-            title: controller.textLanguage,
+            title: controller.tr('language'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  controller.currentLanguage,
+                  controller.currentLanguage == 'en' ? 'English' : 'Tiếng Việt',
                   style: TextStyle(
                     color: Theme.of(context).hintColor,
                     fontSize: 14,
@@ -508,7 +518,7 @@ class ProfileView extends StatelessWidget {
           _buildSettingTile(
             context,
             icon: Icons.person_add_alt_1,
-            title: controller.textInviteFriends,
+            title: controller.tr('invite_friends'),
             trailing: Icon(
               Icons.chevron_right,
               color: Theme.of(context).hintColor,
@@ -519,7 +529,7 @@ class ProfileView extends StatelessWidget {
           _buildSettingTile(
             context,
             icon: Icons.feedback_outlined,
-            title: controller.textFeedback,
+            title: controller.tr('feedback'),
             trailing: Icon(
               Icons.chevron_right,
               color: Theme.of(context).hintColor,
@@ -580,7 +590,7 @@ class ProfileView extends StatelessWidget {
         onPressed: onLogout,
         icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
         label: Text(
-          controller.textLogout,
+          controller.tr('logout'),
           style: TextStyle(
             color: Theme.of(context).colorScheme.error,
             fontSize: 16,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class ScannerAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isFlashOn;
@@ -26,9 +28,9 @@ class ScannerAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
         ),
       ),
-      title: const Text(
-        'Sổ tay cây trồng',
-        style: TextStyle(
+      title: Text(
+        context.watch<ProfileController>().tr('app_name'),
+        style: const TextStyle(
           color: Colors.white,
           fontSize: 16,
           fontWeight: FontWeight.w600,

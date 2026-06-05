@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 import 'package:plant_notebook/controller/plant_scanner_controller.dart';
 import 'package:plant_notebook/screens/plant_scanner/widget/camera_area/scan_bottom_bar.dart';
@@ -73,7 +74,7 @@ class _PlantScannerScreenState extends State<PlantScannerScreen>
   }
 
   void _navigateToResult(String imagePath) {
-    _showSnackBar('Đã chuẩn bị ảnh, đang phân tích...');
+    _showSnackBar(context.read<ProfileController>().tr('analyzing_image'));
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ScanResultScreen(imagePath: imagePath)),
     );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class ScanBottomBar extends StatelessWidget {
   final VoidCallback? onCapture;
@@ -14,6 +16,7 @@ class ScanBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     return Container(
       color: Colors.black,
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -24,7 +27,7 @@ class ScanBottomBar extends StatelessWidget {
           // Gallery
           _SideButton(
             icon: Icons.photo_library_outlined,
-            label: 'THƯ VIỆN',
+            label: lang.tr('gallery'),
             onTap: onGallery,
           ),
           // Capture button
@@ -32,7 +35,7 @@ class ScanBottomBar extends StatelessWidget {
           // Flip camera
           _SideButton(
             icon: Icons.flip_camera_ios_outlined,
-            label: 'ĐỔI CAMERA',
+            label: lang.tr('switch_camera'),
             onTap: onFlipCamera,
           ),
         ],

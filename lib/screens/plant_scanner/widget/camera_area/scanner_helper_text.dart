@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class ScannerHelperText extends StatelessWidget {
   const ScannerHelperText({super.key});
@@ -18,8 +20,7 @@ class ScannerHelperText extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            'Giữ điện thoại ổn định và hướng camera vào tổng quan cây. '
-            'Nhấn vào tâm camera để lấy nét cây tốt nhất.',
+            context.watch<ProfileController>().tr('scanner_helper'),
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withOpacity(0.75),

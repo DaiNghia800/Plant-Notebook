@@ -37,7 +37,7 @@ class HomeHeroBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Chào $greetingName 👋',
+                  '${profileController.tr('hero_greeting')} $greetingName',
                   style: const TextStyle(
                     color: Color(0xFFE8F5E9),
                     fontSize: 14,
@@ -45,9 +45,9 @@ class HomeHeroBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Hôm nay cây của\nbạn thế nào?',
-                  style: TextStyle(
+                Text(
+                  profileController.tr('hero_subtitle'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
@@ -56,9 +56,9 @@ class HomeHeroBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Theo dõi, nhắc tưới & chẩn đoán bệnh',
-                  style: TextStyle(
+                Text(
+                  profileController.tr('hero_desc'),
+                  style: const TextStyle(
                     color: Color(0xFFB9F6CA),
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
@@ -70,9 +70,9 @@ class HomeHeroBanner extends StatelessWidget {
                     Navigator.pushNamed(context, scannerViewRoute);
                   },
                   icon: const Icon(Icons.document_scanner, size: 18),
-                  label: const Text(
-                    'Quét cây ngay',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  label: Text(
+                    profileController.tr('quick_scan'),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,

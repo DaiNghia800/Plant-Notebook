@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class MyGardenPlantListCard extends StatelessWidget {
   const MyGardenPlantListCard({
@@ -18,20 +20,21 @@ class MyGardenPlantListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     final (String titleText, Color color, IconData icon) statusMeta =
         switch (profile.status) {
           GardenPlantStatus.healthy => (
-            'KHOẺ MẠNH',
+            lang.tr('status_healthy').toUpperCase(),
             const Color(0xFF199E63),
             Icons.spa,
           ),
           GardenPlantStatus.thirsty => (
-            'ĐANG KHÁT',
+            lang.tr('status_thirsty').toUpperCase(),
             const Color(0xFFB8860B),
             Icons.sunny,
           ),
           GardenPlantStatus.sick => (
-            'ĐANG BỆNH',
+            lang.tr('status_sick').toUpperCase(),
             const Color(0xFFC62828),
             Icons.warning,
           ),
@@ -39,7 +42,7 @@ class MyGardenPlantListCard extends StatelessWidget {
     final (title, statusColor, statusIcon) = statusMeta;
 
     final String subtitle =
-        'Tưới: ${profile.reminderSetting.wateringCycleDays} ngày/lần';
+        lang.tr('watering_format').replaceAll('{days}', profile.reminderSetting.wateringCycleDays.toString());
 
     return GestureDetector(
       onTap: onTap,
