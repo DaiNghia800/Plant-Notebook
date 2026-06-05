@@ -4,6 +4,8 @@ import 'package:plant_notebook/routes/view_export.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:plant_notebook/data/services/firebase_messaging_service.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -13,6 +15,20 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
+  @override
+  void initState() {
+    super.initState();
+    _registerFcmToken();
+  }
+
+  Future<void> _registerFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? userId = prefs.getString('userId');
+    if (userId != null) {
+      await FirebaseMessagingService.registerToken(userId);
+    }
+  }
+
   final List _pages = [
   const HomeScreen(),
   const MyGardenScreen(),

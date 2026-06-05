@@ -24,6 +24,14 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
   Category _selectedCategory = Category.all;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MyGardenController>(context, listen: false).initialize();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Consumer<MyGardenController>(
       builder: (context, controller, _) {
@@ -36,9 +44,11 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
                 return false;
               }
               if (controller.searchQuery.isNotEmpty) {
-                final query = controller.searchQuery.toLowerCase();
-                final matchesName = plant.name.toLowerCase().contains(query);
-                final matchesLatin = plant.latinName.toLowerCase().contains(query);
+                final query = _removeDiacritics(controller.searchQuery.toLowerCase());
+                final name = _removeDiacritics(plant.name.toLowerCase());
+                final latin = _removeDiacritics(plant.latinName.toLowerCase());
+                final matchesName = name.contains(query);
+                final matchesLatin = latin.contains(query);
                 if (!matchesName && !matchesLatin) {
                   return false;
                 }
@@ -245,4 +255,30 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
       },
     );
   }
+}
+
+String _removeDiacritics(String str) {
+  const vietnamese = 'aAeEoOuUiIdDyY';
+  final vietnameseRegex = [
+    RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'),
+    RegExp(r'[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]'),
+    RegExp(r'[èéẹẻẽêềếệểễ]'),
+    RegExp(r'[ÈÉẸẺẼÊỀẾỆỂỄ]'),
+    RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'),
+    RegExp(r'[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]'),
+    RegExp(r'[ùúụủũưừứựửữ]'),
+    RegExp(r'[ÙÚỤỦŨƯỪỨỰỬỮ]'),
+    RegExp(r'[ìíịỉĩ]'),
+    RegExp(r'[ÌÍỊỈĨ]'),
+    RegExp(r'[đ]'),
+    RegExp(r'[Đ]'),
+    RegExp(r'[ỳýỵỷỹ]'),
+    RegExp(r'[ỲÝỴỶỸ]')
+  ];
+
+  var result = str;
+  for (var i = 0; i < vietnameseRegex.length; i++) {
+    result = result.replaceAll(vietnameseRegex[i], vietnamese[i]);
+  }
+  return result;
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
-import 'package:plant_notebook/screens/plant_detail/plant_detail_screen.dart';
+import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 
 class LibraryPlantScreen extends StatefulWidget {
@@ -49,9 +49,10 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
 
   List<LibraryPlantItem> _filteredPlants(List<LibraryPlantItem> plants) {
     return plants.where((plant) {
-      final bool matchesQuery =
-          plant.name.toLowerCase().contains(_query.toLowerCase()) ||
-          plant.category.toLowerCase().contains(_query.toLowerCase());
+      final query = _removeDiacritics(_query.toLowerCase());
+      final name = _removeDiacritics(plant.name.toLowerCase());
+      final category = _removeDiacritics(plant.category.toLowerCase());
+      final bool matchesQuery = name.contains(query) || category.contains(query);
       final bool matchesCategory =
           _selectedCategory == _all || plant.category == _selectedCategory;
       final bool matchesLight =
@@ -476,7 +477,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
 
   void _openDetail(LibraryPlantItem plant) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => PlantDetailScreen(plant: plant)),
+      MaterialPageRoute(builder: (context) => PlantDetailScreen(libraryPlant: plant)),
     );
   }
 }
@@ -826,4 +827,30 @@ class _ErrorView extends StatelessWidget {
       ),
     );
   }
+}
+
+String _removeDiacritics(String str) {
+  const vietnamese = 'aAeEoOuUiIdDyY';
+  final vietnameseRegex = [
+    RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'),
+    RegExp(r'[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]'),
+    RegExp(r'[èéẹẻẽêềếệểễ]'),
+    RegExp(r'[ÈÉẸẺẼÊỀẾỆỂỄ]'),
+    RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'),
+    RegExp(r'[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]'),
+    RegExp(r'[ùúụủũưừứựửữ]'),
+    RegExp(r'[ÙÚỤỦŨƯỪỨỰỬỮ]'),
+    RegExp(r'[ìíịỉĩ]'),
+    RegExp(r'[ÌÍỊỈĨ]'),
+    RegExp(r'[đ]'),
+    RegExp(r'[Đ]'),
+    RegExp(r'[ỳýỵỷỹ]'),
+    RegExp(r'[ỲÝỴỶỸ]')
+  ];
+
+  var result = str;
+  for (var i = 0; i < vietnameseRegex.length; i++) {
+    result = result.replaceAll(vietnameseRegex[i], vietnamese[i]);
+  }
+  return result;
 }
