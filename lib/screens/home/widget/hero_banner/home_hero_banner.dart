@@ -1,17 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class HomeHeroBanner extends StatelessWidget {
   const HomeHeroBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final profileController = context.watch<ProfileController>();
+    final String greetingName = profileController.userName;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E7D32),
-        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2E7D32), Color(0xFF4CAF50)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2E7D32).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -20,29 +36,44 @@ class HomeHeroBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Hôm nay cây của\nbạn thế nào? 🌱',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    height: 1.3,
+                Text(
+                  'Chào $greetingName 👋',
+                  style: const TextStyle(
+                    color: Color(0xFFE8F5E9),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Theo dõi, nhắc tưới & chẩn\nđoán cây bằng AI',
+                  'Hôm nay cây của\nbạn thế nào?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Theo dõi, nhắc tưới & chẩn đoán bệnh',
                   style: TextStyle(
                     color: Color(0xFFB9F6CA),
                     fontSize: 13,
-                    height: 1.5,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pushNamed(context, scannerViewRoute);
                   },
+                  icon: const Icon(Icons.document_scanner, size: 18),
+                  label: const Text(
+                    'Quét cây ngay',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFF2E7D32),
@@ -50,14 +81,11 @@ class HomeHeroBanner extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
+                      horizontal: 20,
                       vertical: 12,
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Quét cây ngay',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    elevation: 2,
+                    shadowColor: Colors.black.withOpacity(0.2),
                   ),
                 ),
               ],
@@ -72,14 +100,25 @@ class HomeHeroBanner extends StatelessWidget {
 
   Widget _buildPlantIcon() {
     return Container(
-      width: 90,
-      height: 90,
+      width: 100,
+      height: 100,
       decoration: BoxDecoration(
-        color: const Color(0xFF388E3C),
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4CAF50), Color(0xFF81C784)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(2, 4),
+          )
+        ],
       ),
       child: const Center(
-        child: Icon(Icons.local_florist, color: Color(0xFF81C784), size: 52),
+        child: Icon(Icons.eco, color: Colors.white, size: 56),
       ),
     );
   }

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/library_plant_controller.dart';
+import 'package:plant_notebook/data/models/library_plant_item.dart';
 import 'dart:math';
 
 class HomeDiscoverPlant extends StatefulWidget {
@@ -9,52 +12,39 @@ class HomeDiscoverPlant extends StatefulWidget {
 }
 
 class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
-  late Map<String, String> _selectedPlant;
+  LibraryPlantItem? _selectedPlant;
 
-  static const List<Map<String, String>> _plantsFact = [
-    {
-      'name': 'Cây Kim Tiền',
-      'fact': 'Được cho là mang lại tài lộc. Rất dễ sống trong khu vực ánh sáng yếu.',
-      'icon': '🌿',
-      'bgColor': '0xFFE8F5E9',
-      'iconColor': '0xFF2E7D32',
-    },
-    {
-      'name': 'Cây Nha Đam',
-      'fact': 'Thanh lọc không khí tuyệt vời và có thể dùng gel để làm dịu vết bỏng.',
-      'icon': '🌵',
-      'bgColor': '0xFFE0F7FA',
-      'iconColor': '0xFF006064',
-    },
-    {
-      'name': 'Cây Lưỡi Hổ',
-      'fact': 'Nhả oxy mạnh vào ban đêm thay vì ban ngày, cực hợp để trong phòng ngủ.',
-      'icon': '🪴',
-      'bgColor': '0xFFFFF3E0',
-      'iconColor': '0xFFE65100',
-    },
-    {
-      'name': 'Cây Lan Ý',
-      'fact': 'Hút các tia bức xạ từ màn hình máy tính và hút ẩm cực kỳ tốt.',
-      'icon': '🌸',
-      'bgColor': '0xFFFCE4EC',
-      'iconColor': '0xFF880E4F',
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _randomizePlant();
-  }
-
-  void _randomizePlant() {
+  void _randomizePlant(List<LibraryPlantItem> plants) {
+    if (plants.isEmpty) return;
     final random = Random();
-    _selectedPlant = _plantsFact[random.nextInt(_plantsFact.length)];
+    setState(() {
+      _selectedPlant = plants[random.nextInt(plants.length)];
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final libraryController = context.watch<LibraryPlantController>();
+    final plants = libraryController.plants;
+
+    if (_selectedPlant == null && plants.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _randomizePlant(plants);
+      });
+    }
+
+    if (plants.isEmpty) {
+      return const SizedBox.shrink(); // Hide if no data
+    }
+
+    final plant = _selectedPlant ?? plants.first;
+    final String imageUrl = plant.imageUrl;
+    final String description = plant.description.isNotEmpty 
+        ? plant.description 
+        : 'Cây này rất tốt cho không gian sống của bạn.';
+    
+    final plantName = plant.name.isNotEmpty ? plant.name : (plant.scientificName ?? 'Unknown');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -72,9 +62,7 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
             IconButton(
               icon: const Icon(Icons.refresh, color: Color(0xFF757575), size: 20),
               onPressed: () {
-                setState(() {
-                  _randomizePlant();
-                });
+                _randomizePlant(plants);
               },
               constraints: const BoxConstraints(),
               padding: EdgeInsets.zero,
@@ -83,50 +71,84 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
         ),
         const SizedBox(height: 14),
         Container(
-          padding: const EdgeInsets.all(16),
+          height: 140,
           decoration: BoxDecoration(
-            color: Color(int.parse(_selectedPlant['bgColor']!)),
             borderRadius: BorderRadius.circular(16),
+            color: const Color(0xFFF5F5F5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
             children: [
+              // Background Image with gradient
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: imageUrl.startsWith('http')
+                    ? Image.network(
+                        imageUrl,
+                        width: double.infinity,
+                        height: 140,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildFallbackBg(),
+                      )
+                    : _buildFallbackBg(),
+              ),
+              // Gradient Overlay
               Container(
-                width: 48,
-                height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    _selectedPlant['icon']!,
-                    style: const TextStyle(fontSize: 24),
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withOpacity(0.7),
+                      Colors.black.withOpacity(0.2),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // Content
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   children: [
-                    Text(
-                      _selectedPlant['name']!,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(int.parse(_selectedPlant['iconColor']!)),
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            plantName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            description,
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _selectedPlant['fact']!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: Color(int.parse(_selectedPlant['iconColor']!)).withOpacity(0.8),
-                      ),
-                    ),
+                    const Expanded(flex: 1, child: SizedBox()), // Space for the right side
                   ],
                 ),
               ),
@@ -134,6 +156,17 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFallbackBg() {
+    return Container(
+      width: double.infinity,
+      height: 140,
+      color: const Color(0xFFE8F5E9),
+      child: const Center(
+        child: Icon(Icons.eco, color: Color(0xFF81C784), size: 60),
+      ),
     );
   }
 }

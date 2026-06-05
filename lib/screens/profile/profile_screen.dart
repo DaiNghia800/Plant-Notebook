@@ -46,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (mounted) {
       // Reload profile controller's data in case user logged in or updated details
-      Provider.of<ProfileController>(context, listen: false).loadUserProfile();
+      Provider.of<ProfileController>(context, listen: false).loadUserData();
     }
 
     setState(() {
