@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:plant_notebook/screens/home/widget/watering_section/home_watering_section.dart';
 import 'package:plant_notebook/screens/home/widget/garden_health/home_garden_health.dart';
 import 'package:plant_notebook/screens/home/widget/hero_banner/home_hero_banner.dart';
@@ -18,7 +18,7 @@ class _HomeViewState extends State<HomeScreen> {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(), // Hiệu ứng cuộn mượt
       child: Padding(
-        padding: EdgeInsets.only(top: 100, left: 20, right: 20, bottom: 60),
+        padding: EdgeInsets.only(top: 100, left: 20, right: 20, bottom: 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
