@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class MyGardenAddPlantListCard extends StatelessWidget {
   const MyGardenAddPlantListCard({super.key, required this.onTap});
@@ -7,6 +9,7 @@ class MyGardenAddPlantListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -43,8 +46,8 @@ class MyGardenAddPlantListCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Thêm cây mới',
-                    style: TextStyle(
+                    lang.tr('add_new_plant'),
+                    style: const TextStyle(
                       color: Color(0xFF1B7A3D),
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -52,11 +55,12 @@ class MyGardenAddPlantListCard extends StatelessWidget {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'Trồng thêm một cây mới vào khu vườn',
-                    style: TextStyle(
+                    lang.tr('add_new_plant_desc'),
+                    style: const TextStyle(
                       color: Color(0xFF5E8B6D),
                       fontSize: 12,
                     ),
+                  ),
                   ),
                 ],
               ),

@@ -45,7 +45,7 @@ class MyGardenPlantCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.8),
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -71,7 +71,7 @@ class MyGardenPlantCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: Row(
@@ -98,8 +98,8 @@ class MyGardenPlantCard extends StatelessWidget {
                       onTap: onEdit, // Gọi hàm sửa khi nhấn vào đây
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Colors.white, // Nền trắng để nổi bật trên ảnh
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface, // Nền trắng để nổi bật trên ảnh
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(

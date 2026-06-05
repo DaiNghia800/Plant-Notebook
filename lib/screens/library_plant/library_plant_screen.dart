@@ -4,6 +4,7 @@ import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
 import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class LibraryPlantScreen extends StatefulWidget {
   const LibraryPlantScreen({super.key});
@@ -15,35 +16,33 @@ class LibraryPlantScreen extends StatefulWidget {
 class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   final TextEditingController _searchController = TextEditingController();
 
-  static const String _all = 'Tất cả';
-
   String _query = '';
-  String _selectedCategory = _all;
-  String _selectedLight = _all;
-  String _selectedWater = _all;
-  String _selectedDifficulty = _all;
+  String _selectedCategory = '';
+  String _selectedLight = '';
+  String _selectedWater = '';
+  String _selectedDifficulty = '';
 
   int _visibleCount = 10;
   List<Map<String, dynamic>> _randomFacts = [];
   List<LibraryPlantItem>? _previousPlants;
 
   List<String> _categoryOptions(List<LibraryPlantItem> plants) => <String>[
-        _all,
+        '',
         ...{for (final plant in plants) plant.category},
       ];
 
   List<String> _lightOptions(List<LibraryPlantItem> plants) => <String>[
-        _all,
+        '',
         ...{for (final plant in plants) plant.lightLevel},
       ];
 
   List<String> _waterOptions(List<LibraryPlantItem> plants) => <String>[
-        _all,
+        '',
         ...{for (final plant in plants) plant.waterNeed},
       ];
 
   List<String> _difficultyOptions(List<LibraryPlantItem> plants) => <String>[
-        _all,
+        '',
         ...{for (final plant in plants) plant.difficulty},
       ];
 
@@ -54,13 +53,13 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
       final category = _removeDiacritics(plant.category.toLowerCase());
       final bool matchesQuery = name.contains(query) || category.contains(query);
       final bool matchesCategory =
-          _selectedCategory == _all || plant.category == _selectedCategory;
+          _selectedCategory.isEmpty || plant.category == _selectedCategory;
       final bool matchesLight =
-          _selectedLight == _all || plant.lightLevel == _selectedLight;
+          _selectedLight.isEmpty || plant.lightLevel == _selectedLight;
       final bool matchesWater =
-          _selectedWater == _all || plant.waterNeed == _selectedWater;
+          _selectedWater.isEmpty || plant.waterNeed == _selectedWater;
       final bool matchesDifficulty =
-          _selectedDifficulty == _all ||
+          _selectedDifficulty.isEmpty ||
           plant.difficulty == _selectedDifficulty;
 
       return matchesQuery &&
@@ -87,17 +86,18 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     return Consumer<LibraryPlantController>(
       builder: (context, controller, _) {
         // ── Loading ──────────────────────────────────────────────────────────
         if (controller.isLoading) {
-          return const _LoadingView();
+          return _LoadingView();
         }
 
         // ── Error ────────────────────────────────────────────────────────────
         if (controller.hasError) {
           return _ErrorView(
-            message: controller.errorMessage ?? 'Đã xảy ra lỗi.',
+            message: controller.errorMessage ?? lang.tr('error_occurred'),
             onRetry: controller.refresh,
           );
         }
@@ -151,6 +151,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
                 _buildCategoryRow(_categoryOptions(allPlants)),
                 const SizedBox(height: 14),
                 _buildFilterRow(
+                  lang: lang,
                   lightOptions: _lightOptions(allPlants),
                   waterOptions: _waterOptions(allPlants),
                   difficultyOptions: _difficultyOptions(allPlants),
@@ -192,9 +193,9 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
                             borderRadius: BorderRadius.circular(99),
                           ),
                         ),
-                        child: const Text(
-                          'Xem thêm cây trồng',
-                          style: TextStyle(
+                        child: Text(
+                          lang.tr('load_more'),
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
@@ -213,10 +214,12 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   }
 
   Widget _buildSearchBox() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E3323) : Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: isDark ? Border.all(color: const Color(0xFF2D4C34)) : null,
       ),
       child: TextField(
         controller: _searchController,
@@ -225,7 +228,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
           _visibleCount = 10;
         }),
         decoration: InputDecoration(
-          hintText: 'Tìm kiếm cây trồng...',
+          hintText: context.read<ProfileController>().tr('search_library'),
           prefixIcon: const Icon(Icons.search_rounded),
           suffixIcon: _query.isEmpty
               ? null
@@ -247,6 +250,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   }
 
   Widget _buildCategoryRow(List<String> categoryOptions) {
+    final lang = context.read<ProfileController>();
     return SizedBox(
       height: 40,
       child: ListView.separated(
@@ -257,16 +261,20 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
           final String category = categoryOptions[index];
           final bool selected = _selectedCategory == category;
           return ChoiceChip(
-            label: Text(category),
+            label: Text(category.isEmpty ? lang.tr('all_filter') : category),
             selected: selected,
             onSelected: (_) => setState(() {
               _selectedCategory = category;
               _visibleCount = 10;
             }),
             selectedColor: primaryColor,
-            backgroundColor: const Color(0xFF7BCF7A),
+            backgroundColor: Theme.of(context).brightness == Brightness.dark 
+                ? const Color(0xFF1E3323) 
+                : const Color(0xFFE8F5E9),
             labelStyle: TextStyle(
-              color: selected ? Colors.white : const Color(0xFF0E3B1A),
+              color: selected 
+                  ? Colors.white 
+                  : (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF0E3B1A)),
               fontWeight: FontWeight.w700,
             ),
             side: BorderSide.none,
@@ -280,6 +288,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   }
 
   Widget _buildFilterRow({
+    required ProfileController lang,
     required List<String> lightOptions,
     required List<String> waterOptions,
     required List<String> difficultyOptions,
@@ -289,29 +298,29 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
       runSpacing: 8,
       children: [
         _FilterMenuChip(
-          label: 'Ánh sáng: $_selectedLight',
+          label: '${lang.tr('light_filter')}: ${_selectedLight.isEmpty ? lang.tr('all_filter') : _selectedLight}',
           icon: Icons.wb_sunny_outlined,
-          options: lightOptions,
+          options: lightOptions.map((e) => e.isEmpty ? lang.tr('all_filter') : e).toList(),
           onSelected: (value) => setState(() {
-            _selectedLight = value;
+            _selectedLight = value == lang.tr('all_filter') ? '' : value;
             _visibleCount = 10;
           }),
         ),
         _FilterMenuChip(
-          label: 'Nước: $_selectedWater',
+          label: '${lang.tr('water_filter')}: ${_selectedWater.isEmpty ? lang.tr('all_filter') : _selectedWater}',
           icon: Icons.water_drop_outlined,
-          options: waterOptions,
+          options: waterOptions.map((e) => e.isEmpty ? lang.tr('all_filter') : e).toList(),
           onSelected: (value) => setState(() {
-            _selectedWater = value;
+            _selectedWater = value == lang.tr('all_filter') ? '' : value;
             _visibleCount = 10;
           }),
         ),
         _FilterMenuChip(
-          label: 'Độ khó: $_selectedDifficulty',
+          label: '${lang.tr('difficulty_filter')}: ${_selectedDifficulty.isEmpty ? lang.tr('all_filter') : _selectedDifficulty}',
           icon: Icons.stacked_line_chart,
-          options: difficultyOptions,
+          options: difficultyOptions.map((e) => e.isEmpty ? lang.tr('all_filter') : e).toList(),
           onSelected: (value) => setState(() {
-            _selectedDifficulty = value;
+            _selectedDifficulty = value == lang.tr('all_filter') ? '' : value;
             _visibleCount = 10;
           }),
         ),
@@ -415,23 +424,24 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   }
 
   Widget _buildEmptyState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E3323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: isDark ? const Color(0xFF2D4C34) : Colors.black12),
       ),
-      child: const Column(
+      child: Column(
         children: [
-          Icon(Icons.search_off_rounded, size: 34, color: Color(0xFF6C7A70)),
-          SizedBox(height: 8),
+          Icon(Icons.search_off_rounded, size: 34, color: isDark ? Colors.white54 : const Color(0xFF6C7A70)),
+          const SizedBox(height: 8),
           Text(
-            'Không tìm thấy cây phù hợp bộ lọc hiện tại.',
+            context.read<ProfileController>().tr('no_plant_found'),
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFF4A5A4E),
+              color: isDark ? Colors.white70 : const Color(0xFF4A5A4E),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -448,12 +458,12 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Bạn có biết?',
+        Text(
+          context.read<ProfileController>().tr('did_you_know'),
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF102A17),
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF102A17),
           ),
         ),
         const SizedBox(height: 10),
@@ -490,15 +500,16 @@ class _PlantListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(26),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.92),
+          color: isDark ? const Color(0xFF1E3323) : Colors.white.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: Colors.black12),
+          border: Border.all(color: isDark ? const Color(0xFF2D4C34) : Colors.black12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -530,11 +541,11 @@ class _PlantListCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     plant.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 33,
                       height: 1,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF101713),
+                      color: isDark ? Colors.white : const Color(0xFF101713),
                     ),
                   ),
                 ),
@@ -545,15 +556,15 @@ class _PlantListCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF9D9E4),
+                      color: isDark ? const Color(0xFF4A1F2D) : const Color(0xFFF9D9E4),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Rare',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF8A3E58),
+                        color: isDark ? const Color(0xFFF9D9E4) : const Color(0xFF8A3E58),
                       ),
                     ),
                   ),
@@ -562,9 +573,9 @@ class _PlantListCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               plant.shortDescription,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
-                color: Color(0xFF404F45),
+                color: isDark ? Colors.white70 : const Color(0xFF404F45),
                 height: 1.5,
               ),
             ),
@@ -599,17 +610,19 @@ class _MetaText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final contentColor = isDark ? const Color(0xFF81C784) : const Color(0xFF1E5A2F);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF1E5A2F)),
+        Icon(icon, size: 14, color: contentColor),
         const SizedBox(width: 4),
         Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF2B4A34),
+            color: isDark ? Colors.white70 : const Color(0xFF2B4A34),
           ),
         ),
       ],
@@ -625,13 +638,14 @@ class _DidYouKnowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 260,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F8F4),
+        color: isDark ? const Color(0xFF1E3323) : const Color(0xFFF3F8F4),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE1EAE2)),
+        border: Border.all(color: isDark ? const Color(0xFF2D4C34) : const Color(0xFFE1EAE2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -642,7 +656,7 @@ class _DidYouKnowCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE3F1E4),
+                  color: isDark ? const Color(0xFF2D4C34) : const Color(0xFFE3F1E4),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
@@ -660,18 +674,18 @@ class _DidYouKnowCard extends StatelessWidget {
                       plant.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF102A17),
+                        color: isDark ? Colors.white : const Color(0xFF102A17),
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'Mẹo chăm cây nhanh',
+                    Text(
+                      context.watch<ProfileController>().tr('plant_tip'),
                       style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF688071),
+                        color: isDark ? Colors.white54 : const Color(0xFF688071),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -685,10 +699,10 @@ class _DidYouKnowCard extends StatelessWidget {
             fact,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               height: 1.45,
-              color: Color(0xFF3E4E43),
+              color: isDark ? Colors.white70 : const Color(0xFF3E4E43),
             ),
           ),
         ],
@@ -712,6 +726,11 @@ class _FilterMenuChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1E3323) : const Color(0xFFE5EFE8);
+    final borderColor = isDark ? const Color(0xFF2D4C34) : const Color(0xFFD2E1D7);
+    final contentColor = isDark ? const Color(0xFF81C784) : const Color(0xFF1D5630);
+
     return PopupMenuButton<String>(
       onSelected: onSelected,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -726,25 +745,25 @@ class _FilterMenuChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFFE5EFE8),
+          color: bgColor,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0xFFD2E1D7)),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 15, color: const Color(0xFF1D5630)),
+            Icon(icon, size: 15, color: contentColor),
             const SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF1D5630),
+              style: TextStyle(
+                color: contentColor,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.expand_more, size: 14, color: Color(0xFF1D5630)),
+            Icon(Icons.expand_more, size: 14, color: contentColor),
           ],
         ),
       ),
@@ -757,18 +776,19 @@ class _LoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 80),
+        padding: const EdgeInsets.symmetric(vertical: 80),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: primaryColor),
-            SizedBox(height: 16),
+            const CircularProgressIndicator(color: primaryColor),
+            const SizedBox(height: 16),
             Text(
-              'Đang tải thư viện cây...',
+              context.watch<ProfileController>().tr('loading_library'),
               style: TextStyle(
-                color: Color(0xFF4A5A4E),
+                color: isDark ? Colors.white70 : const Color(0xFF4A5A4E),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -802,8 +822,8 @@ class _ErrorView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF4A3A3A),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF4A3A3A),
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
                 height: 1.5,
@@ -813,7 +833,7 @@ class _ErrorView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Thử lại'),
+              label: Text(context.watch<ProfileController>().tr('retry')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,

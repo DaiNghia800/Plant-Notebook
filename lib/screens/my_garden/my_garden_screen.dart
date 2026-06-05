@@ -10,6 +10,7 @@ import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plan
 import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plant_form_sheet.dart';
 import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class MyGardenScreen extends StatefulWidget {
   const MyGardenScreen({super.key});
@@ -31,6 +32,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     return Consumer<MyGardenController>(
       builder: (context, controller, _) {
         final List<GardenPlantProfile> allPlants = controller.plantProfiles;
@@ -114,7 +116,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
                               Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
                               const SizedBox(height: 16),
                               Text(
-                                'Không tìm thấy cây phù hợp',
+                                lang.tr('no_plant_match'),
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.grey[600],
@@ -226,7 +228,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
     await showModalBottomSheet<GardenPlantProfile>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: neutral,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (_) {
         return MyGardenPlantFormSheet(
           initialValue: initialValue,

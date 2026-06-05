@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class ResultSliverAppBar extends StatelessWidget {
   final String imagePath;
@@ -33,9 +35,9 @@ class ResultSliverAppBar extends StatelessWidget {
             ),
           ],
         ),
-        title: const Text(
-          'Kết quả phân tích',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          context.watch<ProfileController>().tr('analysis_result'),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
     );

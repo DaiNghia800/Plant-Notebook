@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/routes/view_export.dart';
-import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:plant_notebook/data/services/firebase_messaging_service.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -37,12 +37,12 @@ class _AppState extends State<App> {
   ProfileScreen(), 
 ];
 
-  final List<String> _pageTitles = [
-    "Trang chủ",
-    "Vườn của tôi",
-    "Quét cây",
-    "Thư viện",
-    "Cá nhân",
+  List<String> _getPageTitles(ProfileController lang) => [
+    lang.tr('home'),
+    lang.tr('garden'),
+    lang.tr('scan'),
+    lang.tr('library'),
+    lang.tr('profile'),
   ];
 
   int _currentIndex = 0;
@@ -57,24 +57,28 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
+    final theme = Theme.of(context);
+    final bgColor = theme.scaffoldBackgroundColor;
+    final fgColor = theme.primaryColor;
     return Scaffold(
       extendBodyBehindAppBar: true,
       extendBody: true,
-      backgroundColor: neutral,
+      backgroundColor: bgColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: neutral.withOpacity(0.9),
+        backgroundColor: bgColor.withOpacity(0.9),
         title: _isSearching && _currentIndex == 1
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Tìm kiếm cây...',
+                decoration: InputDecoration(
+                  hintText: lang.tr('search_plant'),
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.grey),
+                  hintStyle: const TextStyle(color: Colors.grey),
                 ),
                 style: TextStyle(
-                  color: primaryColor,
+                  color: fgColor,
                   fontSize: 18,
                 ),
                 onChanged: (value) {
@@ -83,9 +87,9 @@ class _AppState extends State<App> {
                 },
               )
             : Text(
-                _pageTitles[_currentIndex],
+                _getPageTitles(lang)[_currentIndex],
                 style: TextStyle(
-                  color: primaryColor,
+                  color: fgColor,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
@@ -100,7 +104,7 @@ class _AppState extends State<App> {
                   Provider.of<MyGardenController>(context, listen: false)
                       .searchQuery = '';
                 },
-                icon: Icon(Icons.close, color: primaryColor),
+                icon: Icon(Icons.close, color: fgColor),
               )
             : (_currentIndex != 0
                 ? IconButton(
@@ -109,14 +113,14 @@ class _AppState extends State<App> {
                         _currentIndex = 0;
                       });
                     },
-                    icon: Icon(Icons.arrow_back, color: primaryColor),
+                    icon: Icon(Icons.arrow_back, color: fgColor),
                   )
                 : null),
         actions: [
           if (_currentIndex == 0)
             IconButton(
               onPressed: () {},
-              icon: Icon(Icons.notifications, color: primaryColor),
+              icon: Icon(Icons.notifications, color: fgColor),
             ),
           if (_currentIndex == 1) ...[
             if (_isSearching)
@@ -129,7 +133,7 @@ class _AppState extends State<App> {
                   Provider.of<MyGardenController>(context, listen: false)
                       .searchQuery = '';
                 },
-                icon: Icon(Icons.close, color: primaryColor),
+                icon: Icon(Icons.close, color: fgColor),
               )
             else
               IconButton(
@@ -138,10 +142,10 @@ class _AppState extends State<App> {
                     _isSearching = true;
                   });
                 },
-                icon: Icon(Icons.search, color: primaryColor),
+                icon: Icon(Icons.search, color: fgColor),
               ),
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: primaryColor),
+              icon: Icon(Icons.more_vert, color: fgColor),
               onSelected: (value) async {
                 final myGardenController =
                     Provider.of<MyGardenController>(context, listen: false);
@@ -167,13 +171,13 @@ class _AppState extends State<App> {
                       children: [
                         Icon(
                           Icons.sort_by_alpha,
-                          color: currentSort == 'name' ? primaryColor : Colors.grey,
+                          color: currentSort == 'name' ? fgColor : Colors.grey,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Sắp xếp theo tên (A-Z)',
+                          lang.tr('sort_by_name'),
                           style: TextStyle(
-                            color: currentSort == 'name' ? primaryColor : null,
+                            color: currentSort == 'name' ? fgColor : null,
                             fontWeight: currentSort == 'name' ? FontWeight.bold : null,
                           ),
                         ),
@@ -186,16 +190,16 @@ class _AppState extends State<App> {
                       children: [
                         Icon(
                           Icons.water_drop,
-                          color: currentSort == 'waterNeed'
-                              ? primaryColor
-                              : Colors.grey,
+                            color: currentSort == 'waterNeed'
+                                ? fgColor
+                                : Colors.grey,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Sắp xếp theo nhu cầu tưới',
+                          lang.tr('sort_by_water'),
                           style: TextStyle(
                             color:
-                                currentSort == 'waterNeed' ? primaryColor : null,
+                                currentSort == 'waterNeed' ? fgColor : null,
                             fontWeight: currentSort == 'waterNeed'
                                 ? FontWeight.bold
                                 : null,
@@ -215,7 +219,7 @@ class _AppState extends State<App> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          isGridView ? 'Chuyển sang Danh sách' : 'Chuyển sang Lưới',
+                          isGridView ? lang.tr('switch_to_list') : lang.tr('switch_to_grid'),
                         ),
                       ],
                     ),
@@ -224,9 +228,9 @@ class _AppState extends State<App> {
                     value: 'refresh',
                     child: Row(
                       children: [
-                        Icon(Icons.refresh, color: Colors.grey),
+                        const Icon(Icons.refresh, color: Colors.grey),
                         const SizedBox(width: 8),
-                        Text('Làm mới dữ liệu'),
+                        Text(lang.tr('refresh_data')),
                       ],
                     ),
                   ),
@@ -237,19 +241,19 @@ class _AppState extends State<App> {
           if (_currentIndex == 3)
             IconButton(
               onPressed: () {},
-              icon: Icon(Icons.bookmark, color: primaryColor),
+              icon: Icon(Icons.bookmark, color: fgColor),
             ),
           if (_currentIndex == 4)
             IconButton(
               onPressed: () {},
-              icon: Icon(Icons.more_vert, color: primaryColor),
+              icon: Icon(Icons.more_vert, color: fgColor),
             ),
         ],
       ),
       body: _pages[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: neutral,
+          color: bgColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black12,
@@ -270,16 +274,16 @@ class _AppState extends State<App> {
           child: BottomNavigationBar(
             elevation: 0,
             type: BottomNavigationBarType.fixed,
-            backgroundColor: neutral,
+            backgroundColor: bgColor,
             currentIndex: _currentIndex,
             showUnselectedLabels: true,
             unselectedItemColor: const Color.fromARGB(255, 123, 123, 123),
             unselectedLabelStyle: TextStyle(
               fontWeight: FontWeight.w800,
-              color: primaryColor,
+              color: fgColor,
             ),
             selectedLabelStyle: TextStyle(fontWeight: FontWeight.w800),
-            selectedItemColor: primaryColor,
+            selectedItemColor: fgColor,
             onTap: (value) {
               setState(() {
                 _currentIndex = value;
@@ -291,12 +295,12 @@ class _AppState extends State<App> {
             },
             items: [
               BottomNavigationBarItem(
-                icon: Icon(Icons.home_filled),
-                label: "Trang chủ",
+                icon: const Icon(Icons.home_filled),
+                label: lang.tr('home'),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.spa),
-                label: "Khu vườn",
+                icon: const Icon(Icons.spa),
+                label: lang.tr('garden'),
               ),
               BottomNavigationBarItem(
                 icon: Container(
@@ -304,9 +308,9 @@ class _AppState extends State<App> {
                   height: 70,
                   margin: EdgeInsets.only(top: 0),
                   decoration: BoxDecoration(
-                    color: primaryColor,
+                    color: fgColor,
                     borderRadius: BorderRadius.circular(35),
-                    border: Border.all(color: neutral, width: 4),
+                    border: Border.all(color: bgColor, width: 4),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black12,
@@ -328,12 +332,12 @@ class _AppState extends State<App> {
                 label: "",
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.library_books),
-                label: "Thư viện",
+                icon: const Icon(Icons.library_books),
+                label: lang.tr('library'),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: "Cá nhân",
+                icon: const Icon(Icons.person),
+                label: lang.tr('profile'),
               ),
             ],
           ),

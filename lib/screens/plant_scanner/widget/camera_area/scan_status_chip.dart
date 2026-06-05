@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class ScanStatusChip extends StatefulWidget {
-  final String label;
+  final String? label;
 
-  const ScanStatusChip({super.key, this.label = 'ĐANG PHÂN TÍCH CÂY...'});
+  const ScanStatusChip({super.key, this.label});
 
   @override
   State<ScanStatusChip> createState() => _ScanStatusChipState();
@@ -60,7 +62,7 @@ class _ScanStatusChipState extends State<ScanStatusChip>
             ),
             const SizedBox(width: 10),
             Text(
-              widget.label,
+              widget.label ?? context.watch<ProfileController>().tr('analyzing_plant'),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 13,

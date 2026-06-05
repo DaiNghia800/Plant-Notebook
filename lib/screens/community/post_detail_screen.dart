@@ -32,7 +32,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(controller.textPostDetail, style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+        title: Text(controller.tr('post_detail'), style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
       ),
       body: Column(
         children: [
@@ -51,7 +51,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           contentPadding: EdgeInsets.zero,
                           leading: CircleAvatar(backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=32')),
                           title: Text('Trần Minh Tuấn', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-                          subtitle: Text(controller.textTimeAgo, style: TextStyle(color: Theme.of(context).hintColor)),
+                          subtitle: Text(controller.tr('time_ago'), style: TextStyle(color: Theme.of(context).hintColor)),
                           trailing: IconButton(icon: Icon(Icons.more_horiz, color: Theme.of(context).colorScheme.onSurface), onPressed: () {}),
                         ),
                         SizedBox(height: 8),
@@ -67,7 +67,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Center(child: Text(controller.textPostImage, style: TextStyle(color: Theme.of(context).hintColor))),
+                          child: Center(child: Text(controller.tr('post_image'), style: TextStyle(color: Theme.of(context).hintColor))),
                         ),
                         SizedBox(height: 16),
                         Row(
@@ -107,7 +107,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   Container(
                     color: Theme.of(context).colorScheme.surface,
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Text(controller.textComments, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Theme.of(context).colorScheme.onSurface)),
+                    child: Text(controller.tr('comments'), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Theme.of(context).colorScheme.onSurface)),
                   ),
                   _buildCommentItem('Nguyễn Hoa', 'Đẹp quá bạn ơi!', '1 giờ trước', 'https://i.pravatar.cc/150?img=5'),
                   _buildCommentItem('Lê Hải', 'Cho mình hỏi tỷ lệ trộn đất của bạn với ạ?', '45 phút trước', 'https://i.pravatar.cc/150?img=11'),

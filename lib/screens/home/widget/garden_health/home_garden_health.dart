@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 import 'package:plant_notebook/screens/home/widget/garden_health/health_card.dart';
 
 class HomeGardenHealth extends StatefulWidget {
@@ -14,7 +16,6 @@ class _HomeGardenHealthState extends State<HomeGardenHealth> {
   bool _isLoading = true;
   String _temperature = '--°C';
   String _humidity = '--%';
-  String _skyStatus = '--';
   bool _isDay = true;
 
   @override
@@ -65,7 +66,6 @@ class _HomeGardenHealthState extends State<HomeGardenHealth> {
             _temperature = '${current['temperature_2m']}°C';
             _humidity = '${current['relative_humidity_2m']}%';
             _isDay = current['is_day'] == 1;
-            _skyStatus = _isDay ? 'Sáng' : 'Tối';
             _isLoading = false;
           });
         }
@@ -84,7 +84,6 @@ class _HomeGardenHealthState extends State<HomeGardenHealth> {
         _temperature = '32°C';
         _humidity = '65%';
         _isDay = true;
-        _skyStatus = 'Sáng';
         _isLoading = false;
       });
     }
@@ -92,18 +91,21 @@ class _HomeGardenHealthState extends State<HomeGardenHealth> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final lang = context.watch<ProfileController>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Thời tiết hiện tại',
+            Text(
+              lang.tr('current_weather'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1B1B1B),
+                color: theme.colorScheme.onSurface,
               ),
             ),
             if (_isLoading)
@@ -133,14 +135,14 @@ class _HomeGardenHealthState extends State<HomeGardenHealth> {
                 width: 140,
                 child: HealthCard(
                   icon: Icons.thermostat_outlined,
-                  iconColor: const Color(0xFFE65100),
-                  backgroundColor: const Color(0xFFFFF3E0),
-                  label: 'NHIỆT ĐỘ',
+                  iconColor: isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100),
+                  backgroundColor: isDark ? const Color(0xFF3E2723) : const Color(0xFFFFF3E0),
+                  label: lang.tr('temperature'),
                   value: _temperature,
-                  valueStyle: const TextStyle(
+                  valueStyle: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -149,14 +151,14 @@ class _HomeGardenHealthState extends State<HomeGardenHealth> {
                 width: 140,
                 child: HealthCard(
                   icon: Icons.water_drop_outlined,
-                  iconColor: const Color(0xFF0277BD),
-                  backgroundColor: const Color(0xFFE1F5FE),
-                  label: 'ĐỘ ẨM',
+                  iconColor: isDark ? const Color(0xFF4FC3F7) : const Color(0xFF0277BD),
+                  backgroundColor: isDark ? const Color(0xFF0D2D44) : const Color(0xFFE1F5FE),
+                  label: lang.tr('humidity'),
                   value: _humidity,
-                  valueStyle: const TextStyle(
+                  valueStyle: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -167,14 +169,14 @@ class _HomeGardenHealthState extends State<HomeGardenHealth> {
                   icon: _isDay
                       ? Icons.wb_sunny_outlined
                       : Icons.nights_stay_outlined,
-                  iconColor: const Color(0xFFF57F17),
-                  backgroundColor: const Color(0xFFFFFDE7),
-                  label: 'BẦU TRỜI',
-                  value: _skyStatus,
-                  valueStyle: const TextStyle(
+                  iconColor: isDark ? const Color(0xFFFFD54F) : const Color(0xFFF57F17),
+                  backgroundColor: isDark ? const Color(0xFF3E3623) : const Color(0xFFFFFDE7),
+                  label: lang.tr('sky'),
+                  value: _isDay ? lang.tr('sky_day') : lang.tr('sky_night'),
+                  valueStyle: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B1B1B),
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),

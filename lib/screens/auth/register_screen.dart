@@ -6,6 +6,8 @@ import 'package:plant_notebook/common/widgets/widget.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:plant_notebook/data/services/email_auth_service.dart';
 import 'package:plant_notebook/utils/validators.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -57,7 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (!mounted) return;
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Lỗi đăng ký Google: $error')));
+          ).showSnackBar(SnackBar(content: Text('${context.read<ProfileController>().tr('google_reg_error')}$error')));
         } finally {
           if (mounted) {
             setState(() {
@@ -168,7 +170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (result == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Người dùng đã hủy đăng ký Google')),
+          SnackBar(content: Text(context.read<ProfileController>().tr('google_reg_cancel'))),
         );
         return;
       }
@@ -183,7 +185,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Lỗi đăng ký Google: $error')));
+      ).showSnackBar(SnackBar(content: Text('${context.read<ProfileController>().tr('google_reg_error')}$error')));
     } finally {
       if (mounted) {
         setState(() {
@@ -197,6 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     return Scaffold(
       backgroundColor: const Color(0xFFF6FBF7),
       appBar: AppBar(
@@ -265,8 +268,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Tạo tài khoản để quản lý khu vườn của bạn',
+                    Text(
+                      lang.tr('create_account_desc'),
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 15, color: Color(0xFF4B6255)),
                     ),
@@ -304,7 +307,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 18),
 
                           // Email Field
-                          _buildLabel('EMAIL CỦA BẠN'),
+                          _buildLabel(lang.tr('email').toUpperCase()),
                           _buildTextField(
                             controller: _emailController,
                             hintText: 'example@gmail.com',
@@ -334,7 +337,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 18),
 
                           // Password Field
-                          _buildLabel('MẬT KHẨU'),
+                          _buildLabel(lang.tr('password_label')),
                           _buildTextField(
                             controller: _passwordController,
                             hintText: '••••••••',
@@ -373,7 +376,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 18),
 
                           // Confirm Password Field
-                          _buildLabel('XÁC NHẬN MẬT KHẨU'),
+                          _buildLabel(lang.tr('confirm_password_label')),
                           _buildTextField(
                             controller: _confirmController,
                             hintText: '••••••••',
@@ -426,16 +429,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   : Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
-                                      children: const [
+                                      children: [
                                         Text(
-                                          'Đăng ký',
+                                          lang.tr('register'),
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                         SizedBox(width: 8),
-                                        Icon(
+                                        const Icon(
                                           Icons.arrow_forward_rounded,
                                           size: 20,
                                         ),
@@ -449,8 +452,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
-                                'Đã có tài khoản? ',
+                              Text(
+                                lang.tr('already_have_account'),
                                 style: TextStyle(
                                   color: Color(0xFF4B6255),
                                   fontSize: 14,
@@ -460,8 +463,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 onTap: () {
                                   Navigator.of(context).pop();
                                 },
-                                child: const Text(
-                                  'Đăng nhập ngay',
+                                child: Text(
+                                  lang.tr('login_now'),
                                   style: TextStyle(
                                     color: Color(0xFF186F2F),
                                     fontSize: 14,
@@ -478,12 +481,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 32),
                     // Social Divider
                     Row(
-                      children: const [
-                        Expanded(child: Divider(color: Color(0xFFE5ECE7))),
+                      children: [
+                        const Expanded(child: Divider(color: Color(0xFFE5ECE7))),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
-                            'HOẶC ĐĂNG KÝ BẰNG',
+                            lang.tr('or_register_with'),
                             style: TextStyle(
                               color: Color(0xFF6B8071),
                               fontSize: 11,
@@ -492,7 +495,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                         ),
-                        Expanded(child: Divider(color: Color(0xFFE5ECE7))),
+                        const Expanded(child: Divider(color: Color(0xFFE5ECE7))),
                       ],
                     ),
                     const SizedBox(height: 20),

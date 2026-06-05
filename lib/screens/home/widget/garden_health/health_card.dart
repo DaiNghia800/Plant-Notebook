@@ -34,10 +34,12 @@ class HealthCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF757575),
+              color: Theme.of(context).brightness == Brightness.dark 
+                  ? Colors.white54 
+                  : const Color(0xFF757575),
               letterSpacing: 0.8,
             ),
           ),

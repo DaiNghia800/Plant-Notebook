@@ -5,21 +5,24 @@ import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plant_form_sheet.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class HomeQuickActions extends StatelessWidget {
   const HomeQuickActions({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final lang = context.watch<ProfileController>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Hành động nhanh',
+        Text(
+          lang.tr('quick_actions'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B1B1B),
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 14),
@@ -31,7 +34,7 @@ class HomeQuickActions extends StatelessWidget {
                 iconColor: const Color(0xFF2E7D32),
                 iconBgColor: const Color(0xFFE8F5E9),
                 title: 'Scan AI',
-                subtitle: 'Thông tin cây trồng/ Chẩn đoán sâu bệnh',
+                subtitle: lang.tr('scan_ai_desc'),
                 onTap: () {
                   Navigator.of(context).pushNamed(scannerViewRoute);
                 },
@@ -43,15 +46,15 @@ class HomeQuickActions extends StatelessWidget {
                 icon: Icons.add_circle,
                 iconColor: const Color(0xFF2E7D32),
                 iconBgColor: const Color(0xFFE8F5E9),
-                title: 'Thêm cây',
-                subtitle: 'Vào vườn của bạn',
+                title: lang.tr('add_plant'),
+                subtitle: lang.tr('add_plant_desc'),
                 onTap: () {
                   final controller = context.read<MyGardenController>();
                   final category = controller.plantCategory;
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
-                    backgroundColor: neutral,
+                    backgroundColor: theme.scaffoldBackgroundColor,
                     builder: (_) {
                       return MyGardenPlantFormSheet(
                         initialValue: null,
@@ -72,8 +75,8 @@ class HomeQuickActions extends StatelessWidget {
                 icon: Icons.map_outlined,
                 iconColor: const Color(0xFF1976D2),
                 iconBgColor: const Color(0xFFE3F2FD),
-                title: 'Cửa hàng & Vườn ươm',
-                subtitle: 'Tìm tiệm cây, thuốc BVTV gần bạn',
+                title: lang.tr('store_nursery'),
+                subtitle: lang.tr('store_desc'),
                 onTap: () {
                   Navigator.of(context).pushNamed(storeMapRoute);
                 },

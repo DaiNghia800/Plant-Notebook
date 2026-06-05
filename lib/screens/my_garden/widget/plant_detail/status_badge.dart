@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class StatusBadge extends StatelessWidget {
   final GardenPlantStatus status;
@@ -13,15 +15,15 @@ class StatusBadge extends StatelessWidget {
 
     switch (status) {
       case GardenPlantStatus.healthy:
-        text = 'Khỏe mạnh';
+        text = context.watch<ProfileController>().tr('status_healthy');
         color = Colors.green;
         break;
       case GardenPlantStatus.thirsty:
-        text = 'Đang khát';
+        text = context.watch<ProfileController>().tr('status_thirsty');
         color = Colors.orange;
         break;
       case GardenPlantStatus.sick:
-        text = 'Đang bệnh';
+        text = context.watch<ProfileController>().tr('status_sick');
         color = Colors.red;
         break;
     }

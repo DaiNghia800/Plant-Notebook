@@ -8,6 +8,7 @@ import 'package:plant_notebook/data/models/category.dart';
 import 'package:plant_notebook/data/models/reminder.dart';
 import 'package:plant_notebook/data/models/garden_plant.dart';
 import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class MyGardenPlantFormSheet extends StatefulWidget {
   const MyGardenPlantFormSheet({
@@ -90,6 +91,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<ProfileController>();
     final double bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final bool isEditing = widget.initialValue != null && widget.initialValue!.id != null;
 
@@ -120,7 +122,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isEditing ? 'Sửa hồ sơ cây' : 'Thêm cây mới',
+                    isEditing ? lang.tr('edit_plant_profile') : lang.tr('add_new_plant'),
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -172,13 +174,13 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                                     color: Colors.white.withOpacity(0.9),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.camera_alt, color: primaryColor, size: 18),
                                       SizedBox(width: 6),
                                       Text(
-                                        'Thay đổi ảnh',
+                                        context.watch<ProfileController>().tr('change_photo'),
                                         style: TextStyle(
                                           color: primaryColor,
                                           fontWeight: FontWeight.bold,
@@ -223,16 +225,16 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              const Text(
-                                'Thêm hình ảnh cho cây',
-                                style: TextStyle(
+                              Text(
+                                lang.tr('add_plant_image'),
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Chụp ảnh hoặc chọn từ thư viện',
+                                lang.tr('take_or_pick_image'),
                                 style: TextStyle(
                                   color: Colors.grey[500],
                                   fontSize: 12,
@@ -246,15 +248,15 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
               const SizedBox(height: 20),
 
               // 2. Category selection (Position)
-              _buildCategorySelector(isEditing),
+              _buildCategorySelector(isEditing, lang),
               const SizedBox(height: 20),
 
               // 3. Plant Name Input
               TextFormField(
                 controller: _nicknameController,
                 decoration: InputDecoration(
-                  labelText: 'Tên cây',
-                  hintText: 'Ví dụ: Sen đá ban công, Trầu bà...',
+                  labelText: lang.tr('plant_name'),
+                  hintText: context.watch<ProfileController>().tr('plant_name_hint'),
                   prefixIcon: const Icon(Icons.eco_rounded, color: primaryColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -273,7 +275,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Vui lòng nhập tên cho cây';
+                    return lang.tr('enter_plant_name');
                   }
                   return null;
                 },
@@ -311,7 +313,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Ngày bắt đầu trồng',
+                              lang.tr('start_date'),
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 12,
@@ -336,11 +338,11 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
               const SizedBox(height: 20),
 
               // 5. Status Selector
-              _buildStatusSelector(),
+              _buildStatusSelector(lang),
               const SizedBox(height: 24),
 
               // 6. Reminder Settings
-              _buildReminderSettingsCard(),
+              _buildReminderSettingsCard(lang),
               const SizedBox(height: 28),
 
               // 7. Submit Button
@@ -360,7 +362,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                   ),
                   icon: Icon(isEditing ? Icons.save_rounded : Icons.add_circle_outline_rounded),
                   label: Text(
-                    isEditing ? 'Lưu thay đổi' : 'Thêm vào vườn',
+                    isEditing ? lang.tr('save_changes') : lang.tr('add_to_garden'),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -375,12 +377,12 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
     );
   }
 
-  Widget _buildCategorySelector(bool isEditing) {
+  Widget _buildCategorySelector(bool isEditing, ProfileController lang) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Vị trí đặt cây',
+        Text(
+          lang.tr('plant_location'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -434,12 +436,12 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
     );
   }
 
-  Widget _buildStatusSelector() {
+  Widget _buildStatusSelector(ProfileController lang) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Tình trạng sức khỏe',
+        Text(
+          lang.tr('plant_health'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -450,7 +452,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
           children: [
             _buildStatusChip(
               status: GardenPlantStatus.healthy,
-              label: 'Khỏe mạnh',
+              label: lang.tr('healthy'),
               icon: Icons.check_circle_rounded,
               activeColor: Colors.green,
               backgroundColor: Colors.green[50]!,
@@ -458,7 +460,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
             const SizedBox(width: 8),
             _buildStatusChip(
               status: GardenPlantStatus.thirsty,
-              label: 'Đang khát',
+              label: lang.tr('thirsty'),
               icon: Icons.opacity_rounded,
               activeColor: Colors.blue,
               backgroundColor: Colors.blue[50]!,
@@ -466,7 +468,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
             const SizedBox(width: 8),
             _buildStatusChip(
               status: GardenPlantStatus.sick,
-              label: 'Đang bệnh',
+              label: lang.tr('sick'),
               icon: Icons.medical_services_rounded,
               activeColor: Colors.orange,
               backgroundColor: Colors.orange[50]!,
@@ -536,7 +538,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
     );
   }
 
-  Widget _buildReminderSettingsCard() {
+  Widget _buildReminderSettingsCard(ProfileController lang) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -569,8 +571,8 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Tự động nhắc nhở',
+              Text(
+                lang.tr('auto_reminder'),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -591,16 +593,18 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
           if (_pushEnabled) ...[
             const Divider(height: 24),
             _buildCycleInput(
+              lang: lang,
               controller: _wateringController,
-              label: 'Chu kỳ tưới nước',
+              label: lang.tr('water_cycle'),
               icon: Icons.opacity_rounded,
               iconColor: Colors.blue,
               quickDays: [1, 3, 5, 7],
             ),
             const SizedBox(height: 20),
             _buildCycleInput(
+              lang: lang,
               controller: _fertilizingController,
-              label: 'Chu kỳ bón phân',
+              label: lang.tr('fertilize_cycle'),
               icon: Icons.grass_rounded,
               iconColor: Colors.brown,
               quickDays: [7, 14, 30, 60],
@@ -612,6 +616,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
   }
 
   Widget _buildCycleInput({
+    required ProfileController lang,
     required TextEditingController controller,
     required String label,
     required IconData icon,
@@ -639,8 +644,8 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
           controller: controller,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
-            suffixText: 'ngày',
-            hintText: 'Nhập số ngày...',
+            suffixText: lang.tr('days'),
+            hintText: lang.tr('enter_days'),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -669,7 +674,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ChoiceChip(
-                  label: Text('$days ngày'),
+                  label: Text('$days ${context.watch<ProfileController>().tr('days_label')}'),
                   selected: isSelected,
                   selectedColor: primaryColor.withOpacity(0.15),
                   backgroundColor: Colors.grey[100],
@@ -704,7 +709,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
   String? _validateCycle(String? value) {
     final int? parsed = int.tryParse(value ?? '');
     if (parsed == null || parsed <= 0) {
-      return 'Vui lòng nhập số ngày hợp lệ';
+      return context.read<ProfileController>().tr('invalid_days');
     }
     return null;
   }
@@ -754,8 +759,8 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Chọn ảnh cho cây',
+            Text(
+              context.read<ProfileController>().tr('choose_photo'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -771,7 +776,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                 ),
                 child: const Icon(Icons.camera_alt, color: Colors.blue),
               ),
-              title: const Text('Chụp ảnh mới'),
+              title: Text(context.read<ProfileController>().tr('take_new_photo')),
               onTap: () {
                 Navigator.pop(context);
                 _pickPhoto(ImageSource.camera);
@@ -786,7 +791,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                 ),
                 child: const Icon(Icons.photo_library, color: Colors.green),
               ),
-              title: const Text('Chọn từ thư viện'),
+              title: Text(context.read<ProfileController>().tr('pick_gallery')),
               onTap: () {
                 Navigator.pop(context);
                 _pickPhoto(ImageSource.gallery);
@@ -836,7 +841,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Lỗi khi thêm cây')));
+          ).showSnackBar(SnackBar(content: Text(context.read<ProfileController>().tr('add_plant_error'))));
         }
         return;
       }
@@ -848,7 +853,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        ).showSnackBar(SnackBar(content: Text(context.read<ProfileController>().tr('error_msg').replaceAll('{error}', e.toString()))));
       }
     }
   }
