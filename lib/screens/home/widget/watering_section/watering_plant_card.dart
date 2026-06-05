@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 
 class WateringPlantCard extends StatelessWidget {
   final String name;
@@ -14,6 +15,28 @@ class WateringPlantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget imageWidget;
+    if (imagePath.startsWith('http')) {
+      imageWidget = Image.network(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildErrorIcon(),
+      );
+    } else if (imagePath.startsWith('data:image')) {
+      final base64String = imagePath.split(',').last;
+      imageWidget = Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildErrorIcon(),
+      );
+    } else {
+      imageWidget = Image.asset(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildErrorIcon(),
+      );
+    }
+
     return GestureDetector(
       onTap: () {},
       child: Container(
@@ -23,9 +46,9 @@ class WateringPlantCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -42,23 +65,8 @@ class WateringPlantCard extends StatelessWidget {
                     ),
                     child: Container(
                       width: double.infinity,
-                      color: const Color(0xFF1C1C1E),
-                      child: Image.asset(
-                        imagePath,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: const Color(0xFF2C2C2E),
-                            child: const Center(
-                              child: Icon(
-                                Icons.eco,
-                                color: Color(0xFF4CAF50),
-                                size: 40,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                      color: const Color(0xFFF5F5F5),
+                      child: imageWidget,
                     ),
                   ),
                   // Badge
@@ -71,15 +79,22 @@ class WateringPlantCard extends StatelessWidget {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD32F2F),
+                        color: const Color(0xFFD32F2F).withOpacity(0.9),
                         borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
                       ),
                       child: const Text(
                         'Cần tưới',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -95,26 +110,40 @@ class WateringPlantCard extends StatelessWidget {
                 children: [
                   Text(
                     name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       fontSize: 14,
                       color: Color(0xFF1B1B1B),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.water_drop,
-                        color: Color(0xFF1565C0),
-                        size: 14,
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE3F2FD),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.water_drop,
+                          color: Color(0xFF1976D2),
+                          size: 14,
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        water,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF757575),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          water,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF757575),
+                          ),
                         ),
                       ),
                     ],
@@ -123,6 +152,19 @@ class WateringPlantCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorIcon() {
+    return Container(
+      color: const Color(0xFFE8F5E9),
+      child: const Center(
+        child: Icon(
+          Icons.eco,
+          color: Color(0xFF4CAF50),
+          size: 40,
         ),
       ),
     );
