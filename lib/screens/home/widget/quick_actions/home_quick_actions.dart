@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:plant_notebook/screens/home/widget/quick_actions/quick_action_card.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/my_garden_controller.dart';
+import 'package:plant_notebook/common/styles/app_colors.dart';
+import 'package:plant_notebook/screens/my_garden/widget/my_garden/my_garden_plant_form_sheet.dart';
 
 class HomeQuickActions extends StatelessWidget {
   const HomeQuickActions({super.key});
@@ -41,7 +45,21 @@ class HomeQuickActions extends StatelessWidget {
                 iconBgColor: const Color(0xFFE8F5E9),
                 title: 'Thêm cây',
                 subtitle: 'Vào vườn của bạn',
-                onTap: () {},
+                onTap: () {
+                  final controller = context.read<MyGardenController>();
+                  final category = controller.plantCategory;
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: neutral,
+                    builder: (_) {
+                      return MyGardenPlantFormSheet(
+                        initialValue: null,
+                        plantOptions: category,
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
