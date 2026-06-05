@@ -56,9 +56,15 @@ class PlantScannerController extends ChangeNotifier {
 
     try {
       await controller.initialize();
-      await controller.setFlashMode(
-        isFlashOn ? FlashMode.torch : FlashMode.off,
-      );
+      try {
+        await controller.setFlashMode(
+          isFlashOn ? FlashMode.torch : FlashMode.off,
+        );
+      } catch (e) {
+        // ignore flash support errors on devices/platforms that do not support it (e.g. desktop webcams)
+        // ignore: avoid_print
+        print('Flash mode setting failed: $e');
+      }
 
       currentCameraIndex = index;
       isCameraReady = true;

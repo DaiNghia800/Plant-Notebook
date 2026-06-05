@@ -175,20 +175,21 @@ class MyGardenController extends ChangeNotifier {
       await _persist();
     }
 
-    try {
-      final int profileIndex = _plantProfiles.indexWhere(
-        (p) => p.plantId == gardenPlantId || p.id == gardenPlantId,
-      );
-      if (profileIndex != -1) {
-        final GardenPlantProfile profile = _plantProfiles[profileIndex];
-        final String savedPlantKey = profile.plantId;
-        _savedPlantIds.remove(savedPlantKey);
+    final int profileIndex = _plantProfiles.indexWhere(
+      (p) => p.plantId == gardenPlantId || p.id == gardenPlantId,
+    );
+    if (profileIndex != -1) {
+      final GardenPlantProfile profile = _plantProfiles[profileIndex];
+      final String savedPlantKey = profile.plantId;
+      _savedPlantIds.remove(savedPlantKey);
+      _plantProfiles.removeAt(profileIndex);
+      notifyListeners();
+
+      try {
         await _apiService.deletePlantProfile(profile.id ?? profile.plantId);
-        _plantProfiles.removeAt(profileIndex);
-        notifyListeners();
+      } catch (e) {
+        debugPrint('Lỗi khi xóa cây trên server: $e');
       }
-    } catch (_) {
-      // Ignore API errors
     }
   }
 

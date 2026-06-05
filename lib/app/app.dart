@@ -37,6 +37,14 @@ class _AppState extends State<App> {
   ProfileScreen(), 
 ];
 
+  final List<String> _pageTitles = [
+    "Trang chủ",
+    "Vườn của tôi",
+    "Quét cây",
+    "Thư viện",
+    "Cá nhân",
+  ];
+
   int _currentIndex = 0;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -75,7 +83,7 @@ class _AppState extends State<App> {
                 },
               )
             : Text(
-                "Sổ tay cây trồng",
+                _pageTitles[_currentIndex],
                 style: TextStyle(
                   color: primaryColor,
                   fontSize: 20,
@@ -284,11 +292,11 @@ class _AppState extends State<App> {
             items: [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home_filled),
-                label: "HOME",
+                label: "Trang chủ",
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.spa),
-                label: "MY GARDEN",
+                label: "Khu vườn",
               ),
               BottomNavigationBarItem(
                 icon: Container(
@@ -303,7 +311,7 @@ class _AppState extends State<App> {
                       BoxShadow(
                         color: Colors.black12,
                         blurRadius: 10,
-                        offset: Offset(0, 3), // shadow rÆ¡i xuá»‘ng dÆ°á»›i
+                        offset: Offset(0, 3), // shadow rơi xuống dưới
                       ),
                     ],
                   ),
@@ -321,11 +329,11 @@ class _AppState extends State<App> {
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.library_books),
-                label: "LIBRARY",
+                label: "Thư viện",
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person),
-                label: "PROFILE",
+                label: "Cá nhân",
               ),
             ],
           ),
