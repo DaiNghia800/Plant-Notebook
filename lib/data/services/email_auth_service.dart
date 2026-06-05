@@ -132,4 +132,23 @@ class EmailAuthService {
       throw Exception(data['message'] ?? 'Lỗi đặt lại mật khẩu');
     }
   }
+
+  /// Đồng bộ user từ Firebase sang PostgreSQL
+  Future<void> syncToPostgres({
+    required String email,
+    String? displayName,
+    required String uid,
+  }) async {
+    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
+    final Uri endpoint = Uri.parse('$resolvedBase/auth/sync-firebase');
+    await http.post(
+      endpoint,
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'displayName': displayName,
+        'uid': uid,
+      }),
+    );
+  }
 }

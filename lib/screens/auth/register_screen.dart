@@ -110,6 +110,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       if (!mounted) return;
 
+      // Đồng bộ user sang PostgreSQL
+      await _emailAuthService.syncToPostgres(
+        email: email,
+        displayName: name,
+        uid: password, // dùng password làm uid tạm
+      );
+
       // Sau khi đăng ký thành công, tự động đăng nhập
       await _emailAuthService.login(identifier: email, password: password);
       if (!mounted) return;
