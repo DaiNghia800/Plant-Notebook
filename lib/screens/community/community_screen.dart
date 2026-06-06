@@ -15,7 +15,7 @@ class CommunityScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        title: Text(controller.textCommunity, style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+        title: Text(controller.tr('community'), style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(icon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface), onPressed: () {}),
         ],
@@ -53,19 +53,19 @@ class CommunityScreen extends StatelessWidget {
           ListTile(
             leading: CircleAvatar(backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=32')),
             title: Text('Trần Minh Tuấn', style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(controller.textTimeAgo),
+            subtitle: Text(controller.tr('time_ago')),
             trailing: IconButton(icon: Icon(Icons.more_horiz), onPressed: () {}),
           ),
           // Body: Text & Image
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(controller.textPostContent),
+            child: Text(controller.tr('post_content')),
           ),
           Container(
             height: 200,
             width: double.infinity,
             color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-            child: Center(child: Text(controller.textPostImage, style: TextStyle(color: Theme.of(context).hintColor))),
+            child: Center(child: Text(controller.tr('post_image'), style: TextStyle(color: Theme.of(context).hintColor))),
             // Thực tế em dùng: Image.network('url_anh', fit: BoxFit.cover)
           ),
           // Footer: Actions (Like, Comment)

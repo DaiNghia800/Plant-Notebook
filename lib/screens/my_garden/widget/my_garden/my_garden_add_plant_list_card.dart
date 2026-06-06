@@ -40,7 +40,7 @@ class MyGardenAddPlantListCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -53,14 +53,13 @@ class MyGardenAddPlantListCard extends StatelessWidget {
                       fontSize: 15,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     lang.tr('add_new_plant_desc'),
                     style: const TextStyle(
                       color: Color(0xFF5E8B6D),
                       fontSize: 12,
                     ),
-                  ),
                   ),
                 ],
               ),
