@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:plant_notebook/common/styles/app_colors.dart';
 import 'package:plant_notebook/controller/store_controller.dart';
 import 'package:plant_notebook/data/models/store.dart';
+import 'package:share_plus/share_plus.dart';
 
 class StoreDetailScreen extends StatefulWidget {
   final String storeId;
@@ -124,7 +125,19 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.share, color: primaryColor),
-            onPressed: () {},
+            onPressed: () {
+              if (store != null) {
+                SharePlus.instance.share(
+                  ShareParams(
+                    text: 'Cửa hàng: ${store.name}\n'
+                        'Địa chỉ: ${store.address}\n'
+                        'Đánh giá: ${store.rating.toStringAsFixed(1)} ★\n'
+                        'Vị trí trên bản đồ: https://www.google.com/maps/search/?api=1&query=${store.latitude},${store.longitude}',
+                    subject: 'Chia sẻ cửa hàng ${store.name}',
+                  ),
+                );
+              }
+            },
           )
         ],
       ),
@@ -535,7 +548,10 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final review = reviews[index];
-        final userName = review.user?.fullName ?? 'Khách vãng lai';
+        String userName = review.user?.fullName ?? 'Khách vãng lai';
+        if (review.comment == 'Địa điểm này được cập nhật tự động từ hệ thống bản đồ OpenStreetMap.') {
+          userName = 'Hệ thống bản đồ';
+        }
 
         return Container(
           padding: const EdgeInsets.all(16),
