@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../controller/profile_controller.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 import '../../utils/app_colors.dart';
 
 class PostDetailScreen extends StatefulWidget {

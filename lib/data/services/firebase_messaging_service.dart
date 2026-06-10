@@ -124,8 +124,9 @@ class FirebaseMessagingService {
     }
 
     final prefs = await SharedPreferences.getInstance();
+    final bool isNotificationOn = prefs.getBool('is_notification_on') ?? true;
     final String? userId = prefs.getString('userId');
-    if (userId != null && _currentToken != null) {
+    if (isNotificationOn && userId != null && _currentToken != null) {
       await _sendTokenToServer(userId, _currentToken!);
     }
 
@@ -164,6 +165,12 @@ class FirebaseMessagingService {
 
   static Future<void> registerToken(String userId) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final bool isNotificationOn = prefs.getBool('is_notification_on') ?? true;
+      if (!isNotificationOn) {
+        await removeFcmTokenFromServer(userId);
+        return;
+      }
       _currentToken ??= await _firebaseMessaging.getToken();
       if (_currentToken == null) return;
       await _sendTokenToServer(userId, _currentToken!);
