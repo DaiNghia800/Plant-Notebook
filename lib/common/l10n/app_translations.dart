@@ -223,11 +223,11 @@ class AppTranslations {
     
     // ===== COMMUNITY (Từ ProfileController cũ) =====
     'community': {'vi': 'Cộng đồng', 'en': 'Community'},
+    'community_desc': {'vi': 'Chia sẻ & kết nối', 'en': 'Share & connect'},
+    'comments': {'vi': 'Bình luận', 'en': 'Comments'},
     'post_detail': {'vi': 'Bài viết', 'en': 'Post Detail'},
     'time_ago': {'vi': '2 giờ trước', 'en': '2 hours ago'},
     'post_content': {'vi': 'Góc sen đá mới thay chậu hôm qua. Nhìn cưng xỉu luôn mọi người ơi! 🌱', 'en': 'Repotted my succulents yesterday. So cute! 🌱'},
-    'post_image': {'vi': 'Hình ảnh bài viết', 'en': 'Post Image'},
-    'comments': {'vi': 'Bình luận', 'en': 'Comments'},
     'comment_time': {'vi': '15 phút trước', 'en': '15 minutes ago'},
     'comment_content': {'vi': 'Đẹp quá bạn ơi! Chậu mua ở đâu vậy?', 'en': 'So beautiful! Where did you buy the pot?'},
     'add_comment': {'vi': 'Thêm bình luận...', 'en': 'Add a comment...'},

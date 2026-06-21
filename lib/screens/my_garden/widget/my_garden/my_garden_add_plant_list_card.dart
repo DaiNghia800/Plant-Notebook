@@ -18,10 +18,7 @@ class MyGardenAddPlantListCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFE7EFE9).withOpacity(0.5),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFFB8C9BC),
-            width: 1.5,
-          ),
+          border: Border.all(color: const Color(0xFFB8C9BC), width: 1.5),
         ),
         child: Row(
           children: [
@@ -33,14 +30,10 @@ class MyGardenAddPlantListCard extends StatelessWidget {
                 color: Color(0xFFD0E2D5),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.add,
-                color: Color(0xFF1B7A3D),
-                size: 24,
-              ),
+              child: const Icon(Icons.add, color: Color(0xFF1B7A3D), size: 24),
             ),
             const SizedBox(width: 16),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -53,7 +46,7 @@ class MyGardenAddPlantListCard extends StatelessWidget {
                       fontSize: 15,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     lang.tr('add_new_plant_desc'),
                     style: const TextStyle(
@@ -61,14 +54,10 @@ class MyGardenAddPlantListCard extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
-                  ),
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFF1B7A3D),
-            ),
+            const Icon(Icons.chevron_right, color: Color(0xFF1B7A3D)),
             const SizedBox(width: 16),
           ],
         ),
