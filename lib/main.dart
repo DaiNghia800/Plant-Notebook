@@ -10,6 +10,7 @@ import 'package:plant_notebook/controller/plant_scanner_controller.dart';
 import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:plant_notebook/controller/store_controller.dart';
 import 'package:plant_notebook/controller/profile_controller.dart';
+import 'package:plant_notebook/controller/community_controller.dart';
 import 'package:plant_notebook/utils/app_colors.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -48,6 +49,7 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider(create: (_) => StoreController()..fetchStores()),
         ChangeNotifierProvider(create: (_) => ProfileController()),
+        ChangeNotifierProvider(create: (_) => CommunityController()),
       ],
       child: MyApp(initialRoute: initialRoute),
     ),
