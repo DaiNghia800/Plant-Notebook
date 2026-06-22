@@ -1,69 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:plant_notebook/data/models/library_plant_item.dart';
-import 'package:http_parser/http_parser.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:plant_notebook/data/network/dio_client.dart';
 
 class LibraryPlantApiService {
-  LibraryPlantApiService({http.Client? client})
-    : _client = client ?? http.Client();
+  LibraryPlantApiService({Dio? dio}) : _dio = dio ?? DioClient.createDio();
 
-  final http.Client _client;
-
-  // ── Cấu hình service URL ───────────────────────────────────────────────────
-  static String? _resolvedUrl;
-
-  static Future<String> _initServiceUrl() async {
-    // ignore: avoid_print
-    print(
-      '[LibraryPlantApiService] _initServiceUrl starting, rawEnv: ${dotenv.env['LIBRARY_PLANTS_SERVICE_URL']}',
-    );
-    if (_resolvedUrl != null) return _resolvedUrl!;
-
-    final String? rawEnvUrl = dotenv.env['LIBRARY_PLANTS_SERVICE_URL'];
-    String envUrl = rawEnvUrl ?? '';
-    if (envUrl.isEmpty) {
-      envUrl = kIsWeb
-          ? 'http://localhost:5000/library-plants'
-          : 'http://localhost:5000/library-plants';
-    }
-
-    if (envUrl.endsWith('/')) {
-      envUrl = envUrl.substring(0, envUrl.length - 1);
-    }
-
-    if (!kIsWeb &&
-        Platform.isAndroid &&
-        (envUrl.contains('localhost') || envUrl.contains('127.0.0.1'))) {
-      try {
-        // Thử kết nối nhanh tới 10.0.2.2 (máy ảo Android). Dùng thêm .timeout() của Dart để chắc chắn không bị nghẽn mạng trên máy thật.
-        final socket = await Socket.connect(
-          '10.0.2.2',
-          5000,
-        ).timeout(const Duration(milliseconds: 200));
-        socket.destroy();
-        // Nếu thành công -> Bạn đang dùng máy ảo (Emulator)
-        _resolvedUrl = envUrl
-            .replaceAll('localhost', '10.0.2.2')
-            .replaceAll('127.0.0.1', '10.0.2.2');
-      } catch (_) {
-        // Nếu thất bại hoặc quá thời gian -> Sử dụng 127.0.0.1 (máy thật + adb reverse)
-        _resolvedUrl = envUrl.replaceAll('localhost', '127.0.0.1');
-      }
-    } else {
-      _resolvedUrl = envUrl;
-    }
-
-    // ignore: avoid_print
-    print('[LibraryPlantApiService] Resolved service URL: $_resolvedUrl');
-
-    return _resolvedUrl!;
-  }
-
-  static const Duration _timeout = Duration(seconds: 15);
+  final Dio _dio;
 
   // ── Lấy toàn bộ danh sách cây (có hỗ trợ filter) ─────────────────────────
   Future<List<LibraryPlantItem>> getAllPlants({
@@ -72,7 +16,7 @@ class LibraryPlantApiService {
     bool? isRare,
     String approvalStatus = 'approved',
   }) async {
-    final Map<String, String> params = {'approvalStatus': approvalStatus};
+    final Map<String, dynamic> params = {'approvalStatus': approvalStatus};
     if (category != null && category.isNotEmpty) {
       params['category'] = category;
     }
@@ -83,34 +27,39 @@ class LibraryPlantApiService {
       params['isRare'] = isRare.toString();
     }
 
-    final String baseUrl = await _initServiceUrl();
-    final Uri uri = Uri.parse(baseUrl).replace(queryParameters: params);
+    try {
+      final Response response = await _dio.get(
+        '/library-plants',
+        queryParameters: params,
+      );
 
-    final http.Response response = await _client.get(uri).timeout(_timeout);
+      final Map<String, dynamic> body = response.data as Map<String, dynamic>;
+      final List<dynamic> data = body['data'] as List<dynamic>? ?? [];
 
-    _assertOk(response);
-
-    final Map<String, dynamic> body =
-        jsonDecode(response.body) as Map<String, dynamic>;
-    final List<dynamic> data = body['data'] as List<dynamic>? ?? [];
-
-    return data
-        .whereType<Map<String, dynamic>>()
-        .map(LibraryPlantItem.fromJson)
-        .toList();
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(LibraryPlantItem.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw LibraryPlantApiException(
+        statusCode: e.response?.statusCode ?? -1,
+        message: _extractMessage(e.response?.data),
+      );
+    }
   }
 
   // ── Lấy chi tiết một cây theo ID ──────────────────────────────────────────
   Future<LibraryPlantItem> getPlantById(String id) async {
-    final String baseUrl = await _initServiceUrl();
-    final Uri uri = Uri.parse('$baseUrl/$id');
-    final http.Response response = await _client.get(uri).timeout(_timeout);
-
-    _assertOk(response);
-
-    final Map<String, dynamic> body =
-        jsonDecode(response.body) as Map<String, dynamic>;
-    return LibraryPlantItem.fromJson(body['data'] as Map<String, dynamic>);
+    try {
+      final Response response = await _dio.get('/library-plants/$id');
+      final Map<String, dynamic> body = response.data as Map<String, dynamic>;
+      return LibraryPlantItem.fromJson(body['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw LibraryPlantApiException(
+        statusCode: e.response?.statusCode ?? -1,
+        message: _extractMessage(e.response?.data),
+      );
+    }
   }
 
   // ── Kiểm tra sự tồn tại của cây ──────────────────────────────────────────
@@ -118,21 +67,23 @@ class LibraryPlantApiService {
     required String name,
     required String scientificName,
   }) async {
-    final Map<String, String> params = {
+    final Map<String, dynamic> params = {
       'name': name,
       'scientificName': scientificName,
     };
-    final String baseUrl = await _initServiceUrl();
-    final Uri uri = Uri.parse(
-      '$baseUrl/check-existence',
-    ).replace(queryParameters: params);
-    final http.Response response = await _client.get(uri).timeout(_timeout);
-
-    _assertOk(response);
-
-    final Map<String, dynamic> body =
-        jsonDecode(response.body) as Map<String, dynamic>;
-    return body['data'] as Map<String, dynamic>? ?? {'exists': false};
+    try {
+      final Response response = await _dio.get(
+        '/library-plants/check-existence',
+        queryParameters: params,
+      );
+      final Map<String, dynamic> body = response.data as Map<String, dynamic>;
+      return body['data'] as Map<String, dynamic>? ?? {'exists': false};
+    } on DioException catch (e) {
+      throw LibraryPlantApiException(
+        statusCode: e.response?.statusCode ?? -1,
+        message: _extractMessage(e.response?.data),
+      );
+    }
   }
 
   // ── Đóng góp cây mới vào thư viện ─────────────────────────────────────────
@@ -161,87 +112,56 @@ class LibraryPlantApiService {
     final String id =
         'proposal-$cleanName-${DateTime.now().millisecondsSinceEpoch}';
 
-    final String baseUrl = await _initServiceUrl();
-    final Uri uri = Uri.parse('$baseUrl/contribute');
-    final request = http.MultipartRequest('POST', uri);
+    final Map<String, dynamic> fields = {
+      'id': id,
+      'name': name,
+      'scientificName': scientificName,
+      'category': category,
+      'shortDescription': shortDescription,
+      'description': description,
+      'lightLevel': lightLevel,
+      'waterNeed': waterNeed,
+      'difficulty': difficulty,
+      'temperature': temperature ?? '',
+      'humidity': humidity ?? '',
+      'toxicity': toxicity ?? '',
+      'funFacts': jsonEncode(funFacts),
+      'careGuide': jsonEncode(careGuide),
+      'growthTimeline': jsonEncode(growthTimeline),
+    };
 
-    final SharedPreferences preferences = await SharedPreferences.getInstance();
-    final String? token = preferences.getString('auth_jwt_token');
-    if (token != null && token.isNotEmpty) {
-      request.headers['Authorization'] = 'Bearer $token';
-    }
-
-    // Thêm các trường text
-    request.fields['id'] = id;
-    request.fields['name'] = name;
-    request.fields['scientificName'] = scientificName;
-    request.fields['category'] = category;
-    request.fields['shortDescription'] = shortDescription;
-    request.fields['description'] = description;
-    request.fields['lightLevel'] = lightLevel;
-    request.fields['waterNeed'] = waterNeed;
-    request.fields['difficulty'] = difficulty;
-    request.fields['temperature'] = temperature ?? '';
-    request.fields['humidity'] = humidity ?? '';
-    request.fields['toxicity'] = toxicity ?? '';
-    request.fields['funFacts'] = jsonEncode(funFacts);
-    request.fields['careGuide'] = jsonEncode(careGuide);
-    request.fields['growthTimeline'] = jsonEncode(growthTimeline);
-
-    // Thêm file ảnh nếu có
     if (imagePath != null && imagePath.isNotEmpty) {
       final file = File(imagePath);
       if (await file.exists()) {
-        final stream = http.ByteStream(file.openRead());
-        final length = await file.length();
-        final String extension = imagePath.split('.').last.toLowerCase();
-        String mimeSubtype = 'jpeg';
-        if (extension == 'png') {
-          mimeSubtype = 'png';
-        } else if (extension == 'gif') {
-          mimeSubtype = 'gif';
-        } else if (extension == 'webp') {
-          mimeSubtype = 'webp';
-        }
-
-        final multipartFile = http.MultipartFile(
-          'image',
-          stream,
-          length,
+        fields['image'] = await MultipartFile.fromFile(
+          imagePath,
           filename: imagePath.split('/').last,
-          contentType: MediaType('image', mimeSubtype),
         );
-        request.files.add(multipartFile);
       }
     }
 
-    final streamedResponse = await _client.send(request).timeout(_timeout);
-    final response = await http.Response.fromStream(streamedResponse);
+    final FormData formData = FormData.fromMap(fields);
 
-    _assertOk(response);
-
-    final Map<String, dynamic> body =
-        jsonDecode(response.body) as Map<String, dynamic>;
-    return body;
-  }
-
-  // ── Kiểm tra status code ──────────────────────────────────────────────────
-  void _assertOk(http.Response response) {
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    try {
+      final Response response = await _dio.post(
+        '/library-plants/contribute',
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
       throw LibraryPlantApiException(
-        statusCode: response.statusCode,
-        message: _extractMessage(response.body),
+        statusCode: e.response?.statusCode ?? -1,
+        message: _extractMessage(e.response?.data),
       );
     }
   }
 
-  String _extractMessage(String body) {
-    try {
-      final decoded = jsonDecode(body) as Map<String, dynamic>;
-      return decoded['message'] as String? ?? 'Lỗi không xác định';
-    } catch (_) {
-      return body;
+  String _extractMessage(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      return data['message'] as String? ?? 'Lỗi không xác định';
     }
+    return data?.toString() ?? 'Lỗi không xác định';
   }
 }
 

@@ -43,11 +43,13 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
 
     final plant = _selectedPlant ?? plants.first;
     final String imageUrl = plant.imageUrl;
-    final String description = plant.description.isNotEmpty 
-        ? plant.description 
+    final String description = plant.description.isNotEmpty
+        ? plant.description
         : lang.tr('default_plant_desc');
-    
-    final plantName = plant.name.isNotEmpty ? plant.name : (plant.scientificName ?? 'Unknown');
+
+    final plantName = plant.name.isNotEmpty
+        ? plant.name
+        : (plant.scientificName ?? 'Unknown');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,26 +66,29 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.refresh, color: Color(0xFF757575), size: 20),
+              icon: const Icon(
+                Icons.refresh,
+                color: Color(0xFF757575),
+                size: 20,
+              ),
               onPressed: () {
                 _randomizePlant(plants);
               },
               constraints: const BoxConstraints(),
               padding: EdgeInsets.zero,
-            )
+            ),
           ],
         ),
         const SizedBox(height: 14),
-        GestureDetector(
-          onTap: description.length > 80
-              ? () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => PlantDetailScreen(libraryPlant: plant),
-                    ),
-                  );
-                }
-              : null,
+        InkWell(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => PlantDetailScreen(libraryPlant: plant),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
           child: Container(
             height: 140,
             decoration: BoxDecoration(
@@ -162,7 +167,10 @@ class _HomeDiscoverPlantState extends State<HomeDiscoverPlant> {
                           ],
                         ),
                       ),
-                      const Expanded(flex: 1, child: SizedBox()), // Space for the right side
+                      const Expanded(
+                        flex: 1,
+                        child: SizedBox(),
+                      ), // Space for the right side
                     ],
                   ),
                 ),

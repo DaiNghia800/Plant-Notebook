@@ -1,50 +1,44 @@
-import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:plant_notebook/data/models/store.dart';
+import 'package:plant_notebook/data/network/dio_client.dart';
 
 class StoreService {
-  String get _baseUrl {
-    final url = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:3000/';
-    // Clean up trailing slash
-    return url.endsWith('/') ? url : '$url/';
-  }
+  StoreService({Dio? dio}) : _dio = dio ?? DioClient.createDio();
+
+  final Dio _dio;
 
   Future<List<Store>> getStores({String? type}) async {
     try {
-      final uri = Uri.parse('${_baseUrl}store').replace(
-        queryParameters: type != null && type != 'Tất cả' ? {'type': type} : null,
+      final Map<String, dynamic>? queryParameters = 
+          type != null && type != 'Tất cả' ? {'type': type} : null;
+
+      final response = await _dio.get(
+        '/store',
+        queryParameters: queryParameters,
       );
 
-      final response = await http.get(uri);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> body = jsonDecode(response.body);
-        if (body['success'] == true) {
-          final List data = body['data'] ?? [];
-          return data.map((json) => Store.fromJson(json)).toList();
-        }
+      final Map<String, dynamic> body = response.data as Map<String, dynamic>;
+      if (body['success'] == true) {
+        final List data = body['data'] ?? [];
+        return data.map((json) => Store.fromJson(json)).toList();
       }
-      throw Exception('Failed to load stores: ${response.body}');
-    } catch (e) {
-      throw Exception('Lỗi kết nối server: $e');
+      throw Exception('Failed to load stores: ${response.data}');
+    } on DioException catch (e) {
+      throw Exception('Lỗi kết nối server: ${e.message}');
     }
   }
 
   Future<Store> getStoreById(String id) async {
     try {
-      final uri = Uri.parse('${_baseUrl}store/$id');
-      final response = await http.get(uri);
+      final response = await _dio.get('/store/$id');
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> body = jsonDecode(response.body);
-        if (body['success'] == true) {
-          return Store.fromJson(body['data']);
-        }
+      final Map<String, dynamic> body = response.data as Map<String, dynamic>;
+      if (body['success'] == true) {
+        return Store.fromJson(body['data']);
       }
-      throw Exception('Failed to load store details: ${response.body}');
-    } catch (e) {
-      throw Exception('Lỗi kết nối server: $e');
+      throw Exception('Failed to load store details: ${response.data}');
+    } on DioException catch (e) {
+      throw Exception('Lỗi kết nối server: ${e.message}');
     }
   }
 
@@ -55,38 +49,30 @@ class StoreService {
     String? userId,
   }) async {
     try {
-      final uri = Uri.parse('${_baseUrl}store/$storeId/reviews');
-      final response = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      final response = await _dio.post(
+        '/store/$storeId/reviews',
+        data: {
           'rating': rating,
           'comment': comment,
           'userId': userId,
-        }),
+        },
       );
 
-      if (response.statusCode == 201) {
-        final Map<String, dynamic> body = jsonDecode(response.body);
-        if (body['success'] == true) {
-          return StoreReview.fromJson(body['data']);
-        }
+      final Map<String, dynamic> body = response.data as Map<String, dynamic>;
+      if (body['success'] == true) {
+        return StoreReview.fromJson(body['data']);
       }
-      throw Exception('Failed to create review: ${response.body}');
-    } catch (e) {
-      throw Exception('Lỗi kết nối server: $e');
+      throw Exception('Failed to create review: ${response.data}');
+    } on DioException catch (e) {
+      throw Exception('Lỗi kết nối server: ${e.message}');
     }
   }
 
   Future<bool> seedStores() async {
     try {
-      final uri = Uri.parse('${_baseUrl}store/seed');
-      final response = await http.post(uri);
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> body = jsonDecode(response.body);
-        return body['success'] == true;
-      }
-      return false;
+      final response = await _dio.post('/store/seed');
+      final Map<String, dynamic> body = response.data as Map<String, dynamic>;
+      return body['success'] == true;
     } catch (e) {
       return false;
     }

@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
+
 import 'package:plant_notebook/data/models/garden_plant.dart';
 import 'package:plant_notebook/data/models/care_history.dart';
 import 'package:plant_notebook/data/network/dio_client.dart';
@@ -205,20 +205,12 @@ class FirebaseMessagingService {
 
   static Future<void> _sendTokenToServer(String userId, String token) async {
     try {
-      final String resolvedBase = await UrlResolver.resolve(_baseUrl());
-      final response = await http.post(
-        Uri.parse('$resolvedBase/user/update-fcm-token'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'userId': userId, 'fcmToken': token}),
+      await _request(
+        method: 'POST',
+        path: '/user/update-fcm-token',
+        body: {'userId': userId, 'fcmToken': token},
       );
-
-      if (response.statusCode == 200) {
-        print('FCM token sent to server successfully');
-      } else {
-        print(
-          'Failed to send FCM token: ${response.statusCode} - ${response.body}',
-        );
-      }
+      print('FCM token sent to server successfully');
     } catch (e) {
       print('Error sending FCM token: $e');
     }
@@ -226,20 +218,12 @@ class FirebaseMessagingService {
 
   static Future<void> removeFcmTokenFromServer(String userId) async {
     try {
-      final String resolvedBase = await UrlResolver.resolve(_baseUrl());
-      final response = await http.post(
-        Uri.parse('$resolvedBase/user/update-fcm-token'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'userId': userId, 'fcmToken': null}),
+      await _request(
+        method: 'POST',
+        path: '/user/update-fcm-token',
+        body: {'userId': userId, 'fcmToken': null},
       );
-
-      if (response.statusCode == 200) {
-        print('FCM token removed from server successfully');
-      } else {
-        print(
-          'Failed to remove FCM token: ${response.statusCode} - ${response.body}',
-        );
-      }
+      print('FCM token removed from server successfully');
     } catch (e) {
       print('Error removing FCM token: $e');
     }

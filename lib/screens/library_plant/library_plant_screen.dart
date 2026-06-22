@@ -27,31 +27,32 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
   List<LibraryPlantItem>? _previousPlants;
 
   List<String> _categoryOptions(List<LibraryPlantItem> plants) => <String>[
-        '',
-        ...{for (final plant in plants) plant.category},
-      ];
+    '',
+    ...{for (final plant in plants) plant.category},
+  ];
 
   List<String> _lightOptions(List<LibraryPlantItem> plants) => <String>[
-        '',
-        ...{for (final plant in plants) plant.lightLevel},
-      ];
+    '',
+    ...{for (final plant in plants) plant.lightLevel},
+  ];
 
   List<String> _waterOptions(List<LibraryPlantItem> plants) => <String>[
-        '',
-        ...{for (final plant in plants) plant.waterNeed},
-      ];
+    '',
+    ...{for (final plant in plants) plant.waterNeed},
+  ];
 
   List<String> _difficultyOptions(List<LibraryPlantItem> plants) => <String>[
-        '',
-        ...{for (final plant in plants) plant.difficulty},
-      ];
+    '',
+    ...{for (final plant in plants) plant.difficulty},
+  ];
 
   List<LibraryPlantItem> _filteredPlants(List<LibraryPlantItem> plants) {
     return plants.where((plant) {
       final query = _removeDiacritics(_query.toLowerCase());
       final name = _removeDiacritics(plant.name.toLowerCase());
       final category = _removeDiacritics(plant.category.toLowerCase());
-      final bool matchesQuery = name.contains(query) || category.contains(query);
+      final bool matchesQuery =
+          name.contains(query) || category.contains(query);
       final bool matchesCategory =
           _selectedCategory.isEmpty || plant.category == _selectedCategory;
       final bool matchesLight =
@@ -103,17 +104,14 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
         }
 
         final List<LibraryPlantItem> allPlants = controller.plants;
-        
+
         // Trộn ngẫu nhiên 3 fun facts từ danh sách cây thật
         if (_previousPlants == null || _previousPlants != allPlants) {
           _previousPlants = allPlants;
           final List<Map<String, dynamic>> allFacts = [];
           for (final plant in allPlants) {
             for (final fact in plant.funFacts) {
-              allFacts.add({
-                'plant': plant,
-                'fact': fact,
-              });
+              allFacts.add({'plant': plant, 'fact': fact});
             }
           }
           if (allFacts.isEmpty) {
@@ -128,9 +126,9 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
 
         final LibraryPlantItem? featured =
             plants.cast<LibraryPlantItem?>().firstWhere(
-                  (p) => p?.isTrending ?? false,
-                  orElse: () => null,
-                ) ??
+              (p) => p?.isTrending ?? false,
+              orElse: () => null,
+            ) ??
             (plants.isNotEmpty ? plants.first : null);
 
         final displayedPlants = plants.take(_visibleCount).toList();
@@ -177,25 +175,25 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
                         ),
                       ),
                     ),
-                    if (plants.length > _visibleCount) ...[
-                      const SizedBox(height: 10),
-                      Center(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            setState(() {
-                              _visibleCount += 10;
-                            });
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: primaryColor,
-                            side: const BorderSide(color: primaryColor, width: 1.5),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(99),
-                            ),
+                  ),
+                  if (plants.length > _visibleCount) ...[
+                    const SizedBox(height: 10),
+                    Center(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          setState(() {
+                            _visibleCount += 10;
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: primaryColor,
+                          side: const BorderSide(
+                            color: primaryColor,
+                            width: 1.5,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 14,
                           ),
                           child: Text(
                             lang.tr('load_more'),
@@ -273,13 +271,15 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
               _visibleCount = 10;
             }),
             selectedColor: primaryColor,
-            backgroundColor: Theme.of(context).brightness == Brightness.dark 
-                ? const Color(0xFF1E3323) 
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E3323)
                 : const Color(0xFFE8F5E9),
             labelStyle: TextStyle(
-              color: selected 
-                  ? Colors.white 
-                  : (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF0E3B1A)),
+              color: selected
+                  ? Colors.white
+                  : (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white70
+                        : const Color(0xFF0E3B1A)),
               fontWeight: FontWeight.w700,
             ),
             side: BorderSide.none,
@@ -303,27 +303,36 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
       runSpacing: 8,
       children: [
         _FilterMenuChip(
-          label: '${lang.tr('light_filter')}: ${_selectedLight.isEmpty ? lang.tr('all_filter') : _selectedLight}',
+          label:
+              '${lang.tr('light_filter')}: ${_selectedLight.isEmpty ? lang.tr('all_filter') : _selectedLight}',
           icon: Icons.wb_sunny_outlined,
-          options: lightOptions.map((e) => e.isEmpty ? lang.tr('all_filter') : e).toList(),
+          options: lightOptions
+              .map((e) => e.isEmpty ? lang.tr('all_filter') : e)
+              .toList(),
           onSelected: (value) => setState(() {
             _selectedLight = value == lang.tr('all_filter') ? '' : value;
             _visibleCount = 10;
           }),
         ),
         _FilterMenuChip(
-          label: '${lang.tr('water_filter')}: ${_selectedWater.isEmpty ? lang.tr('all_filter') : _selectedWater}',
+          label:
+              '${lang.tr('water_filter')}: ${_selectedWater.isEmpty ? lang.tr('all_filter') : _selectedWater}',
           icon: Icons.water_drop_outlined,
-          options: waterOptions.map((e) => e.isEmpty ? lang.tr('all_filter') : e).toList(),
+          options: waterOptions
+              .map((e) => e.isEmpty ? lang.tr('all_filter') : e)
+              .toList(),
           onSelected: (value) => setState(() {
             _selectedWater = value == lang.tr('all_filter') ? '' : value;
             _visibleCount = 10;
           }),
         ),
         _FilterMenuChip(
-          label: '${lang.tr('difficulty_filter')}: ${_selectedDifficulty.isEmpty ? lang.tr('all_filter') : _selectedDifficulty}',
+          label:
+              '${lang.tr('difficulty_filter')}: ${_selectedDifficulty.isEmpty ? lang.tr('all_filter') : _selectedDifficulty}',
           icon: Icons.stacked_line_chart,
-          options: difficultyOptions.map((e) => e.isEmpty ? lang.tr('all_filter') : e).toList(),
+          options: difficultyOptions
+              .map((e) => e.isEmpty ? lang.tr('all_filter') : e)
+              .toList(),
           onSelected: (value) => setState(() {
             _selectedDifficulty = value == lang.tr('all_filter') ? '' : value;
             _visibleCount = 10;
@@ -436,11 +445,17 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E3323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? const Color(0xFF2D4C34) : Colors.black12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2D4C34) : Colors.black12,
+        ),
       ),
       child: Column(
         children: [
-          Icon(Icons.search_off_rounded, size: 34, color: isDark ? Colors.white54 : const Color(0xFF6C7A70)),
+          Icon(
+            Icons.search_off_rounded,
+            size: 34,
+            color: isDark ? Colors.white54 : const Color(0xFF6C7A70),
+          ),
           const SizedBox(height: 8),
           Text(
             context.read<ProfileController>().tr('no_plant_found'),
@@ -468,7 +483,9 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF102A17),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : const Color(0xFF102A17),
           ),
         ),
         const SizedBox(height: 10),
@@ -482,7 +499,11 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
               final Map<String, dynamic> item = _randomFacts[index];
               final LibraryPlantItem plant = item['plant'] as LibraryPlantItem;
               final String fact = item['fact'] as String;
-              return _DidYouKnowCard(plant: plant, fact: fact);
+              return _DidYouKnowCard(
+                plant: plant,
+                fact: fact,
+                onTap: () => _openDetail(plant),
+              );
             },
           ),
         ),
@@ -492,7 +513,9 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
 
   void _openDetail(LibraryPlantItem plant) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => PlantDetailScreen(libraryPlant: plant)),
+      MaterialPageRoute(
+        builder: (context) => PlantDetailScreen(libraryPlant: plant),
+      ),
     );
   }
 }
@@ -512,9 +535,13 @@ class _PlantListCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E3323) : Colors.white.withValues(alpha: 0.92),
+          color: isDark
+              ? const Color(0xFF1E3323)
+              : Colors.white.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: isDark ? const Color(0xFF2D4C34) : Colors.black12),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2D4C34) : Colors.black12,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -561,7 +588,9 @@ class _PlantListCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF4A1F2D) : const Color(0xFFF9D9E4),
+                      color: isDark
+                          ? const Color(0xFF4A1F2D)
+                          : const Color(0xFFF9D9E4),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -569,7 +598,9 @@ class _PlantListCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? const Color(0xFFF9D9E4) : const Color(0xFF8A3E58),
+                        color: isDark
+                            ? const Color(0xFFF9D9E4)
+                            : const Color(0xFF8A3E58),
                       ),
                     ),
                   ),
@@ -616,7 +647,9 @@ class _MetaText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final contentColor = isDark ? const Color(0xFF81C784) : const Color(0xFF1E5A2F);
+    final contentColor = isDark
+        ? const Color(0xFF81C784)
+        : const Color(0xFF1E5A2F);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -636,81 +669,98 @@ class _MetaText extends StatelessWidget {
 }
 
 class _DidYouKnowCard extends StatelessWidget {
-  const _DidYouKnowCard({required this.plant, required this.fact});
+  const _DidYouKnowCard({
+    required this.plant,
+    required this.fact,
+    required this.onTap,
+  });
 
   final LibraryPlantItem plant;
   final String fact;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: 260,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3323) : const Color(0xFFF3F8F4),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: isDark ? const Color(0xFF2D4C34) : const Color(0xFFE1EAE2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF2D4C34) : const Color(0xFFE3F1E4),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: primaryColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      plant.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF102A17),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      context.watch<ProfileController>().tr('plant_tip'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.white54 : const Color(0xFF688071),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        width: 260,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E3323) : const Color(0xFFF3F8F4),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2D4C34) : const Color(0xFFE1EAE2),
           ),
-          const SizedBox(height: 12),
-          Text(
-            fact,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.45,
-              color: isDark ? Colors.white70 : const Color(0xFF3E4E43),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF2D4C34)
+                        : const Color(0xFFE3F1E4),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: primaryColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        plant.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF102A17),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        context.watch<ProfileController>().tr('plant_tip'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? Colors.white54
+                              : const Color(0xFF688071),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              fact,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.45,
+                color: isDark ? Colors.white70 : const Color(0xFF3E4E43),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -733,8 +783,12 @@ class _FilterMenuChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF1E3323) : const Color(0xFFE5EFE8);
-    final borderColor = isDark ? const Color(0xFF2D4C34) : const Color(0xFFD2E1D7);
-    final contentColor = isDark ? const Color(0xFF81C784) : const Color(0xFF1D5630);
+    final borderColor = isDark
+        ? const Color(0xFF2D4C34)
+        : const Color(0xFFD2E1D7);
+    final contentColor = isDark
+        ? const Color(0xFF81C784)
+        : const Color(0xFF1D5630);
 
     return PopupMenuButton<String>(
       onSelected: onSelected,
@@ -828,7 +882,9 @@ class _ErrorView extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF4A3A3A),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : const Color(0xFF4A3A3A),
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
                 height: 1.5,
@@ -870,7 +926,7 @@ String _removeDiacritics(String str) {
     RegExp(r'[đ]'),
     RegExp(r'[Đ]'),
     RegExp(r'[ỳýỵỷỹ]'),
-    RegExp(r'[ỲÝỴỶỸ]')
+    RegExp(r'[ỲÝỴỶỸ]'),
   ];
 
   var result = str;

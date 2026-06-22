@@ -1,23 +1,15 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:plant_notebook/utils/url_resolver.dart';
+import 'package:plant_notebook/data/network/dio_client.dart';
 
 class EmailAuthService {
-  static const String _defaultBackendUrl = 'http://10.0.2.2:5000';
+  EmailAuthService({Dio? dio}) : _dio = dio ?? DioClient.createDio();
+
+  final Dio _dio;
+
   static const String _tokenStorageKey = 'auth_jwt_token';
   static const String _userStorageKey = 'auth_user_profile';
-
-  String get _backendBaseUrl {
-    final String defaultUrl = kIsWeb
-        ? 'http://localhost:5000'
-        : _defaultBackendUrl;
-    return dotenv.env['GOOGLE_AUTH_BACKEND_URL']?.trim().isNotEmpty == true
-        ? dotenv.env['GOOGLE_AUTH_BACKEND_URL']!.trim()
-        : defaultUrl;
-  }
 
   Future<void> register({
     required String email,
@@ -25,24 +17,27 @@ class EmailAuthService {
     required String password,
     required String name,
   }) async {
-    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
-    final Uri endpoint = Uri.parse('$resolvedBase/auth/register');
+    try {
+      final response = await _dio.post(
+        '/auth/register',
+        data: {
+          'email': email,
+          'phone': phone,
+          'password': password,
+          'name': name,
+        },
+      );
 
-    final http.Response response = await http.post(
-      endpoint,
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'phone': phone,
-        'password': password,
-        'name': name,
-      }),
-    );
-
-    final Map<String, dynamic> data = jsonDecode(response.body);
-
-    if (response.statusCode != 201) {
-      throw Exception(data['message'] ?? 'Lỗi đăng ký');
+      if (response.statusCode != 201) {
+        final data = response.data;
+        throw Exception(data is Map<String, dynamic> ? data['message'] ?? 'Lỗi đăng ký' : 'Lỗi đăng ký');
+      }
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      final String message = (responseData is Map<String, dynamic>)
+          ? responseData['message'] as String? ?? 'Lỗi đăng ký'
+          : 'Lỗi đăng ký';
+      throw Exception(message);
     }
   }
 
@@ -50,63 +45,78 @@ class EmailAuthService {
     required String identifier,
     required String password,
   }) async {
-    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
-    final Uri endpoint = Uri.parse('$resolvedBase/auth/login');
     final bool isEmail = identifier.contains('@');
 
-    final http.Response response = await http.post(
-      endpoint,
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        if (isEmail) 'email': identifier else 'phone': identifier,
-        'password': password,
-      }),
-    );
+    try {
+      final response = await _dio.post(
+        '/auth/login',
+        data: {
+          if (isEmail) 'email': identifier else 'phone': identifier,
+          'password': password,
+        },
+      );
 
-    final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic> data = response.data as Map<String, dynamic>;
 
-    if (response.statusCode != 200) {
-      throw Exception(data['message'] ?? 'Lỗi đăng nhập');
+      if (response.statusCode != 200) {
+        throw Exception(data['message'] ?? 'Lỗi đăng nhập');
+      }
+
+      final String backendToken = data['token'] as String;
+      final Map<String, dynamic> user = Map<String, dynamic>.from(
+        data['user'] as Map,
+      );
+
+      final SharedPreferences preferences = await SharedPreferences.getInstance();
+      await preferences.setString(_tokenStorageKey, backendToken);
+      await preferences.setString(_userStorageKey, jsonEncode(user));
+      await preferences.setString('userId', user['id'].toString());
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      final String message = (responseData is Map<String, dynamic>)
+          ? responseData['message'] as String? ?? 'Lỗi đăng nhập'
+          : 'Lỗi đăng nhập';
+      throw Exception(message);
     }
-
-    final String backendToken = data['token'] as String;
-    final Map<String, dynamic> user = Map<String, dynamic>.from(
-      data['user'] as Map,
-    );
-
-    final SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_tokenStorageKey, backendToken);
-    await preferences.setString(_userStorageKey, jsonEncode(user));
-    await preferences.setString('userId', user['id'].toString());
   }
 
   Future<void> sendForgotPasswordOtp({required String email}) async {
-    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
-    final Uri endpoint = Uri.parse('$resolvedBase/auth/forgot-password');
-    final http.Response response = await http.post(
-      endpoint,
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
-    );
+    try {
+      final response = await _dio.post(
+        '/auth/forgot-password',
+        data: {'email': email},
+      );
 
-    final Map<String, dynamic> data = jsonDecode(response.body);
-    if (response.statusCode != 200) {
-      throw Exception(data['message'] ?? 'Lỗi gửi mã OTP');
+      final Map<String, dynamic> data = response.data as Map<String, dynamic>;
+      if (response.statusCode != 200) {
+        throw Exception(data['message'] ?? 'Lỗi gửi mã OTP');
+      }
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      final String message = (responseData is Map<String, dynamic>)
+          ? responseData['message'] as String? ?? 'Lỗi gửi mã OTP'
+          : 'Lỗi gửi mã OTP';
+      throw Exception(message);
     }
   }
 
   Future<void> verifyOtp({required String email, required String otp}) async {
-    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
-    final Uri endpoint = Uri.parse('$resolvedBase/auth/verify-otp');
-    final http.Response response = await http.post(
-      endpoint,
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'otp': otp}),
-    );
+    try {
+      final response = await _dio.post(
+        '/auth/verify-otp',
+        data: {'email': email, 'otp': otp},
+      );
 
-    final Map<String, dynamic> data = jsonDecode(response.body);
-    if (response.statusCode != 200) {
-      throw Exception(data['message'] ?? 'Mã OTP không hợp lệ');
+      final Map<String, dynamic> data = response.data as Map<String, dynamic>;
+      if (response.statusCode != 200) {
+        throw Exception(data['message'] ?? 'Mã OTP không hợp lệ');
+      }
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      final String message = (responseData is Map<String, dynamic>)
+          ? responseData['message'] as String? ?? 'Mã OTP không hợp lệ'
+          : 'Mã OTP không hợp lệ';
+      throw Exception(message);
     }
   }
 
@@ -115,21 +125,26 @@ class EmailAuthService {
     required String otp,
     required String newPassword,
   }) async {
-    final String resolvedBase = await UrlResolver.resolve(_backendBaseUrl);
-    final Uri endpoint = Uri.parse('$resolvedBase/auth/reset-password');
-    final http.Response response = await http.post(
-      endpoint,
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'otp': otp,
-        'newPassword': newPassword,
-      }),
-    );
+    try {
+      final response = await _dio.post(
+        '/auth/reset-password',
+        data: {
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        },
+      );
 
-    final Map<String, dynamic> data = jsonDecode(response.body);
-    if (response.statusCode != 200) {
-      throw Exception(data['message'] ?? 'Lỗi đặt lại mật khẩu');
+      final Map<String, dynamic> data = response.data as Map<String, dynamic>;
+      if (response.statusCode != 200) {
+        throw Exception(data['message'] ?? 'Lỗi đặt lại mật khẩu');
+      }
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      final String message = (responseData is Map<String, dynamic>)
+          ? responseData['message'] as String? ?? 'Lỗi đặt lại mật khẩu'
+          : 'Lỗi đặt lại mật khẩu';
+      throw Exception(message);
     }
   }
 }
