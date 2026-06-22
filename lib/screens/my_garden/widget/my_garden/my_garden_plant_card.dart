@@ -39,7 +39,7 @@ class MyGardenPlantCard extends StatelessWidget {
     final (title, color, icon) = statusMeta;
 
     final String subtitle =
-        '${profile.reminderSetting.wateringCycleDays} ngay/lan';
+        '${profile.reminderSetting.wateringCycleDays} ngày/lần';
 
     return GestureDetector(
       onTap: onTap,

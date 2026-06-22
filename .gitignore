@@ -47,3 +47,5 @@ app.*.map.json
 analyze.txt
 # Secrets
 .env
+
+giai_thich_routes_gemini.md

@@ -8,6 +8,8 @@ export 'package:plant_notebook/screens/profile/profile_screen.dart';
 export 'package:plant_notebook/screens/store/store_map_screen.dart';
 export 'package:plant_notebook/screens/store/store_detail_screen.dart';
 export 'package:plant_notebook/screens/community/post_detail_screen.dart';
+export 'package:plant_notebook/screens/community/community_screen.dart';
+export 'package:plant_notebook/screens/community/fullscreen_image_screen.dart';
 export 'package:plant_notebook/screens/splash/splash_screen.dart';
 export 'package:plant_notebook/screens/onboarding/onboarding_screen.dart';
 export 'package:plant_notebook/screens/auth/login_screen.dart';

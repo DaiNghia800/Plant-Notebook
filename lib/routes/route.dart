@@ -45,9 +45,14 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       return MaterialPageRoute(
         builder: (context) => StoreDetailScreen(storeId: storeId),
       );
-      return MaterialPageRoute(builder: (context) => ProfileScreen());
     case communityPostDetailRoute:
-      return MaterialPageRoute(builder: (context) => PostDetailScreen());
+      final String? postId = settings.arguments as String?;
+      return MaterialPageRoute(builder: (context) => PostDetailScreen(postId: postId));
+    case fullscreenImageRoute:
+      final String imageUrl = settings.arguments as String;
+      return MaterialPageRoute(builder: (context) => FullscreenImageScreen(imageUrl: imageUrl));
+    case communityViewRoute:
+      return MaterialPageRoute(builder: (context) => const CommunityScreen());
     default:
       return MaterialPageRoute(builder: (context) => const HomeScreen());
   }

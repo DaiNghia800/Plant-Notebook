@@ -3,10 +3,13 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:plant_notebook/data/models/garden_plant.dart';
+import 'package:plant_notebook/data/models/care_history.dart';
 import 'package:plant_notebook/data/network/dio_client.dart';
 import 'package:plant_notebook/data/services/my_garden_service.dart';
 import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
@@ -124,8 +127,9 @@ class FirebaseMessagingService {
     }
 
     final prefs = await SharedPreferences.getInstance();
+    final bool isNotificationOn = prefs.getBool('is_notification_on') ?? true;
     final String? userId = prefs.getString('userId');
-    if (userId != null && _currentToken != null) {
+    if (isNotificationOn && userId != null && _currentToken != null) {
       await _sendTokenToServer(userId, _currentToken!);
     }
 
@@ -164,6 +168,12 @@ class FirebaseMessagingService {
 
   static Future<void> registerToken(String userId) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final bool isNotificationOn = prefs.getBool('is_notification_on') ?? true;
+      if (!isNotificationOn) {
+        await removeFcmTokenFromServer(userId);
+        return;
+      }
       _currentToken ??= await _firebaseMessaging.getToken();
       if (_currentToken == null) return;
       await _sendTokenToServer(userId, _currentToken!);
@@ -237,6 +247,7 @@ class FirebaseMessagingService {
           _handleNotificationPayload(payload);
         }
       },
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackgroundHandler,
     );
 
     await _localNotifications
@@ -247,48 +258,200 @@ class FirebaseMessagingService {
   }
 
   static Future<void> _showForegroundNotification(RemoteMessage message) async {
-    final RemoteNotification? notification = message.notification;
-    if (notification == null) return;
+    final title = message.data['title'] ?? 'Nhắc nhở chăm sóc cây';
+    final body = message.data['body'] ?? 'Đã đến lúc chăm sóc cây!';
+    final type = message.data['type'];
 
-    const AndroidNotificationDetails androidDetails =
+    final isWatering = type == 'Tưới nước' || type == 'watering';
+    final isFertilizing = type == 'Bón phân' || type == 'fertilizing';
+
+    final actions = <AndroidNotificationAction>[];
+    if (isWatering) {
+      actions.add(const AndroidNotificationAction(
+        'action_water',
+        'Tưới nước',
+        showsUserInterface: false,
+      ));
+    } else if (isFertilizing) {
+      actions.add(const AndroidNotificationAction(
+        'action_fertilize',
+        'Bón phân',
+        showsUserInterface: false,
+      ));
+    }
+
+    final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'plant_notebook_reminders',
           'Plant Notebook Reminders',
           channelDescription: 'Reminder notifications for plant care',
           importance: Importance.max,
           priority: Priority.high,
+          actions: actions,
         );
 
-    const NotificationDetails details = NotificationDetails(
+    final NotificationDetails details = NotificationDetails(
       android: androidDetails,
     );
     await _localNotifications.show(
-      id: notification.hashCode,
-      title: notification.title ?? 'Plant Notebook',
-      body: notification.body ?? 'Ban co thong bao moi',
+      id: message.hashCode,
+      title: title,
+      body: body,
       notificationDetails: details,
-      payload: message.data['gardenPlantId'] ?? '',
+      payload: jsonEncode(message.data),
+    );
+  }
+
+  static Future<void> showBackgroundNotification(RemoteMessage message) async {
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidSettings,
+    );
+    await _localNotifications.initialize(
+      settings: initSettings,
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackgroundHandler,
+    );
+
+    final title = message.data['title'] ?? 'Nhắc nhở chăm sóc cây';
+    final body = message.data['body'] ?? 'Đã đến lúc chăm sóc cây!';
+    final type = message.data['type'];
+
+    final isWatering = type == 'Tưới nước' || type == 'watering';
+    final isFertilizing = type == 'Bón phân' || type == 'fertilizing';
+
+    final actions = <AndroidNotificationAction>[];
+    if (isWatering) {
+      actions.add(const AndroidNotificationAction(
+        'action_water',
+        'Tưới nước',
+        showsUserInterface: false,
+      ));
+    } else if (isFertilizing) {
+      actions.add(const AndroidNotificationAction(
+        'action_fertilize',
+        'Bón phân',
+        showsUserInterface: false,
+      ));
+    }
+
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'plant_notebook_reminders',
+          'Plant Notebook Reminders',
+          channelDescription: 'Reminder notifications for plant care',
+          importance: Importance.max,
+          priority: Priority.high,
+          actions: actions,
+        );
+
+    final NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
+    await _localNotifications.show(
+      id: message.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: details,
+      payload: jsonEncode(message.data),
     );
   }
 
   static void _navigateToPlant(RemoteMessage message) {
-    final String? gardenPlantId = message.data['gardenPlantId'];
-    if (gardenPlantId != null && gardenPlantId.isNotEmpty) {
-      _handlePlantNavigation(gardenPlantId);
-    }
+    _handleNotificationAction(message.data);
   }
 
   static void _handleNotificationPayload(String payload) {
     if (payload.isNotEmpty) {
-      _handlePlantNavigation(payload);
+      try {
+        final Map<String, dynamic> data = Map<String, dynamic>.from(jsonDecode(payload));
+        _handleNotificationAction(data);
+      } catch (e) {
+        _handlePlantNavigation(payload);
+      }
+    }
+  }
+
+  static Future<void> _handleNotificationAction(Map<String, dynamic> data) async {
+    final String? gardenPlantId = data['gardenPlantId'];
+    final String? type = data['type'];
+    if (gardenPlantId == null || gardenPlantId.isEmpty) return;
+
+    if (type == 'Tưới nước' || type == 'Bón phân' || type == 'watering' || type == 'fertilizing') {
+      await _performCareAction(gardenPlantId, type!);
+    } else {
+      _handlePlantNavigation(gardenPlantId);
+    }
+  }
+
+  static Future<void> _performCareAction(String gardenPlantId, String type) async {
+    final context = navigatorKey.currentContext;
+    if (context == null) {
+      print('Navigator context is null, cannot perform care action');
+      return;
+    }
+
+    final isWatering = type.contains('Tưới') || type == 'watering';
+    final loadingMsg = isWatering ? 'Đang thực hiện tưới nước...' : 'Đang thực hiện bón phân...';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(loadingMsg),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+
+    try {
+      final myGardenController = Provider.of<MyGardenController>(context, listen: false);
+      
+      GardenPlantProfile? profile;
+      try {
+        profile = myGardenController.plantProfiles.firstWhere(
+          (p) => p.id == gardenPlantId || p.plantId == gardenPlantId,
+        );
+      } catch (_) {
+        profile = await fetchPlantProfileById(gardenPlantId);
+      }
+
+      if (profile == null) {
+        throw Exception('Không tìm thấy cây');
+      }
+
+      GardenPlantProfile? updatedProfile;
+      if (isWatering) {
+        updatedProfile = await myGardenController.waterPlant(profile);
+      } else {
+        updatedProfile = await myGardenController.fertilizePlant(profile);
+      }
+
+      if (updatedProfile != null) {
+        final successMsg = isWatering 
+            ? '✓ Đã cập nhật tưới nước cho cây ${profile.name} thành công!' 
+            : '✓ Đã cập nhật bón phân cho cây ${profile.name} thành công!';
+            
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(successMsg),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        throw Exception('Cập nhật thất bại');
+      }
+    } catch (e) {
+      print('Lỗi khi bón phân/tưới nước từ thông báo: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi: Không thể thực hiện hành động ($e)'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   static Future<void> _handlePlantNavigation(String gardenPlantId) async {
     try {
-      // Get the plant profile from controller or fetch it
-      // For now, navigate to MyGarden and let user find it
-      // In a production app, you would fetch the plant details by ID
       final profile = await fetchPlantProfileById(gardenPlantId);
       debugPrint("profile: ${profile.toJson()}");
       navigatorKey.currentState?.push(
@@ -302,4 +465,86 @@ class FirebaseMessagingService {
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
+  await FirebaseMessagingService.showBackgroundNotification(message);
+}
+
+@pragma('vm:entry-point')
+void notificationTapBackgroundHandler(NotificationResponse response) {
+  final payload = response.payload;
+  if (payload == null || payload.isEmpty) return;
+
+  final actionId = response.actionId;
+  debugPrint('Tapped background notification action: $actionId, payload: $payload');
+
+  if (actionId == 'action_water' || actionId == 'action_fertilize') {
+    _performBackgroundCareAction(payload, actionId!);
+  }
+}
+
+Future<void> _performBackgroundCareAction(String payload, String actionId) async {
+  try {
+    await dotenv.load(fileName: ".env");
+
+    Map<String, dynamic>? data;
+    String gardenPlantId = payload;
+    try {
+      data = Map<String, dynamic>.from(jsonDecode(payload));
+      gardenPlantId = data['gardenPlantId'] ?? payload;
+    } catch (_) {}
+
+    if (gardenPlantId.isEmpty) return;
+
+    final isWatering = actionId == 'action_water';
+    final actionType = isWatering ? CareActionType.watering : CareActionType.fertilizing;
+
+    final myGardenService = MyGardenService();
+    await myGardenService.createCareHistory(gardenPlantId, actionType, 'Tapped action button on notification');
+
+    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    
+    String plantName = 'của bạn';
+    try {
+      final profile = await FirebaseMessagingService.fetchPlantProfileById(gardenPlantId);
+      plantName = profile.name;
+    } catch (_) {}
+
+    final successMsg = isWatering
+        ? '✓ Đã cập nhật tưới nước cho cây $plantName thành công!'
+        : '✓ Đã cập nhật bón phân cho cây $plantName thành công!';
+
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'plant_notebook_reminders_status',
+      'Plant Notebook Reminders Status',
+      channelDescription: 'Care action status notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      id: DateTime.now().millisecond,
+      title: 'Chăm sóc cây thành công',
+      body: successMsg,
+      notificationDetails: details,
+    );
+  } catch (e) {
+    debugPrint('Error performing background action: $e');
+    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'plant_notebook_reminders_status',
+      'Plant Notebook Reminders Status',
+      channelDescription: 'Care action status notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    await flutterLocalNotificationsPlugin.show(
+      id: DateTime.now().millisecond,
+      title: 'Lỗi chăm sóc cây',
+      body: 'Không thể cập nhật hành động chăm sóc cây từ thông báo ($e)',
+      notificationDetails: const NotificationDetails(android: androidDetails),
+    );
+  }
 }

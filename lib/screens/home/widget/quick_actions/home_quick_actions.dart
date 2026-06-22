@@ -82,6 +82,19 @@ class HomeQuickActions extends StatelessWidget {
                 },
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: QuickActionCard(
+                icon: Icons.people_outline_rounded,
+                iconColor: const Color(0xFFE65100),
+                iconBgColor: const Color(0xFFFBE9E7),
+                title: lang.tr('community'),
+                subtitle: lang.tr('community_desc'),
+                onTap: () {
+                  Navigator.of(context).pushNamed(communityViewRoute);
+                },
+              ),
+            ),
           ],
         ),
       ],
