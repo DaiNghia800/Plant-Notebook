@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:plant_notebook/utils/url_resolver.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DioClient {
   static const Duration _timeout = Duration(seconds: 20);
@@ -21,11 +22,21 @@ class DioClient {
         onRequest: (options, handler) async {
           final resolvedBase = await UrlResolver.resolve(options.baseUrl);
           options.baseUrl = resolvedBase;
+
+          // Attach user token dynamically from SharedPreferences if available
+          final SharedPreferences preferences =
+              await SharedPreferences.getInstance();
+          final String? userToken = preferences.getString('auth_jwt_token');
+          if (userToken != null && userToken.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $userToken';
+          }
+
           return handler.next(options);
         },
       ),
     );
 
+    // Fallback: If no dynamic token, but env has a token
     final token = dotenv.env['MY_GARDEN_API_TOKEN']?.trim();
     if (token != null && token.isNotEmpty) {
       dio.options.headers['Authorization'] = 'Bearer $token';
@@ -36,7 +47,6 @@ class DioClient {
 
   static String _baseUrl() {
     return dotenv.env['API_BASE_URL']?.trim() ??
-        dotenv.env['MY_GARDEN_API_BASE_URL']?.trim() ??
-        'http://localhost:5000';
+        'https://plant-notebook.id.vn/';
   }
 }
