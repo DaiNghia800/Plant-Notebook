@@ -76,14 +76,16 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
         }
 
         return Stack(
+          fit: StackFit.expand,
           children: [
             SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Padding(
-                padding: EdgeInsets.only(
+                padding: const EdgeInsets.only(
                   top: 100,
                   left: 20,
                   right: 20,
-                  bottom: 60,
+                  bottom: 160, // Tăng bottom padding để không bị che bởi FAB
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,10 +108,51 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
                       },
                     ),
                     const SizedBox(height: 15),
-                    if (controller.searchQuery.isNotEmpty && visiblePlants.isEmpty)
+                    if (allPlants.isEmpty)
                       Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 40.0),
+                          padding: const EdgeInsets.symmetric(vertical: 60.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFE7EFE9),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.spa_outlined,
+                                  size: 64,
+                                  color: Color(0xFF2E7D32),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                lang.tr('no_plants'),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF1B1B1B),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                lang.tr('add_new_plant_desc'),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF5E8B6D),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else if (visiblePlants.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 60.0),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -184,7 +227,6 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
                           );
                         },
                       ),
-                    const SizedBox(height: 100),
                   ],
                 ),
               ),

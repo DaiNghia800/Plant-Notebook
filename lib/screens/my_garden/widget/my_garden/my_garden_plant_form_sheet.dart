@@ -122,7 +122,7 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isEditing ? lang.tr('edit_plant_profile') : lang.tr('add_new_plant'),
+                    isEditing ? lang.tr('edit_plant') : lang.tr('add_new_plant'),
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,

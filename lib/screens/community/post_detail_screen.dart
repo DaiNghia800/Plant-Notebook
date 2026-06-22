@@ -6,6 +6,7 @@ import '../../controller/community_controller.dart';
 import '../../controller/profile_controller.dart';
 import '../../data/models/post.dart';
 import '../../routes/route_constant.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 import '../../utils/app_colors.dart';
 
 class PostDetailScreen extends StatefulWidget {

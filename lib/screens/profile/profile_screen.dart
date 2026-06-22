@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:plant_notebook/data/services/firebase_messaging_service.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
-import '../../controller/profile_controller.dart';
+import 'package:plant_notebook/controller/profile_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -313,7 +313,7 @@ class ProfileView extends StatelessWidget {
   // 1. Thẻ Thông tin cá nhân
   Widget _buildProfileCard(BuildContext context, ProfileController controller) {
     final myGardenController = context.watch<MyGardenController>();
-    final int plantCount = myGardenController.savedPlants.length;
+    final int plantCount = myGardenController.plantProfiles.length;
     final int level = 1 + (plantCount ~/ 3); // Mỗi 3 cây tăng 1 cấp
 
     final String textPlants = controller.currentLanguage == 'en'

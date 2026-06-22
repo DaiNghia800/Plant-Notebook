@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:plant_notebook/data/models/store.dart';
 import 'package:plant_notebook/data/services/store_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StoreController extends ChangeNotifier {
   final StoreService _storeService = StoreService();
@@ -119,10 +120,14 @@ class StoreController extends ChangeNotifier {
     required String comment,
   }) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? userId = prefs.getString('userId');
+
       await _storeService.createReview(
         storeId: storeId,
         rating: rating,
         comment: comment,
+        userId: userId,
       );
       
       // Refresh details to load new review and average rating

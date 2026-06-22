@@ -135,77 +135,82 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
 
         final displayedPlants = plants.take(_visibleCount).toList();
 
-        return SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              top: 100,
-              left: 20,
-              right: 20,
-              bottom: 120,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSearchBox(),
-                const SizedBox(height: 16),
-                _buildCategoryRow(_categoryOptions(allPlants)),
-                const SizedBox(height: 14),
-                _buildFilterRow(
-                  lang: lang,
-                  lightOptions: _lightOptions(allPlants),
-                  waterOptions: _waterOptions(allPlants),
-                  difficultyOptions: _difficultyOptions(allPlants),
-                ),
-                const SizedBox(height: 16),
-                _buildDidYouKnowSection(),
-                const SizedBox(height: 16),
-                if (featured != null) _buildFeaturedCard(featured),
-                if (featured != null) const SizedBox(height: 16),
-                if (plants.isEmpty)
-                  _buildEmptyState()
-                else ...[
-                  ...displayedPlants.map(
-                    (plant) => Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: _PlantListCard(
-                        plant: plant,
-                        onTap: () => _openDetail(plant),
-                      ),
-                    ),
+        return RefreshIndicator(
+          onRefresh: controller.refresh,
+          color: primaryColor,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: 100,
+                left: 20,
+                right: 20,
+                bottom: 120,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSearchBox(),
+                  const SizedBox(height: 16),
+                  _buildCategoryRow(_categoryOptions(allPlants)),
+                  const SizedBox(height: 14),
+                  _buildFilterRow(
+                    lang: lang,
+                    lightOptions: _lightOptions(allPlants),
+                    waterOptions: _waterOptions(allPlants),
+                    difficultyOptions: _difficultyOptions(allPlants),
                   ),
-                  if (plants.length > _visibleCount) ...[
-                    const SizedBox(height: 10),
-                    Center(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          setState(() {
-                            _visibleCount += 10;
-                          });
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: primaryColor,
-                          side: const BorderSide(color: primaryColor, width: 1.5),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 14,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                        ),
-                        child: Text(
-                          lang.tr('load_more'),
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
+                  const SizedBox(height: 16),
+                  _buildDidYouKnowSection(),
+                  const SizedBox(height: 16),
+                  if (featured != null) _buildFeaturedCard(featured),
+                  if (featured != null) const SizedBox(height: 16),
+                  if (plants.isEmpty)
+                    _buildEmptyState()
+                  else ...[
+                    ...displayedPlants.map(
+                      (plant) => Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _PlantListCard(
+                          plant: plant,
+                          onTap: () => _openDetail(plant),
                         ),
                       ),
                     ),
+                    if (plants.length > _visibleCount) ...[
+                      const SizedBox(height: 10),
+                      Center(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            setState(() {
+                              _visibleCount += 10;
+                            });
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: primaryColor,
+                            side: const BorderSide(color: primaryColor, width: 1.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          ),
+                          child: Text(
+                            lang.tr('load_more'),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
+                  const SizedBox(height: 24),
                 ],
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
           ),
         );

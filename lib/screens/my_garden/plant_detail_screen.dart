@@ -155,8 +155,19 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
   }
 
   bool isReadyToWater(DateTime lastWateredAt, int frequencyDays) {
+    if (_currentProfile?.status == GardenPlantStatus.thirsty) {
+      return true;
+    }
     double cooldownHours = (frequencyDays * 24) * 0.3;
     DateTime earliestAllowedTime = lastWateredAt.add(
+      Duration(minutes: (cooldownHours * 60).toInt()),
+    );
+    return DateTime.now().isAfter(earliestAllowedTime);
+  }
+
+  bool isReadyToFertilize(DateTime lastFertilizedAt, int frequencyDays) {
+    double cooldownHours = (frequencyDays * 24) * 0.3;
+    DateTime earliestAllowedTime = lastFertilizedAt.add(
       Duration(minutes: (cooldownHours * 60).toInt()),
     );
     return DateTime.now().isAfter(earliestAllowedTime);
@@ -616,7 +627,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow:
-                                      isReadyToWater(
+                                      isReadyToFertilize(
                                             _lastFertilized!,
                                             _fertilizingCycleDays,
                                           ) &&
@@ -632,7 +643,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                         ]
                                       : [],
                                   gradient:
-                                      isReadyToWater(
+                                      isReadyToFertilize(
                                             _lastFertilized!,
                                             _fertilizingCycleDays,
                                           ) &&
@@ -647,7 +658,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                         )
                                       : null,
                                   color:
-                                      isReadyToWater(
+                                      isReadyToFertilize(
                                             _lastFertilized!,
                                             _fertilizingCycleDays,
                                           ) &&
@@ -661,7 +672,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                     borderRadius: BorderRadius.circular(16),
                                     onTap:
                                         _isLoading ||
-                                            !isReadyToWater(
+                                            !isReadyToFertilize(
                                               _lastFertilized!,
                                               _fertilizingCycleDays,
                                             )
@@ -673,14 +684,14 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                             MainAxisAlignment.center,
                                         children: [
                                           Icon(
-                                            isReadyToWater(
+                                            isReadyToFertilize(
                                                   _lastFertilized!,
                                                   _fertilizingCycleDays,
                                                 )
                                                 ? Icons.eco
                                                 : Icons.check_circle,
                                             color:
-                                                isReadyToWater(
+                                                isReadyToFertilize(
                                                   _lastFertilized!,
                                                   _fertilizingCycleDays,
                                                 )
@@ -689,7 +700,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
-                                            isReadyToWater(
+                                            isReadyToFertilize(
                                                   _lastFertilized!,
                                                   _fertilizingCycleDays,
                                                 )
@@ -700,7 +711,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
                                               fontWeight: FontWeight.w800,
                                               letterSpacing: 0.5,
                                               color:
-                                                  isReadyToWater(
+                                                  isReadyToFertilize(
                                                     _lastFertilized!,
                                                     _fertilizingCycleDays,
                                                   )

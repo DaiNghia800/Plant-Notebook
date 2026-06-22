@@ -3,29 +3,37 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:plant_notebook/common/l10n/app_translations.dart';
+import 'package:plant_notebook/data/network/dio_client.dart';
+import 'package:plant_notebook/data/services/firebase_messaging_service.dart';
 
 class ProfileController extends ChangeNotifier {
   ProfileController() {
-    _loadDarkMode();
-    _loadLanguage();
     loadUserData();
   }
 
   bool isNotificationOn = true;
   bool isDarkModeOn = false;
-  
+
   String userName = 'Người dùng';
   String userEmail = '';
   String memberSince = '2024';
   Uint8List? avatarBytes;
-  String currentLanguage = 'vi'; // 'vi' or 'en'
+  String currentLanguage = 'Tiếng Việt';
 
   /// Lấy chuỗi dịch theo key
-  String tr(String key) => AppTranslations.tr(key, currentLanguage);
+  String tr(String key) {
+    final String langCode = currentLanguage == 'English' ? 'en' : 'vi';
+    return AppTranslations.tr(key, langCode);
+  }
 
   Future<void> loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Load local notification preference
+    isNotificationOn = prefs.getBool('is_notification_on') ?? true;
+
     final userString = prefs.getString('auth_user_profile');
     if (userString != null) {
       final user = jsonDecode(userString);
@@ -39,45 +47,106 @@ class ProfileController extends ChangeNotifier {
       }
       notifyListeners();
     }
-    
+
     // Load Avatar
     final avatarString = prefs.getString('user_avatar_base64');
     if (avatarString != null) {
       avatarBytes = base64Decode(avatarString);
       notifyListeners();
     }
+
+    // Fetch fresh user data from API to get actual createdAt
+    final String? userId = prefs.getString('userId');
+    if (userId != null) {
+      try {
+        final dio = DioClient.createDio();
+        final response = await dio.get('/user/$userId');
+        if (response.statusCode == 200 && response.data != null) {
+          final freshUser = response.data;
+          userName = freshUser['fullName'] ?? freshUser['name'] ?? userName;
+          userEmail = freshUser['email'] ?? userEmail;
+          if (freshUser['createdAt'] != null) {
+            try {
+              final date = DateTime.parse(freshUser['createdAt']);
+              memberSince = date.year.toString();
+            } catch (_) {}
+          }
+          await prefs.setString('auth_user_profile', jsonEncode(freshUser));
+          notifyListeners();
+        }
+      } catch (e) {
+        debugPrint('Lỗi khi tải dữ liệu người dùng mới từ server: $e');
+      }
+    }
   }
 
   void toggleNotification(bool value) {
     isNotificationOn = value;
     notifyListeners(); // Báo cho UI vẽ lại (Chuẩn của Provider)
+
+    SharedPreferences.getInstance().then((prefs) async {
+      await prefs.setBool('is_notification_on', value);
+      final String? userId = prefs.getString('userId');
+      if (userId != null) {
+        if (value) {
+          await FirebaseMessagingService.registerToken(userId);
+        } else {
+          await FirebaseMessagingService.removeFcmTokenFromServer(userId);
+        }
+      }
+    }).catchError((e) {
+      debugPrint('Lỗi khi cập nhật cài đặt thông báo: $e');
+    });
   }
 
-  void toggleDarkMode(bool value) async {
+  void toggleDarkMode(bool value) {
     isDarkModeOn = value;
     notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkModeOn', value);
   }
 
-  Future<void> _loadDarkMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    isDarkModeOn = prefs.getBool('isDarkModeOn') ?? false;
-    notifyListeners();
-  }
+  // Translations
+  String get textTitle =>
+      currentLanguage == 'English' ? 'Plant Notebook' : 'Sổ tay cây trồng';
+  String get textMemberSince => currentLanguage == 'English'
+      ? 'MEMBER SINCE $memberSince'
+      : 'THÀNH VIÊN TỪ $memberSince';
+  String get textSettings =>
+      currentLanguage == 'English' ? 'APP SETTINGS' : 'CÀI ĐẶT ỨNG DỤNG';
+  String get textNotification =>
+      currentLanguage == 'English' ? 'Notifications' : 'Thông báo';
+  String get textDarkMode =>
+      currentLanguage == 'English' ? 'Dark Mode' : 'Chế độ tối';
+  String get textLanguage =>
+      currentLanguage == 'English' ? 'Language' : 'Ngôn ngữ';
+  String get textInviteFriends =>
+      currentLanguage == 'English' ? 'Invite Friends' : 'Giới thiệu bạn bè';
+  String get textFeedback => currentLanguage == 'English'
+      ? 'Feedback / Report Issue'
+      : 'Phản hồi/Báo lỗi';
+  String get textLogout =>
+      currentLanguage == 'English' ? 'Logout' : 'Đăng xuất';
 
-  void changeLanguage(String langCode) async {
-    currentLanguage = langCode;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('appLanguage', langCode);
-  }
-
-  Future<void> _loadLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
-    currentLanguage = prefs.getString('appLanguage') ?? 'vi';
-    notifyListeners();
-  }
+  // Community Translations
+  String get textCommunity =>
+      currentLanguage == 'English' ? 'Community' : 'Cộng đồng';
+  String get textPostDetail =>
+      currentLanguage == 'English' ? 'Post Detail' : 'Bài viết';
+  String get textTimeAgo =>
+      currentLanguage == 'English' ? '2 hours ago' : '2 giờ trước';
+  String get textPostContent => currentLanguage == 'English'
+      ? 'Repotted my succulents yesterday. So cute! 🌱'
+      : 'Góc sen đá mới thay chậu hôm qua. Nhìn cưng xỉu luôn mọi người ơi! 🌱';
+  String get textPostImage =>
+      currentLanguage == 'English' ? 'Post Image' : 'Hình ảnh bài viết';
+  String get textComments =>
+      currentLanguage == 'English' ? 'Comments' : 'Bình luận';
+  String get textCommentTime =>
+      currentLanguage == 'English' ? '15 minutes ago' : '15 phút trước';
+  String get textCommentContent => currentLanguage == 'English'
+      ? 'So beautiful! Where did you buy the pot?'
+      : 'Đẹp quá bạn ơi! Chậu mua ở đâu vậy?';
+  String get textAddComment =>
+      currentLanguage == 'English' ? 'Add a comment...' : 'Thêm bình luận...';
 
   void reportIssue(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -91,7 +160,7 @@ class ProfileController extends ChangeNotifier {
     if (image != null) {
       avatarBytes = await image.readAsBytes();
       notifyListeners();
-      
+
       // Save Avatar to local storage
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_avatar_base64', base64Encode(avatarBytes!));
@@ -102,7 +171,7 @@ class ProfileController extends ChangeNotifier {
     if (newName.trim().isNotEmpty) {
       userName = newName.trim();
       notifyListeners();
-      
+
       // Save back to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final userString = prefs.getString('auth_user_profile');
@@ -115,6 +184,11 @@ class ProfileController extends ChangeNotifier {
     }
   }
 
+  void changeLanguage(String language) {
+    currentLanguage = language;
+    notifyListeners();
+  }
+
   void submitFeedback(BuildContext context, String content) {
     if (content.trim().isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -122,6 +196,4 @@ class ProfileController extends ChangeNotifier {
       );
     }
   }
-
-
 }
