@@ -72,7 +72,10 @@ class HomeHeroBanner extends StatelessWidget {
                   icon: const Icon(Icons.document_scanner, size: 18),
                   label: Text(
                     profileController.tr('quick_scan'),
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
@@ -114,7 +117,7 @@ class HomeHeroBanner extends StatelessWidget {
             color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(2, 4),
-          )
+          ),
         ],
       ),
       child: const Center(

@@ -196,11 +196,18 @@ class MyGardenController extends ChangeNotifier {
   Future<GardenPlantProfile?> upsertPlantProfile(
     GardenPlantProfile profile,
   ) async {
+    // Chỉ tìm cây hiện có nếu profile có id hợp lệ hoặc plantId không rỗng
+    final bool hasValidId = profile.id != null && profile.id!.isNotEmpty;
+    final bool hasValidPlantId = profile.plantId.isNotEmpty;
+
     final int index = _plantProfiles.indexWhere((item) {
-      if (profile.id != null && item.id != null) {
+      if (hasValidId && item.id != null) {
         return item.id == profile.id;
       }
-      return item.plantId == profile.plantId;
+      if (hasValidPlantId) {
+        return item.plantId == profile.plantId;
+      }
+      return false;
     });
     try {
       if (index >= 0) {
@@ -222,6 +229,7 @@ class MyGardenController extends ChangeNotifier {
       return null;
     }
   }
+
 
   Future<void> updatePlantStatus(
     String plantId,

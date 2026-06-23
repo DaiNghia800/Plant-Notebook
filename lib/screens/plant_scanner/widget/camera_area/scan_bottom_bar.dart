@@ -84,30 +84,34 @@ class _CaptureButtonState extends State<_CaptureButton>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: () => _controller.forward(),
-      child: ScaleTransition(
-        scale: _scale,
-        child: Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF4CAF50), width: 3),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(5),
-            child: Container(
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF4CAF50),
-              ),
-              child: const Icon(
-                Icons.camera_alt_rounded,
-                color: Colors.white,
-                size: 28,
+    final isDisabled = widget.onTap == null;
+    return Opacity(
+      opacity: isDisabled ? 0.4 : 1.0,
+      child: GestureDetector(
+        onTapDown: isDisabled ? null : _onTapDown,
+        onTapUp: isDisabled ? null : _onTapUp,
+        onTapCancel: isDisabled ? null : () => _controller.forward(),
+        child: ScaleTransition(
+          scale: _scale,
+          child: Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF4CAF50), width: 3),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(5),
+              child: Container(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFF4CAF50),
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
             ),
           ),
@@ -126,31 +130,35 @@ class _SideButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.white10,
-              borderRadius: BorderRadius.circular(14),
+    final isDisabled = onTap == null;
+    return Opacity(
+      opacity: isDisabled ? 0.4 : 1.0,
+      child: GestureDetector(
+        onTap: isDisabled ? null : onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: Colors.white70, size: 22),
             ),
-            child: Icon(icon, color: Colors.white70, size: 22),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white54,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.4,
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.4,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

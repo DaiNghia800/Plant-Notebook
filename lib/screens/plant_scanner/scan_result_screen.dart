@@ -9,9 +9,11 @@ import 'package:plant_notebook/screens/plant_scanner/widget/result_area/result_i
 import 'package:plant_notebook/screens/plant_scanner/widget/result_area/result_states.dart';
 
 class ScanResultScreen extends StatefulWidget {
-  final String imagePath;
+  final String? imagePath;
+  final String? taskId;
 
-  const ScanResultScreen({super.key, required this.imagePath});
+  const ScanResultScreen({super.key, this.imagePath, this.taskId})
+      : assert(imagePath != null || taskId != null, 'Phải cung cấp imagePath hoặc taskId');
 
   @override
   State<ScanResultScreen> createState() => _ScanResultScreenState();
@@ -22,7 +24,11 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PlantScannerController>().analyzeImage(widget.imagePath);
+      if (widget.imagePath != null) {
+        context.read<PlantScannerController>().analyzeImage(widget.imagePath!);
+      } else if (widget.taskId != null) {
+        context.read<PlantScannerController>().loadResultByTaskId(widget.taskId!);
+      }
     });
   }
 
@@ -31,17 +37,20 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
     final lang = context.watch<ProfileController>();
     return Scaffold(
       backgroundColor: Colors.white,
-      body: CustomScrollView(
-        slivers: [
-          ResultSliverAppBar(imagePath: widget.imagePath),
-          SliverToBoxAdapter(
-            child: Consumer<PlantScannerController>(
-              builder: (context, controller, child) {
-                return _buildBody(controller, lang);
-              },
-            ),
-          ),
-        ],
+      body: Consumer<PlantScannerController>(
+        builder: (context, controller, child) {
+          return CustomScrollView(
+            slivers: [
+              ResultSliverAppBar(
+                imagePath: widget.imagePath,
+                imageUrl: controller.imageUrl,
+              ),
+              SliverToBoxAdapter(
+                child: _buildBody(controller, lang),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -57,7 +66,11 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
         onRetry: () {
           // Xóa cooldown để retry bắt đầu lại
           PlantScannerService.clearCooldowns();
-          controller.analyzeImage(widget.imagePath);
+          if (widget.imagePath != null) {
+            controller.analyzeImage(widget.imagePath!);
+          } else if (widget.taskId != null) {
+            controller.loadResultByTaskId(widget.taskId!);
+          }
         },
       );
     }
@@ -238,7 +251,7 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
                             ? null
                             : () async {
                                 try {
-                                  await controller.submitProposal(widget.imagePath);
+                                  await controller.submitProposal(controller.imageUrl ?? widget.imagePath ?? '');
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

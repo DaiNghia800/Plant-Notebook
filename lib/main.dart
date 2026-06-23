@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/my_garden_controller.dart';
 import 'package:plant_notebook/controller/plant_scanner_controller.dart';
+import 'package:plant_notebook/controller/scan_upload_controller.dart';
 import 'package:plant_notebook/controller/library_plant_controller.dart';
 import 'package:plant_notebook/controller/store_controller.dart';
 import 'package:plant_notebook/controller/profile_controller.dart';
@@ -41,6 +42,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PlantScannerController()),
+        ChangeNotifierProvider(create: (_) => ScanUploadController()),
         ChangeNotifierProvider(
           create: (_) => MyGardenController()..initialize(),
         ),
