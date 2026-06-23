@@ -747,20 +747,20 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
     }
   }
 
-  void _showPickImageOptions() {
-    showModalBottomSheet(
+  Future<void> _showPickImageOptions() async {
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              context.read<ProfileController>().tr('choose_photo'),
+              sheetContext.read<ProfileController>().tr('choose_photo'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -776,10 +776,9 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                 ),
                 child: const Icon(Icons.camera_alt, color: Colors.blue),
               ),
-              title: Text(context.read<ProfileController>().tr('take_new_photo')),
+              title: Text(sheetContext.read<ProfileController>().tr('take_new_photo')),
               onTap: () {
-                Navigator.pop(context);
-                _pickPhoto(ImageSource.camera);
+                Navigator.pop(sheetContext, ImageSource.camera);
               },
             ),
             ListTile(
@@ -791,17 +790,21 @@ class _MyGardenPlantFormSheetState extends State<MyGardenPlantFormSheet> {
                 ),
                 child: const Icon(Icons.photo_library, color: Colors.green),
               ),
-              title: Text(context.read<ProfileController>().tr('pick_gallery')),
+              title: Text(sheetContext.read<ProfileController>().tr('pick_gallery')),
               onTap: () {
-                Navigator.pop(context);
-                _pickPhoto(ImageSource.gallery);
+                Navigator.pop(sheetContext, ImageSource.gallery);
               },
             ),
           ],
         ),
       ),
     );
+
+    if (source != null) {
+      await _pickPhoto(source);
+    }
   }
+
 
   GardenPlantProfile _buildPlantProfile() {
     return GardenPlantProfile(

@@ -20,16 +20,19 @@ class ProfileController extends ChangeNotifier {
   String userEmail = '';
   String memberSince = '2024';
   Uint8List? avatarBytes;
-  String currentLanguage = 'Tiếng Việt';
+  String currentLanguage = 'vi';
 
   /// Lấy chuỗi dịch theo key
   String tr(String key) {
-    final String langCode = currentLanguage == 'English' ? 'en' : 'vi';
+    final String langCode = currentLanguage == 'en' ? 'en' : 'vi';
     return AppTranslations.tr(key, langCode);
   }
 
   Future<void> loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Load current language
+    currentLanguage = prefs.getString('current_language') ?? 'vi';
 
     // Load local notification preference
     isNotificationOn = prefs.getBool('is_notification_on') ?? true;
@@ -84,19 +87,21 @@ class ProfileController extends ChangeNotifier {
     isNotificationOn = value;
     notifyListeners(); // Báo cho UI vẽ lại (Chuẩn của Provider)
 
-    SharedPreferences.getInstance().then((prefs) async {
-      await prefs.setBool('is_notification_on', value);
-      final String? userId = prefs.getString('userId');
-      if (userId != null) {
-        if (value) {
-          await FirebaseMessagingService.registerToken(userId);
-        } else {
-          await FirebaseMessagingService.removeFcmTokenFromServer(userId);
-        }
-      }
-    }).catchError((e) {
-      debugPrint('Lỗi khi cập nhật cài đặt thông báo: $e');
-    });
+    SharedPreferences.getInstance()
+        .then((prefs) async {
+          await prefs.setBool('is_notification_on', value);
+          final String? userId = prefs.getString('userId');
+          if (userId != null) {
+            if (value) {
+              await FirebaseMessagingService.registerToken(userId);
+            } else {
+              await FirebaseMessagingService.removeFcmTokenFromServer(userId);
+            }
+          }
+        })
+        .catchError((e) {
+          debugPrint('Lỗi khi cập nhật cài đặt thông báo: $e');
+        });
   }
 
   void toggleDarkMode(bool value) {
@@ -106,47 +111,47 @@ class ProfileController extends ChangeNotifier {
 
   // Translations
   String get textTitle =>
-      currentLanguage == 'English' ? 'Plant Notebook' : 'Sổ tay cây trồng';
-  String get textMemberSince => currentLanguage == 'English'
+      currentLanguage == 'en' ? 'Plant Notebook' : 'Sổ tay cây trồng';
+  String get textMemberSince => currentLanguage == 'en'
       ? 'MEMBER SINCE $memberSince'
       : 'THÀNH VIÊN TỪ $memberSince';
   String get textSettings =>
-      currentLanguage == 'English' ? 'APP SETTINGS' : 'CÀI ĐẶT ỨNG DỤNG';
+      currentLanguage == 'en' ? 'APP SETTINGS' : 'CÀI ĐẶT ỨNG DỤNG';
   String get textNotification =>
-      currentLanguage == 'English' ? 'Notifications' : 'Thông báo';
+      currentLanguage == 'en' ? 'Notifications' : 'Thông báo';
   String get textDarkMode =>
-      currentLanguage == 'English' ? 'Dark Mode' : 'Chế độ tối';
+      currentLanguage == 'en' ? 'Dark Mode' : 'Chế độ tối';
   String get textLanguage =>
-      currentLanguage == 'English' ? 'Language' : 'Ngôn ngữ';
+      currentLanguage == 'en' ? 'Language' : 'Ngôn ngữ';
   String get textInviteFriends =>
-      currentLanguage == 'English' ? 'Invite Friends' : 'Giới thiệu bạn bè';
-  String get textFeedback => currentLanguage == 'English'
+      currentLanguage == 'en' ? 'Invite Friends' : 'Giới thiệu bạn bè';
+  String get textFeedback => currentLanguage == 'en'
       ? 'Feedback / Report Issue'
       : 'Phản hồi/Báo lỗi';
   String get textLogout =>
-      currentLanguage == 'English' ? 'Logout' : 'Đăng xuất';
+      currentLanguage == 'en' ? 'Logout' : 'Đăng xuất';
 
   // Community Translations
   String get textCommunity =>
-      currentLanguage == 'English' ? 'Community' : 'Cộng đồng';
+      currentLanguage == 'en' ? 'Community' : 'Cộng đồng';
   String get textPostDetail =>
-      currentLanguage == 'English' ? 'Post Detail' : 'Bài viết';
+      currentLanguage == 'en' ? 'Post Detail' : 'Bài viết';
   String get textTimeAgo =>
-      currentLanguage == 'English' ? '2 hours ago' : '2 giờ trước';
-  String get textPostContent => currentLanguage == 'English'
+      currentLanguage == 'en' ? '2 hours ago' : '2 giờ trước';
+  String get textPostContent => currentLanguage == 'en'
       ? 'Repotted my succulents yesterday. So cute! 🌱'
       : 'Góc sen đá mới thay chậu hôm qua. Nhìn cưng xỉu luôn mọi người ơi! 🌱';
   String get textPostImage =>
-      currentLanguage == 'English' ? 'Post Image' : 'Hình ảnh bài viết';
+      currentLanguage == 'en' ? 'Post Image' : 'Hình ảnh bài viết';
   String get textComments =>
-      currentLanguage == 'English' ? 'Comments' : 'Bình luận';
+      currentLanguage == 'en' ? 'Comments' : 'Bình luận';
   String get textCommentTime =>
-      currentLanguage == 'English' ? '15 minutes ago' : '15 phút trước';
-  String get textCommentContent => currentLanguage == 'English'
+      currentLanguage == 'en' ? '15 minutes ago' : '15 phút trước';
+  String get textCommentContent => currentLanguage == 'en'
       ? 'So beautiful! Where did you buy the pot?'
       : 'Đẹp quá bạn ơi! Chậu mua ở đâu vậy?';
   String get textAddComment =>
-      currentLanguage == 'English' ? 'Add a comment...' : 'Thêm bình luận...';
+      currentLanguage == 'en' ? 'Add a comment...' : 'Thêm bình luận...';
 
   void reportIssue(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -186,6 +191,9 @@ class ProfileController extends ChangeNotifier {
 
   void changeLanguage(String language) {
     currentLanguage = language;
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('current_language', language);
+    });
     notifyListeners();
   }
 

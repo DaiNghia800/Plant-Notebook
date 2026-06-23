@@ -4,12 +4,24 @@ import 'package:provider/provider.dart';
 import 'package:plant_notebook/controller/profile_controller.dart';
 
 class ResultSliverAppBar extends StatelessWidget {
-  final String imagePath;
+  final String? imagePath;
+  final String? imageUrl;
 
-  const ResultSliverAppBar({super.key, required this.imagePath});
+  const ResultSliverAppBar({super.key, this.imagePath, this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
+    Widget imageWidget = const SizedBox();
+    if (imagePath != null && imagePath!.isNotEmpty) {
+      if (imagePath!.startsWith('http://') || imagePath!.startsWith('https://')) {
+        imageWidget = Image.network(imagePath!, fit: BoxFit.cover);
+      } else {
+        imageWidget = Image.file(File(imagePath!), fit: BoxFit.cover);
+      }
+    } else if (imageUrl != null && imageUrl!.isNotEmpty) {
+      imageWidget = Image.network(imageUrl!, fit: BoxFit.cover);
+    }
+
     return SliverAppBar(
       expandedHeight: 350,
       pinned: true,
@@ -22,7 +34,7 @@ class ResultSliverAppBar extends StatelessWidget {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Image.file(File(imagePath), fit: BoxFit.cover),
+            imageWidget,
             const DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

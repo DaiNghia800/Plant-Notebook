@@ -27,7 +27,55 @@ class PlantScannerService {
         ),
       );
 
-      return PlantAnalysisResult.fromJson(response.data);
+      final Map<String, dynamic> data = response.data;
+      if (data['success'] != true || data['taskId'] == null) {
+        throw Exception(data['message'] ?? 'Lỗi khi gửi ảnh phân tích');
+      }
+
+      final String taskId = data['taskId'].toString();
+      final DateTime startTime = DateTime.now();
+      const Duration pollInterval = Duration(seconds: 2);
+      const Duration timeoutDuration = Duration(seconds: 90);
+
+      while (true) {
+        if (DateTime.now().difference(startTime) > timeoutDuration) {
+          throw Exception('Timeout: Quá thời gian chờ phân tích AI');
+        }
+
+        try {
+          final Response taskResponse = await _dio.get(
+            '/library-plants/scan/$taskId',
+          );
+          final Map<String, dynamic> taskData = taskResponse.data;
+
+          if (taskData['success'] == true && taskData['data'] != null) {
+            final taskDetails = taskData['data'];
+            final String status = taskDetails['status'] ?? 'PENDING';
+
+            if (status == 'COMPLETED') {
+              final aiResult = taskDetails['aiResult'];
+              if (aiResult == null) {
+                throw Exception('Kết quả phân tích AI trống');
+              }
+              return PlantAnalysisResult.fromJson(aiResult);
+            } else if (status == 'FAILED') {
+              final aiResult = taskDetails['aiResult'];
+              final String errMsg =
+                  (aiResult is Map && aiResult['error'] != null)
+                  ? aiResult['error'].toString()
+                  : 'Lỗi trong quá trình phân tích AI';
+              throw Exception(errMsg);
+            }
+          }
+        } on DioException catch (de) {
+          final statusCode = de.response?.statusCode ?? -1;
+          if (statusCode == 404) {
+            throw Exception('Không tìm thấy tiến trình phân tích trên máy chủ');
+          }
+        }
+
+        await Future.delayed(pollInterval);
+      }
     } on DioException catch (e) {
       final responseData = e.response?.data;
       final int statusCode = e.response?.statusCode ?? -1;
@@ -44,6 +92,10 @@ class PlantScannerService {
       }
       throw Exception('Server error $statusCode: $errMsg');
     }
+  }
+
+  Future<Response> getTaskResult(String taskId) async {
+    return await _dio.get('/library-plants/scan/$taskId');
   }
 
   static void clearCooldowns() {}

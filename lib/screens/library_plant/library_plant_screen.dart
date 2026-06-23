@@ -175,7 +175,7 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
                         ),
                       ),
                     ),
-                  ),
+                  ],
                   if (plants.length > _visibleCount) ...[
                     const SizedBox(height: 10),
                     Center(
@@ -195,16 +195,16 @@ class _LibraryPlantScreenState extends State<LibraryPlantScreen> {
                             horizontal: 32,
                             vertical: 14,
                           ),
-                          child: Text(
-                            lang.tr('load_more'),
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        ),
+                        child: Text(
+                          lang.tr('load_more'),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ],
                   const SizedBox(height: 24),
                 ],

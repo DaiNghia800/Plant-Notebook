@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -22,6 +23,7 @@ class PlantScannerController extends ChangeNotifier {
   bool isAnalyzing = true;
   PlantAnalysisResult? analysisResult;
   String? analysisErrorMessage;
+  String? imageUrl;
   bool existsInLibrary = true;
   bool isSubmittingProposal = false;
   bool proposalSubmitted = false;
@@ -79,9 +81,12 @@ class PlantScannerController extends ChangeNotifier {
 
   void onChangeAppLifecycleState(AppLifecycleState state) {
     final controller = cameraController;
-    if (controller == null || !controller.value.isInitialized) return;
+    if (controller == null) return;
 
-    if (state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      isCameraReady = false;
+      cameraController = null;
+      notifyListeners();
       controller.dispose();
     } else if (state == AppLifecycleState.resumed) {
       _initCameraAt(currentCameraIndex);
@@ -171,6 +176,7 @@ class PlantScannerController extends ChangeNotifier {
     isAnalyzing = true;
     analysisErrorMessage = null;
     analysisResult = null;
+    imageUrl = imagePath;
     existsInLibrary = true;
     proposalSubmitted = false;
     isSubmittingProposal = false;
@@ -209,6 +215,74 @@ class PlantScannerController extends ChangeNotifier {
       // Log lỗi chi tiết ra terminal cho dev
       // ignore: avoid_print
       print('[PlantScannerController] analyzeImage ERROR: $e');
+      analysisErrorMessage = _mapAnalysisErrorMessage(e);
+      isAnalyzing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadResultByTaskId(String taskId) async {
+    isAnalyzing = true;
+    analysisErrorMessage = null;
+    analysisResult = null;
+    imageUrl = null;
+    existsInLibrary = true;
+    proposalSubmitted = false;
+    isSubmittingProposal = false;
+    notifyListeners();
+
+    try {
+      final DateTime startTime = DateTime.now();
+      const Duration pollInterval = Duration(seconds: 2);
+      const Duration timeoutDuration = Duration(seconds: 90);
+
+      while (true) {
+        if (DateTime.now().difference(startTime) > timeoutDuration) {
+          throw Exception('Timeout: Quá thời gian chờ phân tích AI');
+        }
+
+        final Response taskResponse = await _scannerService.getTaskResult(taskId);
+        final Map<String, dynamic> taskData = taskResponse.data;
+
+        if (taskData['success'] == true && taskData['data'] != null) {
+          final taskDetails = taskData['data'];
+          final String status = taskDetails['status'] ?? 'PENDING';
+          imageUrl = taskDetails['imageUrl'];
+
+          if (status == 'COMPLETED') {
+            final aiResult = taskDetails['aiResult'];
+            if (aiResult == null) {
+              throw Exception('Kết quả phân tích AI trống');
+            }
+            analysisResult = PlantAnalysisResult.fromJson(aiResult);
+            
+            // Kiểm tra xem cây đã tồn tại trong thư viện chưa
+            try {
+              final checkResult = await _libraryApiService.checkPlantExistence(
+                name: analysisResult!.tenPhoThong,
+                scientificName: analysisResult!.tenKhoaHoc,
+              );
+              existsInLibrary = checkResult['exists'] == true;
+            } catch (e) {
+              existsInLibrary = true;
+            }
+            break;
+          } else if (status == 'FAILED') {
+            final aiResult = taskDetails['aiResult'];
+            final String errMsg = (aiResult is Map && aiResult['error'] != null)
+                ? aiResult['error'].toString()
+                : 'Lỗi trong quá trình phân tích AI';
+            throw Exception(errMsg);
+          }
+        }
+        await Future.delayed(pollInterval);
+      }
+
+      isAnalyzing = false;
+      notifyListeners();
+    } catch (e) {
+      // ignore: avoid_print
+      print('[PlantScannerController] loadResultByTaskId ERROR: $e');
       analysisErrorMessage = _mapAnalysisErrorMessage(e);
       isAnalyzing = false;
       notifyListeners();

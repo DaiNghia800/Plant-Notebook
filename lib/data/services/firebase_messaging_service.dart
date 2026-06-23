@@ -13,6 +13,7 @@ import 'package:plant_notebook/data/models/care_history.dart';
 import 'package:plant_notebook/data/network/dio_client.dart';
 import 'package:plant_notebook/data/services/my_garden_service.dart';
 import 'package:plant_notebook/screens/my_garden/plant_detail_screen.dart';
+import 'package:plant_notebook/screens/plant_scanner/scan_result_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:plant_notebook/routes/route_constant.dart';
 import 'package:plant_notebook/main.dart' show navigatorKey;
@@ -28,6 +29,14 @@ class FirebaseMessagingService {
     'plant_notebook_reminders',
     'Plant Notebook Reminders',
     description: 'Reminder notifications for plant care',
+    importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel _aiScanChannel =
+      AndroidNotificationChannel(
+    'plant_ai_scan',
+    'Kết quả quét AI',
+    description: 'Thông báo khi AI phân tích cây xong',
     importance: Importance.high,
   );
 
@@ -255,12 +264,45 @@ class FirebaseMessagingService {
           AndroidFlutterLocalNotificationsPlugin
         >()
         ?.createNotificationChannel(_channel);
+
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(_aiScanChannel);
   }
 
   static Future<void> _showForegroundNotification(RemoteMessage message) async {
-    final title = message.data['title'] ?? 'Nhắc nhở chăm sóc cây';
-    final body = message.data['body'] ?? 'Đã đến lúc chăm sóc cây!';
+    // Ưu tiên lấy title/body từ notification (FCM standard),
+    // fallback sang data field nếu không có
+    final title = message.notification?.title ??
+        message.data['title'] ??
+        'Nhắc nhở chăm sóc cây';
+    final body = message.notification?.body ??
+        message.data['body'] ??
+        'Đã đến lúc chăm sóc cây!';
     final type = message.data['type'];
+    final taskId = message.data['taskId'];
+
+    // Thông báo kết quả quét AI → dùng channel riêng
+    if (taskId != null && taskId.toString().isNotEmpty) {
+      const AndroidNotificationDetails aiDetails = AndroidNotificationDetails(
+        'plant_ai_scan',
+        'Kết quả quét AI',
+        channelDescription: 'Thông báo khi AI phân tích cây xong',
+        importance: Importance.max,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+      );
+      await _localNotifications.show(
+        id: message.hashCode,
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(android: aiDetails),
+        payload: jsonEncode(message.data),
+      );
+      return;
+    }
 
     final isWatering = type == 'Tưới nước' || type == 'watering';
     final isFertilizing = type == 'Bón phân' || type == 'fertilizing';
@@ -313,9 +355,33 @@ class FirebaseMessagingService {
       onDidReceiveBackgroundNotificationResponse: notificationTapBackgroundHandler,
     );
 
-    final title = message.data['title'] ?? 'Nhắc nhở chăm sóc cây';
-    final body = message.data['body'] ?? 'Đã đến lúc chăm sóc cây!';
+    final title = message.notification?.title ??
+        message.data['title'] ??
+        'Nhắc nhở chăm sóc cây';
+    final body = message.notification?.body ??
+        message.data['body'] ??
+        'Đã đến lúc chăm sóc cây!';
     final type = message.data['type'];
+    final taskId = message.data['taskId'];
+
+    // Thông báo kết quả quét AI
+    if (taskId != null && taskId.toString().isNotEmpty) {
+      const AndroidNotificationDetails aiDetails = AndroidNotificationDetails(
+        'plant_ai_scan',
+        'Kết quả quét AI',
+        channelDescription: 'Thông báo khi AI phân tích cây xong',
+        importance: Importance.max,
+        priority: Priority.high,
+      );
+      await _localNotifications.show(
+        id: message.hashCode,
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(android: aiDetails),
+        payload: jsonEncode(message.data),
+      );
+      return;
+    }
 
     final isWatering = type == 'Tưới nước' || type == 'watering';
     final isFertilizing = type == 'Bón phân' || type == 'fertilizing';
@@ -374,7 +440,14 @@ class FirebaseMessagingService {
 
   static Future<void> _handleNotificationAction(Map<String, dynamic> data) async {
     final String? gardenPlantId = data['gardenPlantId'];
+    final String? taskId = data['taskId'];
     final String? type = data['type'];
+
+    if (taskId != null && taskId.isNotEmpty) {
+      _navigateToScanResult(taskId);
+      return;
+    }
+
     if (gardenPlantId == null || gardenPlantId.isEmpty) return;
 
     if (type == 'Tưới nước' || type == 'Bón phân' || type == 'watering' || type == 'fertilizing') {
@@ -382,6 +455,14 @@ class FirebaseMessagingService {
     } else {
       _handlePlantNavigation(gardenPlantId);
     }
+  }
+
+  static void _navigateToScanResult(String taskId) {
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (_) => ScanResultScreen(taskId: taskId),
+      ),
+    );
   }
 
   static Future<void> _performCareAction(String gardenPlantId, String type) async {
